@@ -12,7 +12,7 @@ def get_zip_files_urls(url):
         response.raise_for_status() # Raises HTTPError if the HTTP request returned an unsuccessful status code
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        return [a['href'] for a in soup.find_all('a', href = lambda href: href and 'tripdata.zip' in href)]
+        return [a['href'] for a in soup.find_all('a', href = lambda href: href and href.startswith('JC') and 'tripdata.zip' in href)]
     
     except Exception as e:
         print(f"Error fetching the index page: {e}")
@@ -53,24 +53,27 @@ def insert_csv_to_db(csv_file_path):
     
         with open(csv_file_path, newline = '') as csvfile:
             reader = csv.DictReader(csvfile)
+            
+            records = [(
+                row['ride_id'], row['rideable_type'], row['started_at'], row['ended_at'],
+                row['start_station_name'], row['start_station_id'], row['end_station_name'],
+                row['end_station_id'], row['start_lat'], row['start_lng'], row['end_lat'],
+                row['end_lng'], row['member_casual']
+            ) for row in reader]
         
-            for row in reader:
-                cur.execute(
-                    """ 
-                    INSERT INTO rides (ride_id, rideable_type, started_at, ended_at, 
-                                    start_station_name, start_station_id, end_station_name, 
-                                    end_station_id, start_latitude, start_longitude, 
-                                    end_latitude, end_longitude, member_casual)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, 
-                    (row['ride_id'], row['rideable_type'], row['started_at'], row['ended_at'],
-                    row['start_station_name'], row['start_station_id'], row['end_station_name'],
-                    row['end_station_id'], row['start_lat'], row['start_lng'], row['end_lat'],
-                    row['end_lng'], row['member_casual'])
-                )
+            cur.executemany(
+                """
+                INSERT INTO trips (ride_id, rideable_type, started_at, ended_at, 
+                start_station_name, start_station_id, end_station_name, end_station_id,
+                start_lat, start_lng, end_lat, end_lng, member_casual)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """ , 
+                records
+                
+            )
             
             conn.commit()
-            print(f"Inserted {csv_file_path} into the database")
+            print(f"Inserted {len(records)} records from {csv_file_path} into the database")
     except Exception as e:
         print(f"Error inserting CSV into the database: {e}")
     finally:

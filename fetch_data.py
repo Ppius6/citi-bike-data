@@ -1,25 +1,47 @@
 import csv
-
-# List available data files
 import requests
 from bs4 import BeautifulSoup
+import re
+from datetime import datetime
+import xml
 
-url = 'https://s3.amazonaws.com/tripdata/'
-
+# List available data files
 def get_zip_files_urls(url):
     try: 
         response = requests.get(url)
         response.raise_for_status() # Raises HTTPError if the HTTP request returned an unsuccessful status code
-        soup = BeautifulSoup(response.text, 'html.parser')
+        print("Response Status: ", response.status_code)
         
-        return [a['href'] for a in soup.find_all('a', href = lambda href: href and href.startswith('JC') and 'tripdata.zip' in href)]
+        soup = BeautifulSoup(response.text, 'lxml-xml')
+        
+        print("Soup content: ", soup.prettify()[:500]) 
+        
+        def is_valid(href):
+            if href and href.startswith('JC') and 'tripdata.zip' in href:
+                
+                # Extract the date from the filename
+                match = re.search(r'JC-(\d{6})-citibike-tripdata.csv.zip', href)
+                if match:
+                    file_date = datetime.strptime(match.group(1), '%Y%m')
+                    
+                    # Filter files starting from February 2021
+                    return file_date >= datetime(2021, 2, 1)
+                
+            return False
+            
+        found_urls = [a['href'] for a in soup.find_all('a', href = is_valid)]
+        print("Found URLs: ", found_urls)
+        return found_urls
     
     except Exception as e:
         print(f"Error fetching the index page: {e}")
         return []
         
-# Download and extract the CSV files from ZIP archives
+url = 'https://s3.amazonaws.com/tripdata/'
 
+print(get_zip_files_urls(url))
+
+# Download and extract the CSV files from ZIP archives
 import os
 from io import BytesIO
 from zipfile import ZipFile
@@ -74,6 +96,7 @@ def insert_csv_to_db(csv_file_path):
             
             conn.commit()
             print(f"Inserted {len(records)} records from {csv_file_path} into the database")
+            
     except Exception as e:
         print(f"Error inserting CSV into the database: {e}")
     finally:

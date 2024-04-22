@@ -1,113 +1,136 @@
-
+import csv
 import requests
 from bs4 import BeautifulSoup
+import re
 from datetime import datetime
-import os
-from zipfile import ZipFile
-import pandas as pd
-from sqlalchemy import create_engine
-import urllib
+import xml
 
+# List available data files
+def get_zip_files_urls(url):
+    try: 
+        response = requests.get(url)
+        response.raise_for_status() # Raises HTTPError if the HTTP request returned an unsuccessful status code
+        print("Response Status: ", response.status_code)
+        
+        soup = BeautifulSoup(response.text, 'lxml-xml')
+        
+        print("Soup content: ", soup.prettify()[:500]) 
+        
+        def is_valid(href):
+            if href and href.startswith('JC') and 'tripdata.zip' in href:
+                
+                # Extract the date from the filename
+                match = re.search(r'JC-(\d{6})-citibike-tripdata.csv.zip', href)
+                if match:
+                    file_date = datetime.strptime(match.group(1), '%Y%m')
+                    
+                    # Filter files starting from February 2021
+                    return file_date >= datetime(2021, 2, 1)
+                
+            return False
+            
+        found_urls = [a['href'] for a in soup.find_all('a', href = is_valid)]
+        print("Found URLs: ", found_urls)
+        return found_urls
+    
+    except Exception as e:
+        print(f"Error fetching the index page: {e}")
+        return []
+        
 url = 'https://s3.amazonaws.com/tripdata/'
 
-# FUnction to scrape and return file links
-def get_file_links(url, start_file):
-    response = requests.get(url)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'xml')
-        # Find all links in the response
-        keys = [key.text for key in soup.find_all('Key') if key.text.startswith('JC')]
+print(get_zip_files_urls(url))
+
+# Download and extract the CSV files from ZIP archives
+import os
+from io import BytesIO
+from zipfile import ZipFile
+
+def download_and_extract_zip(url, extract_to):
+    try:
+        response= requests.get(url)
+        response.raise_for_status()
+    
+        with ZipFile(BytesIO(response.content)) as the_zip:
+            the_zip.extractall(extract_to)
+            print(f"Extracted {url} to {extract_to}")
+    except Exception as e:
+        print(f"Error downloading and extracting the ZIP file: {e}")
         
-        # Find the index for the start file and return links from that file onward
-        start_index = keys.index(start_file) if start_file in keys else None
+# Insert data into the database
+import psycopg2
+
+# Database connection
+conn_params = {
+    'dbname': 'citi-bike-trips',
+    'user': 'postgres',
+    'password': 'postgres',
+    'host': 'localhost',
+}
+
+def insert_csv_to_db(csv_file_path):
+    try: 
+        conn = psycopg2.connect(**conn_params)
+        cur = conn.cursor()
+    
+        with open(csv_file_path, newline = '') as csvfile:
+            reader = csv.DictReader(csvfile)
+            
+            records = [(
+                row['ride_id'], row['rideable_type'], row['started_at'], row['ended_at'],
+                row['start_station_name'], row['start_station_id'], row['end_station_name'],
+                row['end_station_id'], row['start_lat'], row['start_lng'], row['end_lat'],
+                row['end_lng'], row['member_casual']
+            ) for row in reader]
         
-        return keys[start_index:] if start_index is not None else []
-    else:
-        raise ConnectionError(f"Failed to get file links, status code: {response.status_code}")
-        
-# Function to download and extract the zip files
-def download_and_extract_files(links, url, extract_to = 'data'):
+            cur.executemany(
+                """
+                INSERT INTO trips (ride_id, rideable_type, started_at, ended_at, 
+                start_station_name, start_station_id, end_station_name, end_station_id,
+                start_lat, start_lng, end_lat, end_lng, member_casual)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """ , 
+                records
+                
+            )
+            
+            conn.commit()
+            print(f"Inserted {len(records)} records from {csv_file_path} into the database")
+            
+    except Exception as e:
+        print(f"Error inserting CSV into the database: {e}")
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+    
+# Main function
+def main():
+    zip_urls = get_zip_files_urls(url)
+    if not zip_urls:
+        print("No ZIP files found")
+        return
+    
+    extract_to = 'extracted csv files'
+    
     if not os.path.exists(extract_to):
         os.makedirs(extract_to)
-    
-    for file_name in links:
-        file_url = f"{url}{file_name}"
-        local_zip_path = os.path.join(extract_to, file_name)
-        extracted_file_name = file_name.replace('.zip', '.csv')
-        local_csv_path = os.path.join(extract_to, extracted_file_name)
         
-        # Skip download and extraction if the CSV file already exists
-        if os.path.isfile(local_csv_path):
-            print(f"File {extracted_file_name} already exists, skipping download and extraction")
-            continue
+    for zip_url in zip_urls:
+        print(f'Downloading and extracting {zip_url}...')
+        download_and_extract_zip(zip_url, extract_to)
         
-        print(f"Downloading {file_name}...")
-        with requests.get(file_url, stream = True) as r:
-            r.raise_for_status()
-            
-            with open(local_zip_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size = 8192):
-                    f.write(chunk)
-                    
-        # Extract the zip file if it exists
-        if file_name.endswith('.zip'):
-            with ZipFile(local_zip_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_to)
+        # Assuming each ZIP contains a single CSV file
+        for filename in os.listdir(extract_to):
+            if filename.endswith('.csv'):
+                csv_file_path = os.path.join(extract_to, filename)
+                print(f"Processing file {csv_file_path}...")
+                insert_csv_to_db(csv_file_path)
+                os.remove(csv_file_path)  # Clean up extracted CSV
                 
-            os.remove(local_zip_path)
-            print(f"Extracted {extracted_file_name}")
-   
-# Function to combine the CSV files
-def combine_csv_files(directory):
-    
-    csv_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.csv')]
-    df_list = [pd.read_csv(csv_file) for csv_file in csv_files]
-    
-    if not all(df.columns.equals(df_list[0].columns) for df in df_list):
-        raise ValueError("Not all CSV files have the same columns")
-    
-    combined_df = pd.concat(df_list, ignore_index = True)
-    
-    return combined_df
-        
-# Function to store DataFrame to PostgreSQL
-def store_dataframe_to_postgres(df, table_name, conn_params):
-    
-    try:
-        # Encoding the password
-        password = urllib.parse.quote_plus(conn_params['password'])
-        
-        # Create the connection url
-        conn_url = f"postgresql://{conn_params['user']}:{password}@{conn_params['host']}:{conn_params['port']}/{conn_params['dbname']}"
-        
-        # Create the database engine
-        with create_engine(conn_url).connect() as connection:
-            
-            df.to_sql(table_name, connection, if_exists = 'replace', index = False)
-            
-        print(f"Data stored in table {table_name} in database {conn_params['dbname']}")
-        
-    except Exception as e:
-        
-        print(f"An error occurred: {e}")
-  
-# Main execution
-if __name__ == "__main__":
-    
-    start_from = 'JC-202102-citibike-tripdata.csv.zip'
-    links = get_file_links(url, start_from)
-    download_and_extract_files(links, url)
-    
-    combined_csv_directory = 'data'
-    combined_df = combine_csv_files(combined_csv_directory)
-    
-    # Database connection parameters
-    conn_params = {
-        'dbname': 'citi-bike-trips',
-        'user': 'postgres',
-        'password': "Pius@21!",
-        'host': 'localhost',
-        'port': '5432'
-        }
-    
-    store_dataframe_to_postgres(combined_df, 'trips', conn_params)
+        print(f"Finished processing {zip_url}")
+
+        os.remove(os.path.join(extract_to, zip_url.split('/')[-1]))
+
+if __name__ == '__main__':
+    main()

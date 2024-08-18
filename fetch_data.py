@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 from zipfile import ZipFile
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, types as sqlalchemy_types
 import logging
 import time
 from pathlib import Path
@@ -85,7 +85,7 @@ def download_and_extract_files(file_names, url, extract_to=EXTRACT_DIR):
             logging.info(f"Extracted and deleted {file_name}")
 
 # Combine the CSV files and return a single DataFrame
-def combine_csv_files(directory=EXTRACT_DIR):
+def combine_csv_files(directory = EXTRACT_DIR):
     csv_files = list(Path(directory).glob('*.csv'))
     
     if not csv_files:
@@ -93,19 +93,29 @@ def combine_csv_files(directory=EXTRACT_DIR):
         raise ValueError("No CSV files found in the directory")
 
     df_list = []
+    
     for file_path in csv_files:
         logging.info(f"Reading {file_path.name}...")
+        
         try:
-            df = pd.read_csv(file_path, parse_dates=['started_at'], usecols=['started_at'])
+            df = pd.read_csv(file_path, parse_dates = ['started_at'])           
+            
+            # Column names for each file
+            logging.info(f"Columns in {file_path.name}: {df.columns.tolist()}")
+
             if not df.empty:
                 df_list.append(df)
             else:
                 logging.warning(f"{file_path.name} is empty. Skipping...")
+        
         except Exception as e:
             logging.error(f"Error reading {file_path.name}: {e}")
 
     combined_df = pd.concat(df_list, ignore_index=True)
     logging.info(f"Combined {len(df_list)} files into a single DataFrame")
+    
+    # Print combined_df column names
+    logging.info(f"Columns in combined DataFrame: {combined_df.columns.tolist()}")
     
     return combined_df
 
@@ -117,8 +127,8 @@ def store_dataframe_to_postgres(df, table_name, conn_params):
     latest_processed_date = get_latest_processed_date()
     logging.info(f"Latest processed date: {latest_processed_date}")
 
-    df['started_at'] = pd.to_datetime(df['started_at'], errors='coerce')
-    df = df.dropna(subset=['started_at'])
+    df['started_at'] = pd.to_datetime(df['started_at'], errors = 'coerce')
+    df['ended_at'] = pd.to_datetime(df['ended_at'], errors = 'coerce')
     
     if latest_processed_date:
         new_data = df[df['started_at'].dt.date > latest_processed_date]
@@ -128,12 +138,30 @@ def store_dataframe_to_postgres(df, table_name, conn_params):
     if new_data.empty:
         logging.info("No new data available to process. Exiting.")
         return False
+    
+    # Specify data types for each column
+    dtype_map = {
+        'ride_id': sqlalchemy_types.String,
+        'rideable_type': sqlalchemy_types.String,
+        'started_at': sqlalchemy_types.DateTime,
+        'ended_at': sqlalchemy_types.DateTime,
+        'start_station_name': sqlalchemy_types.String,
+        'start_station_id': sqlalchemy_types.String,
+        'end_station_name': sqlalchemy_types.String,
+        'end_station_id': sqlalchemy_types.String,
+        'start_lat': sqlalchemy_types.Float,
+        'start_lng': sqlalchemy_types.Float,
+        'end_lat': sqlalchemy_types.Float,
+        'end_lng': sqlalchemy_types.Float,
+        'member_casual': sqlalchemy_types.String,  
+    }
 
-    new_data.to_sql(table_name, engine, if_exists='append', index=False)
+    new_data.to_sql(table_name, engine, if_exists = 'append', index = False, dtype = dtype_map)
     logging.info(f"Inserted {len(new_data)} records into table {table_name}")
 
     latest_date = new_data['started_at'].dt.date.max()
     update_latest_processed_date(latest_date)
+    
     logging.info(f"Updated latest processed date to {latest_date}")
 
     return True

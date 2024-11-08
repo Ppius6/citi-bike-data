@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 import os
 from zipfile import ZipFile
 import pandas as pd
-from sqlalchemy import create_engine, types as sqlalchemy_types
+from sqlalchemy import create_engine, types as sqlalchemy_types, MetaData, Table, Column, String, Float, DateTime, func
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import ProgrammingError, SQLAlchemyError
 import logging
 import time
 from pathlib import Path
@@ -18,7 +20,6 @@ logging.basicConfig(level = logging.INFO, format = '%(asctime)s - %(levelname)s 
 
 # Define constants
 URL = 'https://s3.amazonaws.com/tripdata/'
-LATEST_DATE_FILE = 'latest_processed_date.txt'
 START_FROM = 'JC-202102-citibike-tripdata.csv.zip'
 EXTRACT_DIR = 'data'
 CHUNK_SIZE = 8192
@@ -80,7 +81,7 @@ def download_and_extract_files(file_names, url, extract_to=EXTRACT_DIR):
 
         if local_file_path.suffix == '.zip':
             with ZipFile(local_file_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_to, members=[m for m in zip_ref.namelist() if not m.startswith('__MACOSX')])
+                zip_ref.extractall(extract_to, members = [m for m in zip_ref.namelist() if not m.startswith('__MACOSX')])
             local_file_path.unlink()  # Remove the zip file after extraction
             logging.info(f"Extracted and deleted {file_name}")
 
@@ -119,17 +120,127 @@ def combine_csv_files(directory = EXTRACT_DIR):
     
     return combined_df
 
+# Retrieve the latest processed date from the database
+def get_latest_processed_date(conn_params, table_name):
+    """
+    Retrieves the latest processed date from the specified table in the database.
+
+    Args:
+        conn_params (dict): Database connection parameters.
+        table_name (str): Name of the table to query.
+
+    Returns:
+        datetime.date or None: The latest processed date, or None if the table is empty.
+    """
+    
+    # Create a connection to the database
+    conn_url = f"postgresql+psycopg2://{conn_params['user']}:{conn_params['password']}@{conn_params['host']}/{conn_params['dbname']}"
+    
+    # Create an engine
+    engine = create_engine(conn_url)
+    metadata = MetaData()
+    metadata.reflect(bind = engine)
+    
+    # Reflect the table
+    try:
+        trips_table = Table(table_name, metadata, autoload = True, autoload_with = engine)
+    except Exception as e:
+        logging.error(f"Error reflecting table {table_name}: {e}")
+        return None
+    
+    # Create a session
+    Session = sessionmaker(bind = engine)
+    session = Session()
+    
+    try:
+        # Query for the maximum started_at date
+        latest_datetime = session.query(func.max(trips_table.c.started_at)).scalar()
+        if latest_datetime:
+            latest_date = latest_datetime.date()
+            logging.info(f"Latest processed date retrieved from DB: {latest_date}")
+            return latest_date
+        else:
+            logging.info("No data available in the table")
+            return None
+    except Exception as e:
+        logging.error(f"Error querying the database: {e}")
+        return None
+    finally:
+        session.close()
+        
 # Store the processed data frame to Postgres database
 def store_dataframe_to_postgres(df, table_name, conn_params):
-    conn_url = f"postgresql+psycopg2://{conn_params['user']}:{conn_params['password']}@{conn_params['host']}/{conn_params['dbname']}"
-    engine = create_engine(conn_url)
+    """
+    Stores the provided DataFrame into the PostgreSQL database.
 
-    latest_processed_date = get_latest_processed_date()
+    Args:
+        df (pd.DataFrame): The DataFrame containing trip data.
+        table_name (str): The name of the target table in the database.
+        conn_params (dict): Database connection parameters.
+
+    Returns:
+        bool: True if data was inserted successfully, False otherwise.
+    """
+    # Create a connection to the database
+    conn_url = f"postgresql+psycopg2://{conn_params['user']}:{conn_params['password']}@{conn_params['host']}/{conn_params['dbname']}"
+    
+    # Create SQLAlchemy engine 
+    try:
+        engine = create_engine(conn_url)
+    except SQLAlchemyError as se:
+        logging.error(f"Error creating engine: {se}")
+        return False
+    
+    metadata = MetaData()
+    
+    # Define the table schema
+    trips_table = Table(
+        table_name,
+        metadata,
+        Column('ride_id', String, primary_key=True),
+        Column('rideable_type', String),
+        Column('started_at', DateTime),
+        Column('ended_at', DateTime),
+        Column('start_station_name', String),
+        Column('start_station_id', String),
+        Column('end_station_name', String),
+        Column('end_station_id', String),
+        Column('start_lat', Float),
+        Column('start_lng', Float),
+        Column('end_lat', Float),
+        Column('end_lng', Float),
+        Column('member_casual', String),
+        extend_existing = True
+    )
+        
+    # Create the table if it doesn't exist
+    try:
+        metadata.create_all(engine, tables = [trips_table])
+        logging.info(f"Table {table_name} created successfully")
+    except SQLAlchemyError as se:
+        logging.info(f"Table {table_name} already exists")
+        return False
+    
+    # Get the latest processed date
+    latest_processed_date = get_latest_processed_date(conn_params, table_name)
     logging.info(f"Latest processed date: {latest_processed_date}")
 
-    df['started_at'] = pd.to_datetime(df['started_at'], errors = 'coerce')
-    df['ended_at'] = pd.to_datetime(df['ended_at'], errors = 'coerce')
-    
+    # Convert date columns to datetime without coercion to prevent NaT
+    try:
+        # Use the most flexible parsing approach
+        df['started_at'] = pd.to_datetime(df['started_at'], format='mixed', errors='raise')
+        df['ended_at'] = pd.to_datetime(df['ended_at'], format='mixed', errors='raise')
+            
+        # Verify no NaT values were created
+        if df['started_at'].isna().any() or df['ended_at'].isna().any():
+            logging.warning("Some dates were converted to NaT")
+            return False     
+                    
+    except Exception as e:
+        logging.error(f"Error converting date columns: {e}")
+        return False
+        
+    # Filter new data based on the latest processed date
     if latest_processed_date:
         new_data = df[df['started_at'].dt.date > latest_processed_date]
     else:
@@ -138,6 +249,8 @@ def store_dataframe_to_postgres(df, table_name, conn_params):
     if new_data.empty:
         logging.info("No new data available to process. Exiting.")
         return False
+    
+    logging.info(f"Number of new records to insert: {len(new_data)}")
     
     # Specify data types for each column
     dtype_map = {
@@ -155,31 +268,48 @@ def store_dataframe_to_postgres(df, table_name, conn_params):
         'end_lng': sqlalchemy_types.Float,
         'member_casual': sqlalchemy_types.String,  
     }
-
-    new_data.to_sql(table_name, engine, if_exists = 'append', index = False, dtype = dtype_map)
-    logging.info(f"Inserted {len(new_data)} records into table {table_name}")
-
-    latest_date = new_data['started_at'].dt.date.max()
-    update_latest_processed_date(latest_date)
     
-    logging.info(f"Updated latest processed date to {latest_date}")
-
+    # Insert data into the database with conflict handling
+    try:
+        new_data.to_sql (
+            table_name,
+            engine,
+            if_exists = 'append',
+            index = False,
+            dtype = dtype_map,
+            method = 'multi' # Improved performance for multiple inserts
+        )
+        logging.info(f"Inserted {len(new_data)} records into table {table_name}")
+    except Exception as e:
+        logging.error(f"Error inserting data into the database: {e}")
+        return False
+    
     return True
 
 # Main function
 def run_data_pipeline():
+    
+    # Scrape file links starting from the specified file
     links = get_file_links(URL, START_FROM)
+    if not links:
+        logging.info("No new files found to process. Exiting...")
+        return
+    
+    # Download and extract the files
     download_and_extract_files(links, URL)
     
+    # Combine the CSV files into a single DataFrame
     combined_df = combine_csv_files(EXTRACT_DIR)
-
+    
+    # Define connection parameters
     conn_params = {
         'dbname': os.getenv('DB_NAME'),
         'user': os.getenv('DB_USER'),
         'password': os.getenv('DB_PASSWORD'),
         'host': os.getenv('DB_HOST'),
     }
-
+    
+    # Store the combined DataFrame to the Postgres database
     data_inserted = store_dataframe_to_postgres(combined_df, 'trips', conn_params)
     
     if data_inserted:
@@ -188,7 +318,7 @@ def run_data_pipeline():
         logging.info("No new data available to process.")
     
     # Save the combined data to data folder
-    combined_df.to_csv(Path(EXTRACT_DIR) / 'combined_data.csv', index = False)
+    combined_df.to_csv(Path(EXTRACT_DIR) / 'CombinedData.csv', index = False)
 
 # Main execution
 if __name__ == "__main__":

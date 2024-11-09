@@ -1,0 +1,419 @@
+2024-11-09 10:29:51,611 - INFO - [DataPipeline] - File already exists: JC-202102-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,612 - INFO - [DataPipeline] - File already exists: JC-202103-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,612 - INFO - [DataPipeline] - File already exists: JC-202104-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,614 - INFO - [DataPipeline] - File already exists: JC-202105-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,614 - INFO - [DataPipeline] - File already exists: JC-202106-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,614 - INFO - [DataPipeline] - File already exists: JC-202107-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,615 - INFO - [DataPipeline] - File already exists: JC-202108-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,615 - INFO - [DataPipeline] - File already exists: JC-202109-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,615 - INFO - [DataPipeline] - File already exists: JC-202110-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,616 - INFO - [DataPipeline] - File already exists: JC-202111-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,616 - INFO - [DataPipeline] - File already exists: JC-202112-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,617 - INFO - [DataPipeline] - File already exists: JC-202201-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,617 - INFO - [DataPipeline] - File already exists: JC-202202-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,617 - INFO - [DataPipeline] - File already exists: JC-202203-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,618 - INFO - [DataPipeline] - File already exists: JC-202204-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,618 - INFO - [DataPipeline] - File already exists: JC-202205-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,618 - INFO - [DataPipeline] - File already exists: JC-202206-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,619 - INFO - [DataPipeline] - File already exists: JC-202207-citbike-tripdata.csv.zip
+2024-11-09 10:29:51,619 - INFO - [DataPipeline] - File already exists: JC-202208-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,619 - INFO - [DataPipeline] - File already exists: JC-202209-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,620 - INFO - [DataPipeline] - File already exists: JC-202210-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,620 - INFO - [DataPipeline] - File already exists: JC-202211-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,620 - INFO - [DataPipeline] - File already exists: JC-202212-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,622 - INFO - [DataPipeline] - File already exists: JC-202301-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,622 - INFO - [DataPipeline] - File already exists: JC-202302-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,623 - INFO - [DataPipeline] - File already exists: JC-202303-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,623 - INFO - [DataPipeline] - File already exists: JC-202304-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,624 - INFO - [DataPipeline] - File already exists: JC-202305-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,624 - INFO - [DataPipeline] - File already exists: JC-202306-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,624 - INFO - [DataPipeline] - File already exists: JC-202307-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,625 - INFO - [DataPipeline] - File already exists: JC-202308-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,626 - INFO - [DataPipeline] - File already exists: JC-202309-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,626 - INFO - [DataPipeline] - File already exists: JC-202310-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,627 - INFO - [DataPipeline] - File already exists: JC-202311-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,627 - INFO - [DataPipeline] - File already exists: JC-202312-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,627 - INFO - [DataPipeline] - File already exists: JC-202401-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,628 - INFO - [DataPipeline] - File already exists: JC-202402-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,629 - INFO - [DataPipeline] - File already exists: JC-202403-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,629 - INFO - [DataPipeline] - File already exists: JC-202404-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,630 - INFO - [DataPipeline] - File already exists: JC-202405-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,630 - INFO - [DataPipeline] - File already exists: JC-202406-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,631 - INFO - [DataPipeline] - File already exists: JC-202407-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,631 - INFO - [DataPipeline] - File already exists: JC-202408-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,632 - INFO - [DataPipeline] - File already exists: JC-202409-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,632 - INFO - [DataPipeline] - File already exists: JC-202410-citibike-tripdata.csv.zip
+2024-11-09 10:29:51,633 - ERROR - [DataPipeline] - Error processing data\JC-202102-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202102-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,635 - ERROR - [DataPipeline] - Error processing data\JC-202103-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202103-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,635 - ERROR - [DataPipeline] - Error processing data\JC-202104-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202104-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,636 - ERROR - [DataPipeline] - Error processing data\JC-202105-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202105-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,637 - ERROR - [DataPipeline] - Error processing data\JC-202106-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202106-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,637 - ERROR - [DataPipeline] - Error processing data\JC-202107-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202107-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,637 - ERROR - [DataPipeline] - Error processing data\JC-202108-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202108-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,638 - ERROR - [DataPipeline] - Error processing data\JC-202109-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202109-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,638 - ERROR - [DataPipeline] - Error processing data\JC-202110-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202110-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,639 - ERROR - [DataPipeline] - Error processing data\JC-202111-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202111-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,639 - ERROR - [DataPipeline] - Error processing data\JC-202112-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202112-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,640 - ERROR - [DataPipeline] - Error processing data\JC-202201-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202201-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,641 - ERROR - [DataPipeline] - Error processing data\JC-202202-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202202-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,641 - ERROR - [DataPipeline] - Error processing data\JC-202203-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202203-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,642 - ERROR - [DataPipeline] - Error processing data\JC-202204-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202204-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,642 - ERROR - [DataPipeline] - Error processing data\JC-202205-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202205-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,643 - ERROR - [DataPipeline] - Error processing data\JC-202206-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202206-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,644 - ERROR - [DataPipeline] - Error processing data\JC-202207-citbike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202207-citbike-tripdata.csv.zip'
+2024-11-09 10:29:51,644 - ERROR - [DataPipeline] - Error processing data\JC-202208-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202208-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,645 - ERROR - [DataPipeline] - Error processing data\JC-202209-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202209-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,646 - ERROR - [DataPipeline] - Error processing data\JC-202210-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202210-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,646 - ERROR - [DataPipeline] - Error processing data\JC-202211-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202211-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,647 - ERROR - [DataPipeline] - Error processing data\JC-202212-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202212-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,648 - ERROR - [DataPipeline] - Error processing data\JC-202301-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202301-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,648 - ERROR - [DataPipeline] - Error processing data\JC-202302-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202302-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,649 - ERROR - [DataPipeline] - Error processing data\JC-202303-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202303-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,649 - ERROR - [DataPipeline] - Error processing data\JC-202304-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202304-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,650 - ERROR - [DataPipeline] - Error processing data\JC-202305-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202305-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,650 - ERROR - [DataPipeline] - Error processing data\JC-202306-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202306-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,651 - ERROR - [DataPipeline] - Error processing data\JC-202307-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202307-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,651 - ERROR - [DataPipeline] - Error processing data\JC-202308-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202308-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,652 - ERROR - [DataPipeline] - Error processing data\JC-202309-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202309-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,653 - ERROR - [DataPipeline] - Error processing data\JC-202310-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202310-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,653 - ERROR - [DataPipeline] - Error processing data\JC-202311-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202311-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,654 - ERROR - [DataPipeline] - Error processing data\JC-202312-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202312-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,654 - ERROR - [DataPipeline] - Error processing data\JC-202401-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202401-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,654 - ERROR - [DataPipeline] - Error processing data\JC-202402-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202402-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,655 - ERROR - [DataPipeline] - Error processing data\JC-202403-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202403-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,655 - ERROR - [DataPipeline] - Error processing data\JC-202404-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202404-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,656 - ERROR - [DataPipeline] - Error processing data\JC-202405-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202405-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,656 - ERROR - [DataPipeline] - Error processing data\JC-202406-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202406-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,657 - ERROR - [DataPipeline] - Error processing data\JC-202407-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202407-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,657 - ERROR - [DataPipeline] - Error processing data\JC-202408-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202408-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,658 - ERROR - [DataPipeline] - Error processing data\JC-202409-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202409-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,658 - ERROR - [DataPipeline] - Error processing data\JC-202410-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202410-citibike-tripdata.csv.zip'
+2024-11-09 10:29:51,659 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 10:29:51,659 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 10:31:08,507 - INFO - [DataPipeline] - File already exists: JC-202102-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,508 - INFO - [DataPipeline] - File already exists: JC-202103-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,508 - INFO - [DataPipeline] - File already exists: JC-202104-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,509 - INFO - [DataPipeline] - File already exists: JC-202105-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,509 - INFO - [DataPipeline] - File already exists: JC-202106-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,510 - INFO - [DataPipeline] - File already exists: JC-202107-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,510 - INFO - [DataPipeline] - File already exists: JC-202108-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,510 - INFO - [DataPipeline] - File already exists: JC-202109-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,511 - INFO - [DataPipeline] - File already exists: JC-202110-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,511 - INFO - [DataPipeline] - File already exists: JC-202111-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,511 - INFO - [DataPipeline] - File already exists: JC-202112-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,512 - INFO - [DataPipeline] - File already exists: JC-202201-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,512 - INFO - [DataPipeline] - File already exists: JC-202202-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,512 - INFO - [DataPipeline] - File already exists: JC-202203-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,513 - INFO - [DataPipeline] - File already exists: JC-202204-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,513 - INFO - [DataPipeline] - File already exists: JC-202205-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,513 - INFO - [DataPipeline] - File already exists: JC-202206-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,514 - INFO - [DataPipeline] - File already exists: JC-202207-citbike-tripdata.csv.zip
+2024-11-09 10:31:08,514 - INFO - [DataPipeline] - File already exists: JC-202208-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,514 - INFO - [DataPipeline] - File already exists: JC-202209-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,515 - INFO - [DataPipeline] - File already exists: JC-202210-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,515 - INFO - [DataPipeline] - File already exists: JC-202211-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,515 - INFO - [DataPipeline] - File already exists: JC-202212-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,516 - INFO - [DataPipeline] - File already exists: JC-202301-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,516 - INFO - [DataPipeline] - File already exists: JC-202302-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,516 - INFO - [DataPipeline] - File already exists: JC-202303-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,517 - INFO - [DataPipeline] - File already exists: JC-202304-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,517 - INFO - [DataPipeline] - File already exists: JC-202305-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,517 - INFO - [DataPipeline] - File already exists: JC-202306-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,518 - INFO - [DataPipeline] - File already exists: JC-202307-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,518 - INFO - [DataPipeline] - File already exists: JC-202308-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,518 - INFO - [DataPipeline] - File already exists: JC-202309-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,519 - INFO - [DataPipeline] - File already exists: JC-202310-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,519 - INFO - [DataPipeline] - File already exists: JC-202311-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,519 - INFO - [DataPipeline] - File already exists: JC-202312-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,519 - INFO - [DataPipeline] - File already exists: JC-202401-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,520 - INFO - [DataPipeline] - File already exists: JC-202402-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,520 - INFO - [DataPipeline] - File already exists: JC-202403-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,521 - INFO - [DataPipeline] - File already exists: JC-202404-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,521 - INFO - [DataPipeline] - File already exists: JC-202405-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,521 - INFO - [DataPipeline] - File already exists: JC-202406-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,522 - INFO - [DataPipeline] - File already exists: JC-202407-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,522 - INFO - [DataPipeline] - File already exists: JC-202408-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,522 - INFO - [DataPipeline] - File already exists: JC-202409-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,523 - INFO - [DataPipeline] - File already exists: JC-202410-citibike-tripdata.csv.zip
+2024-11-09 10:31:08,524 - ERROR - [DataPipeline] - Error processing data\JC-202102-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202102-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,524 - ERROR - [DataPipeline] - Error processing data\JC-202103-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202103-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,533 - ERROR - [DataPipeline] - Error processing data\JC-202104-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202104-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,534 - ERROR - [DataPipeline] - Error processing data\JC-202105-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202105-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,534 - ERROR - [DataPipeline] - Error processing data\JC-202106-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202106-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,535 - ERROR - [DataPipeline] - Error processing data\JC-202107-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202107-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,535 - ERROR - [DataPipeline] - Error processing data\JC-202108-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202108-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,536 - ERROR - [DataPipeline] - Error processing data\JC-202109-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202109-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,536 - ERROR - [DataPipeline] - Error processing data\JC-202110-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202110-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,536 - ERROR - [DataPipeline] - Error processing data\JC-202111-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202111-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,537 - ERROR - [DataPipeline] - Error processing data\JC-202112-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202112-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,537 - ERROR - [DataPipeline] - Error processing data\JC-202201-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202201-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,538 - ERROR - [DataPipeline] - Error processing data\JC-202202-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202202-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,538 - ERROR - [DataPipeline] - Error processing data\JC-202203-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202203-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,538 - ERROR - [DataPipeline] - Error processing data\JC-202204-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202204-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,539 - ERROR - [DataPipeline] - Error processing data\JC-202205-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202205-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,539 - ERROR - [DataPipeline] - Error processing data\JC-202206-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202206-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,540 - ERROR - [DataPipeline] - Error processing data\JC-202207-citbike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202207-citbike-tripdata.csv.zip'
+2024-11-09 10:31:08,540 - ERROR - [DataPipeline] - Error processing data\JC-202208-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202208-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,540 - ERROR - [DataPipeline] - Error processing data\JC-202209-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202209-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,541 - ERROR - [DataPipeline] - Error processing data\JC-202210-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202210-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,541 - ERROR - [DataPipeline] - Error processing data\JC-202211-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202211-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,542 - ERROR - [DataPipeline] - Error processing data\JC-202212-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202212-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,542 - ERROR - [DataPipeline] - Error processing data\JC-202301-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202301-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,543 - ERROR - [DataPipeline] - Error processing data\JC-202302-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202302-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,543 - ERROR - [DataPipeline] - Error processing data\JC-202303-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202303-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,543 - ERROR - [DataPipeline] - Error processing data\JC-202304-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202304-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,544 - ERROR - [DataPipeline] - Error processing data\JC-202305-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202305-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,544 - ERROR - [DataPipeline] - Error processing data\JC-202306-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202306-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,544 - ERROR - [DataPipeline] - Error processing data\JC-202307-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202307-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,545 - ERROR - [DataPipeline] - Error processing data\JC-202308-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202308-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,545 - ERROR - [DataPipeline] - Error processing data\JC-202309-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202309-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,546 - ERROR - [DataPipeline] - Error processing data\JC-202310-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202310-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,546 - ERROR - [DataPipeline] - Error processing data\JC-202311-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202311-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,546 - ERROR - [DataPipeline] - Error processing data\JC-202312-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202312-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,547 - ERROR - [DataPipeline] - Error processing data\JC-202401-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202401-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,547 - ERROR - [DataPipeline] - Error processing data\JC-202402-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202402-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,547 - ERROR - [DataPipeline] - Error processing data\JC-202403-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202403-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,548 - ERROR - [DataPipeline] - Error processing data\JC-202404-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202404-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,548 - ERROR - [DataPipeline] - Error processing data\JC-202405-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202405-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,549 - ERROR - [DataPipeline] - Error processing data\JC-202406-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202406-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,549 - ERROR - [DataPipeline] - Error processing data\JC-202407-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202407-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,549 - ERROR - [DataPipeline] - Error processing data\JC-202408-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202408-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,550 - ERROR - [DataPipeline] - Error processing data\JC-202409-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202409-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,550 - ERROR - [DataPipeline] - Error processing data\JC-202410-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202410-citibike-tripdata.csv.zip'
+2024-11-09 10:31:08,551 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 10:31:08,551 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 10:32:33,343 - ERROR - [DataPipeline] - Error downloading JC-202103-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202103-citibike-tripdata.csv.zip
+2024-11-09 10:32:33,343 - ERROR - [DataPipeline] - Error downloading JC-202102-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202102-citibike-tripdata.csv.zip
+2024-11-09 10:32:33,414 - ERROR - [DataPipeline] - Error downloading JC-202105-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202105-citibike-tripdata.csv.zip
+2024-11-09 10:32:33,414 - ERROR - [DataPipeline] - Error downloading JC-202104-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202104-citibike-tripdata.csv.zip
+2024-11-09 10:32:34,217 - ERROR - [DataPipeline] - Error downloading JC-202107-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202107-citibike-tripdata.csv.zip
+2024-11-09 10:32:34,219 - ERROR - [DataPipeline] - Error downloading JC-202106-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202106-citibike-tripdata.csv.zip
+2024-11-09 10:32:34,321 - ERROR - [DataPipeline] - Error downloading JC-202109-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202109-citibike-tripdata.csv.zip
+2024-11-09 10:32:34,321 - ERROR - [DataPipeline] - Error downloading JC-202108-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202108-citibike-tripdata.csv.zip
+2024-11-09 10:32:35,049 - ERROR - [DataPipeline] - Error downloading JC-202110-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202110-citibike-tripdata.csv.zip
+2024-11-09 10:32:35,132 - ERROR - [DataPipeline] - Error downloading JC-202111-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202111-citibike-tripdata.csv.zip
+2024-11-09 10:32:35,164 - ERROR - [DataPipeline] - Error downloading JC-202112-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202112-citibike-tripdata.csv.zip
+2024-11-09 10:32:35,190 - ERROR - [DataPipeline] - Error downloading JC-202201-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202201-citibike-tripdata.csv.zip
+2024-11-09 10:32:35,881 - ERROR - [DataPipeline] - Error downloading JC-202202-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202202-citibike-tripdata.csv.zip
+2024-11-09 10:32:35,967 - ERROR - [DataPipeline] - Error downloading JC-202203-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202203-citibike-tripdata.csv.zip
+2024-11-09 10:32:36,039 - ERROR - [DataPipeline] - Error downloading JC-202204-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202204-citibike-tripdata.csv.zip
+2024-11-09 10:32:36,045 - ERROR - [DataPipeline] - Error downloading JC-202205-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202205-citibike-tripdata.csv.zip
+2024-11-09 10:32:36,789 - ERROR - [DataPipeline] - Error downloading JC-202206-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202206-citibike-tripdata.csv.zip
+2024-11-09 10:32:36,854 - ERROR - [DataPipeline] - Error downloading JC-202207-citbike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202207-citbike-tripdata.csv.zip
+2024-11-09 10:32:36,874 - ERROR - [DataPipeline] - Error downloading JC-202208-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202208-citibike-tripdata.csv.zip
+2024-11-09 10:32:36,917 - ERROR - [DataPipeline] - Error downloading JC-202209-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202209-citibike-tripdata.csv.zip
+2024-11-09 10:32:37,698 - ERROR - [DataPipeline] - Error downloading JC-202210-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202210-citibike-tripdata.csv.zip
+2024-11-09 10:32:37,699 - ERROR - [DataPipeline] - Error downloading JC-202211-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202211-citibike-tripdata.csv.zip
+2024-11-09 10:32:37,731 - ERROR - [DataPipeline] - Error downloading JC-202212-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202212-citibike-tripdata.csv.zip
+2024-11-09 10:32:37,763 - ERROR - [DataPipeline] - Error downloading JC-202301-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202301-citibike-tripdata.csv.zip
+2024-11-09 10:32:38,545 - ERROR - [DataPipeline] - Error downloading JC-202302-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202302-citibike-tripdata.csv.zip
+2024-11-09 10:32:38,574 - ERROR - [DataPipeline] - Error downloading JC-202305-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202305-citibike-tripdata.csv.zip
+2024-11-09 10:32:38,615 - ERROR - [DataPipeline] - Error downloading JC-202303-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202303-citibike-tripdata.csv.zip
+2024-11-09 10:32:38,615 - ERROR - [DataPipeline] - Error downloading JC-202304-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202304-citibike-tripdata.csv.zip
+2024-11-09 10:32:39,403 - ERROR - [DataPipeline] - Error downloading JC-202307-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202307-citibike-tripdata.csv.zip
+2024-11-09 10:32:39,435 - ERROR - [DataPipeline] - Error downloading JC-202306-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202306-citibike-tripdata.csv.zip
+2024-11-09 10:32:39,446 - ERROR - [DataPipeline] - Error downloading JC-202309-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202309-citibike-tripdata.csv.zip
+2024-11-09 10:32:39,467 - ERROR - [DataPipeline] - Error downloading JC-202308-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202308-citibike-tripdata.csv.zip
+2024-11-09 10:32:40,235 - ERROR - [DataPipeline] - Error downloading JC-202310-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202310-citibike-tripdata.csv.zip
+2024-11-09 10:32:40,300 - ERROR - [DataPipeline] - Error downloading JC-202312-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202312-citibike-tripdata.csv.zip
+2024-11-09 10:32:40,300 - ERROR - [DataPipeline] - Error downloading JC-202311-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202311-citibike-tripdata.csv.zip
+2024-11-09 10:32:40,301 - ERROR - [DataPipeline] - Error downloading JC-202401-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202401-citibike-tripdata.csv.zip
+2024-11-09 10:32:41,054 - ERROR - [DataPipeline] - Error downloading JC-202402-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202402-citibike-tripdata.csv.zip
+2024-11-09 10:32:41,203 - ERROR - [DataPipeline] - Error downloading JC-202404-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202404-citibike-tripdata.csv.zip
+2024-11-09 10:32:41,203 - ERROR - [DataPipeline] - Error downloading JC-202403-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202403-citibike-tripdata.csv.zip
+2024-11-09 10:32:41,211 - ERROR - [DataPipeline] - Error downloading JC-202405-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202405-citibike-tripdata.csv.zip
+2024-11-09 10:32:41,911 - ERROR - [DataPipeline] - Error downloading JC-202406-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202406-citibike-tripdata.csv.zip
+2024-11-09 10:32:42,026 - ERROR - [DataPipeline] - Error downloading JC-202409-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202409-citibike-tripdata.csv.zip
+2024-11-09 10:32:42,047 - ERROR - [DataPipeline] - Error downloading JC-202407-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202407-citibike-tripdata.csv.zip
+2024-11-09 10:32:42,057 - ERROR - [DataPipeline] - Error downloading JC-202408-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202408-citibike-tripdata.csv.zip
+2024-11-09 10:32:42,832 - ERROR - [DataPipeline] - Error downloading JC-202410-citibike-tripdata.csv.zip: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata//JC-202410-citibike-tripdata.csv.zip
+2024-11-09 10:32:42,834 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 10:32:42,835 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 10:35:05,852 - ERROR - [DataPipeline] - Error fetching latest date: trips
+2024-11-09 11:02:57,291 - INFO - [DataPipeline] - Stored 3429479 records.
+2024-11-09 11:02:58,086 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 11:18:21,308 - INFO - [DataPipeline] - File already exists: JC-202102-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,308 - INFO - [DataPipeline] - File already exists: JC-202103-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,309 - INFO - [DataPipeline] - File already exists: JC-202104-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,310 - INFO - [DataPipeline] - File already exists: JC-202105-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,310 - INFO - [DataPipeline] - File already exists: JC-202106-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,310 - INFO - [DataPipeline] - File already exists: JC-202107-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,311 - INFO - [DataPipeline] - File already exists: JC-202108-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,311 - INFO - [DataPipeline] - File already exists: JC-202109-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,311 - INFO - [DataPipeline] - File already exists: JC-202110-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,312 - INFO - [DataPipeline] - File already exists: JC-202111-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,312 - INFO - [DataPipeline] - File already exists: JC-202112-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,313 - INFO - [DataPipeline] - File already exists: JC-202201-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,313 - INFO - [DataPipeline] - File already exists: JC-202202-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,313 - INFO - [DataPipeline] - File already exists: JC-202203-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,314 - INFO - [DataPipeline] - File already exists: JC-202204-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,314 - INFO - [DataPipeline] - File already exists: JC-202205-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,314 - INFO - [DataPipeline] - File already exists: JC-202206-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,315 - INFO - [DataPipeline] - File already exists: JC-202207-citbike-tripdata.csv.zip
+2024-11-09 11:18:21,315 - INFO - [DataPipeline] - File already exists: JC-202208-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,315 - INFO - [DataPipeline] - File already exists: JC-202209-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,316 - INFO - [DataPipeline] - File already exists: JC-202210-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,316 - INFO - [DataPipeline] - File already exists: JC-202211-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,316 - INFO - [DataPipeline] - File already exists: JC-202212-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,317 - INFO - [DataPipeline] - File already exists: JC-202301-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,317 - INFO - [DataPipeline] - File already exists: JC-202302-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,317 - INFO - [DataPipeline] - File already exists: JC-202303-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,318 - INFO - [DataPipeline] - File already exists: JC-202304-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,318 - INFO - [DataPipeline] - File already exists: JC-202305-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,318 - INFO - [DataPipeline] - File already exists: JC-202306-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,319 - INFO - [DataPipeline] - File already exists: JC-202307-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,319 - INFO - [DataPipeline] - File already exists: JC-202308-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,320 - INFO - [DataPipeline] - File already exists: JC-202309-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,320 - INFO - [DataPipeline] - File already exists: JC-202310-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,322 - INFO - [DataPipeline] - File already exists: JC-202311-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,322 - INFO - [DataPipeline] - File already exists: JC-202312-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,323 - INFO - [DataPipeline] - File already exists: JC-202401-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,323 - INFO - [DataPipeline] - File already exists: JC-202402-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,324 - INFO - [DataPipeline] - File already exists: JC-202403-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,324 - INFO - [DataPipeline] - File already exists: JC-202404-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,324 - INFO - [DataPipeline] - File already exists: JC-202405-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,325 - INFO - [DataPipeline] - File already exists: JC-202406-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,325 - INFO - [DataPipeline] - File already exists: JC-202407-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,326 - INFO - [DataPipeline] - File already exists: JC-202408-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,326 - INFO - [DataPipeline] - File already exists: JC-202409-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,327 - INFO - [DataPipeline] - File already exists: JC-202410-citibike-tripdata.csv.zip
+2024-11-09 11:18:21,328 - ERROR - [DataPipeline] - Error processing data\JC-202102-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202102-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,329 - ERROR - [DataPipeline] - Error processing data\JC-202103-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202103-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,330 - ERROR - [DataPipeline] - Error processing data\JC-202104-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202104-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,330 - ERROR - [DataPipeline] - Error processing data\JC-202105-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202105-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,330 - ERROR - [DataPipeline] - Error processing data\JC-202106-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202106-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,331 - ERROR - [DataPipeline] - Error processing data\JC-202107-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202107-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,331 - ERROR - [DataPipeline] - Error processing data\JC-202108-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202108-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,332 - ERROR - [DataPipeline] - Error processing data\JC-202109-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202109-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,332 - ERROR - [DataPipeline] - Error processing data\JC-202110-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202110-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,333 - ERROR - [DataPipeline] - Error processing data\JC-202111-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202111-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,334 - ERROR - [DataPipeline] - Error processing data\JC-202112-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202112-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,334 - ERROR - [DataPipeline] - Error processing data\JC-202201-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202201-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,335 - ERROR - [DataPipeline] - Error processing data\JC-202202-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202202-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,335 - ERROR - [DataPipeline] - Error processing data\JC-202203-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202203-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,335 - ERROR - [DataPipeline] - Error processing data\JC-202204-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202204-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,336 - ERROR - [DataPipeline] - Error processing data\JC-202205-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202205-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,336 - ERROR - [DataPipeline] - Error processing data\JC-202206-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202206-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,337 - ERROR - [DataPipeline] - Error processing data\JC-202207-citbike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202207-citbike-tripdata.csv.zip'
+2024-11-09 11:18:21,337 - ERROR - [DataPipeline] - Error processing data\JC-202208-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202208-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,337 - ERROR - [DataPipeline] - Error processing data\JC-202209-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202209-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,338 - ERROR - [DataPipeline] - Error processing data\JC-202210-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202210-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,338 - ERROR - [DataPipeline] - Error processing data\JC-202211-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202211-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,339 - ERROR - [DataPipeline] - Error processing data\JC-202212-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202212-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,339 - ERROR - [DataPipeline] - Error processing data\JC-202301-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202301-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,339 - ERROR - [DataPipeline] - Error processing data\JC-202302-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202302-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,340 - ERROR - [DataPipeline] - Error processing data\JC-202303-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202303-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,340 - ERROR - [DataPipeline] - Error processing data\JC-202304-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202304-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,341 - ERROR - [DataPipeline] - Error processing data\JC-202305-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202305-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,341 - ERROR - [DataPipeline] - Error processing data\JC-202306-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202306-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,342 - ERROR - [DataPipeline] - Error processing data\JC-202307-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202307-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,342 - ERROR - [DataPipeline] - Error processing data\JC-202308-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202308-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,343 - ERROR - [DataPipeline] - Error processing data\JC-202309-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202309-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,344 - ERROR - [DataPipeline] - Error processing data\JC-202310-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202310-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,345 - ERROR - [DataPipeline] - Error processing data\JC-202311-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202311-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,345 - ERROR - [DataPipeline] - Error processing data\JC-202312-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202312-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,345 - ERROR - [DataPipeline] - Error processing data\JC-202401-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202401-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,346 - ERROR - [DataPipeline] - Error processing data\JC-202402-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202402-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,346 - ERROR - [DataPipeline] - Error processing data\JC-202403-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202403-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,347 - ERROR - [DataPipeline] - Error processing data\JC-202404-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202404-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,347 - ERROR - [DataPipeline] - Error processing data\JC-202405-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202405-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,348 - ERROR - [DataPipeline] - Error processing data\JC-202406-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202406-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,348 - ERROR - [DataPipeline] - Error processing data\JC-202407-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202407-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,348 - ERROR - [DataPipeline] - Error processing data\JC-202408-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202408-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,349 - ERROR - [DataPipeline] - Error processing data\JC-202409-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202409-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,349 - ERROR - [DataPipeline] - Error processing data\JC-202410-citibike-tripdata.csv.zip: [Errno 2] No such file or directory: 'data\\JC-202410-citibike-tripdata.csv.zip'
+2024-11-09 11:18:21,350 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 11:18:21,350 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 12:46:24,361 - INFO - [DataPipeline] - CSV already exists: JC-202102-citibike-tripdata.csv
+2024-11-09 12:46:24,361 - INFO - [DataPipeline] - CSV already exists: JC-202103-citibike-tripdata.csv
+2024-11-09 12:46:24,362 - INFO - [DataPipeline] - CSV already exists: JC-202104-citibike-tripdata.csv
+2024-11-09 12:46:24,362 - INFO - [DataPipeline] - CSV already exists: JC-202105-citibike-tripdata.csv
+2024-11-09 12:46:24,364 - INFO - [DataPipeline] - CSV already exists: JC-202106-citibike-tripdata.csv
+2024-11-09 12:46:24,364 - INFO - [DataPipeline] - CSV already exists: JC-202108-citibike-tripdata.csv
+2024-11-09 12:46:24,364 - INFO - [DataPipeline] - CSV already exists: JC-202107-citibike-tripdata.csv
+2024-11-09 12:46:24,364 - INFO - [DataPipeline] - CSV already exists: JC-202109-citibike-tripdata.csv
+2024-11-09 12:46:24,365 - INFO - [DataPipeline] - CSV already exists: JC-202110-citibike-tripdata.csv
+2024-11-09 12:46:24,365 - INFO - [DataPipeline] - CSV already exists: JC-202111-citibike-tripdata.csv
+2024-11-09 12:46:24,366 - INFO - [DataPipeline] - CSV already exists: JC-202112-citibike-tripdata.csv
+2024-11-09 12:46:24,366 - INFO - [DataPipeline] - CSV already exists: JC-202201-citibike-tripdata.csv
+2024-11-09 12:46:24,367 - INFO - [DataPipeline] - CSV already exists: JC-202202-citibike-tripdata.csv
+2024-11-09 12:46:24,367 - INFO - [DataPipeline] - CSV already exists: JC-202203-citibike-tripdata.csv
+2024-11-09 12:46:24,367 - INFO - [DataPipeline] - CSV already exists: JC-202204-citibike-tripdata.csv
+2024-11-09 12:46:24,368 - INFO - [DataPipeline] - CSV already exists: JC-202205-citibike-tripdata.csv
+2024-11-09 12:46:24,368 - INFO - [DataPipeline] - CSV already exists: JC-202206-citibike-tripdata.csv
+2024-11-09 12:46:24,368 - INFO - [DataPipeline] - CSV already exists: JC-202207-citbike-tripdata.csv
+2024-11-09 12:46:24,369 - INFO - [DataPipeline] - CSV already exists: JC-202208-citibike-tripdata.csv
+2024-11-09 12:46:24,369 - INFO - [DataPipeline] - CSV already exists: JC-202209-citibike-tripdata.csv
+2024-11-09 12:46:24,369 - INFO - [DataPipeline] - CSV already exists: JC-202210-citibike-tripdata.csv
+2024-11-09 12:46:24,370 - INFO - [DataPipeline] - CSV already exists: JC-202211-citibike-tripdata.csv
+2024-11-09 12:46:24,370 - INFO - [DataPipeline] - CSV already exists: JC-202212-citibike-tripdata.csv
+2024-11-09 12:46:24,371 - INFO - [DataPipeline] - CSV already exists: JC-202301-citibike-tripdata.csv
+2024-11-09 12:46:24,371 - INFO - [DataPipeline] - CSV already exists: JC-202302-citibike-tripdata.csv
+2024-11-09 12:46:24,372 - INFO - [DataPipeline] - CSV already exists: JC-202303-citibike-tripdata.csv
+2024-11-09 12:46:24,372 - INFO - [DataPipeline] - CSV already exists: JC-202304-citibike-tripdata.csv
+2024-11-09 12:46:24,373 - INFO - [DataPipeline] - CSV already exists: JC-202305-citibike-tripdata.csv
+2024-11-09 12:46:24,373 - INFO - [DataPipeline] - CSV already exists: JC-202306-citibike-tripdata.csv
+2024-11-09 12:46:24,373 - INFO - [DataPipeline] - CSV already exists: JC-202307-citibike-tripdata.csv
+2024-11-09 12:46:24,374 - INFO - [DataPipeline] - CSV already exists: JC-202308-citibike-tripdata.csv
+2024-11-09 12:46:24,374 - INFO - [DataPipeline] - CSV already exists: JC-202309-citibike-tripdata.csv
+2024-11-09 12:46:24,375 - INFO - [DataPipeline] - CSV already exists: JC-202310-citibike-tripdata.csv
+2024-11-09 12:46:24,375 - INFO - [DataPipeline] - CSV already exists: JC-202311-citibike-tripdata.csv
+2024-11-09 12:46:24,375 - INFO - [DataPipeline] - CSV already exists: JC-202312-citibike-tripdata.csv
+2024-11-09 12:46:24,376 - INFO - [DataPipeline] - CSV already exists: JC-202401-citibike-tripdata.csv
+2024-11-09 12:46:24,376 - INFO - [DataPipeline] - CSV already exists: JC-202402-citibike-tripdata.csv
+2024-11-09 12:46:24,376 - INFO - [DataPipeline] - CSV already exists: JC-202403-citibike-tripdata.csv
+2024-11-09 12:46:24,377 - INFO - [DataPipeline] - CSV already exists: JC-202404-citibike-tripdata.csv
+2024-11-09 12:46:24,377 - INFO - [DataPipeline] - CSV already exists: JC-202405-citibike-tripdata.csv
+2024-11-09 12:46:24,378 - INFO - [DataPipeline] - CSV already exists: JC-202406-citibike-tripdata.csv
+2024-11-09 12:46:24,378 - INFO - [DataPipeline] - CSV already exists: JC-202407-citibike-tripdata.csv
+2024-11-09 12:46:24,380 - INFO - [DataPipeline] - CSV already exists: JC-202408-citibike-tripdata.csv
+2024-11-09 12:46:24,380 - INFO - [DataPipeline] - CSV already exists: JC-202409-citibike-tripdata.csv
+2024-11-09 12:46:24,380 - INFO - [DataPipeline] - CSV already exists: JC-202410-citibike-tripdata.csv
+2024-11-09 12:46:24,382 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 12:47:10,281 - INFO - [DataPipeline] - CSV already exists: JC-202102-citibike-tripdata.csv
+2024-11-09 12:47:10,281 - INFO - [DataPipeline] - CSV already exists: JC-202103-citibike-tripdata.csv
+2024-11-09 12:47:10,282 - INFO - [DataPipeline] - CSV already exists: JC-202104-citibike-tripdata.csv
+2024-11-09 12:47:10,283 - INFO - [DataPipeline] - CSV already exists: JC-202106-citibike-tripdata.csv
+2024-11-09 12:47:10,283 - INFO - [DataPipeline] - CSV already exists: JC-202107-citibike-tripdata.csv
+2024-11-09 12:47:10,283 - INFO - [DataPipeline] - CSV already exists: JC-202105-citibike-tripdata.csv
+2024-11-09 12:47:10,284 - INFO - [DataPipeline] - CSV already exists: JC-202108-citibike-tripdata.csv
+2024-11-09 12:47:10,285 - INFO - [DataPipeline] - CSV already exists: JC-202109-citibike-tripdata.csv
+2024-11-09 12:47:10,285 - INFO - [DataPipeline] - CSV already exists: JC-202110-citibike-tripdata.csv
+2024-11-09 12:47:10,285 - INFO - [DataPipeline] - CSV already exists: JC-202111-citibike-tripdata.csv
+2024-11-09 12:47:10,286 - INFO - [DataPipeline] - CSV already exists: JC-202112-citibike-tripdata.csv
+2024-11-09 12:47:10,286 - INFO - [DataPipeline] - CSV already exists: JC-202201-citibike-tripdata.csv
+2024-11-09 12:47:10,286 - INFO - [DataPipeline] - CSV already exists: JC-202202-citibike-tripdata.csv
+2024-11-09 12:47:10,286 - INFO - [DataPipeline] - CSV already exists: JC-202203-citibike-tripdata.csv
+2024-11-09 12:47:10,286 - INFO - [DataPipeline] - CSV already exists: JC-202204-citibike-tripdata.csv
+2024-11-09 12:47:10,287 - INFO - [DataPipeline] - CSV already exists: JC-202205-citibike-tripdata.csv
+2024-11-09 12:47:10,287 - INFO - [DataPipeline] - CSV already exists: JC-202206-citibike-tripdata.csv
+2024-11-09 12:47:10,287 - INFO - [DataPipeline] - CSV already exists: JC-202207-citbike-tripdata.csv
+2024-11-09 12:47:10,288 - INFO - [DataPipeline] - CSV already exists: JC-202208-citibike-tripdata.csv
+2024-11-09 12:47:10,288 - INFO - [DataPipeline] - CSV already exists: JC-202209-citibike-tripdata.csv
+2024-11-09 12:47:10,288 - INFO - [DataPipeline] - CSV already exists: JC-202210-citibike-tripdata.csv
+2024-11-09 12:47:10,289 - INFO - [DataPipeline] - CSV already exists: JC-202211-citibike-tripdata.csv
+2024-11-09 12:47:10,289 - INFO - [DataPipeline] - CSV already exists: JC-202212-citibike-tripdata.csv
+2024-11-09 12:47:10,289 - INFO - [DataPipeline] - CSV already exists: JC-202301-citibike-tripdata.csv
+2024-11-09 12:47:10,289 - INFO - [DataPipeline] - CSV already exists: JC-202302-citibike-tripdata.csv
+2024-11-09 12:47:10,290 - INFO - [DataPipeline] - CSV already exists: JC-202303-citibike-tripdata.csv
+2024-11-09 12:47:10,290 - INFO - [DataPipeline] - CSV already exists: JC-202304-citibike-tripdata.csv
+2024-11-09 12:47:10,290 - INFO - [DataPipeline] - CSV already exists: JC-202305-citibike-tripdata.csv
+2024-11-09 12:47:10,290 - INFO - [DataPipeline] - CSV already exists: JC-202306-citibike-tripdata.csv
+2024-11-09 12:47:10,291 - INFO - [DataPipeline] - CSV already exists: JC-202307-citibike-tripdata.csv
+2024-11-09 12:47:10,291 - INFO - [DataPipeline] - CSV already exists: JC-202308-citibike-tripdata.csv
+2024-11-09 12:47:10,291 - INFO - [DataPipeline] - CSV already exists: JC-202309-citibike-tripdata.csv
+2024-11-09 12:47:10,291 - INFO - [DataPipeline] - CSV already exists: JC-202310-citibike-tripdata.csv
+2024-11-09 12:47:10,292 - INFO - [DataPipeline] - CSV already exists: JC-202311-citibike-tripdata.csv
+2024-11-09 12:47:10,292 - INFO - [DataPipeline] - CSV already exists: JC-202312-citibike-tripdata.csv
+2024-11-09 12:47:10,292 - INFO - [DataPipeline] - CSV already exists: JC-202401-citibike-tripdata.csv
+2024-11-09 12:47:10,293 - INFO - [DataPipeline] - CSV already exists: JC-202402-citibike-tripdata.csv
+2024-11-09 12:47:10,293 - INFO - [DataPipeline] - CSV already exists: JC-202403-citibike-tripdata.csv
+2024-11-09 12:47:10,293 - INFO - [DataPipeline] - CSV already exists: JC-202404-citibike-tripdata.csv
+2024-11-09 12:47:10,294 - INFO - [DataPipeline] - CSV already exists: JC-202405-citibike-tripdata.csv
+2024-11-09 12:47:10,294 - INFO - [DataPipeline] - CSV already exists: JC-202406-citibike-tripdata.csv
+2024-11-09 12:47:10,294 - INFO - [DataPipeline] - CSV already exists: JC-202407-citibike-tripdata.csv
+2024-11-09 12:47:10,295 - INFO - [DataPipeline] - CSV already exists: JC-202408-citibike-tripdata.csv
+2024-11-09 12:47:10,295 - INFO - [DataPipeline] - CSV already exists: JC-202409-citibike-tripdata.csv
+2024-11-09 12:47:10,295 - INFO - [DataPipeline] - CSV already exists: JC-202410-citibike-tripdata.csv
+2024-11-09 12:47:10,296 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 12:47:10,297 - INFO - [root] - Pipeline completed successfully.

@@ -11,7 +11,7 @@ import logging
 import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any, Union, Tuple
 import pytz
 from dateutil.parser import parse
 import numpy as np
@@ -256,15 +256,38 @@ class DataPipeline:
         except Exception as e:
             self.logger.error(f"Error storing data: {str(e)}")
             return False
+    
+    def save_dataframe(self, df: pd.DataFrame) -> bool:
+        """
+        Save DataFrame to the data directory as a CSV file.
         
-    def run(self) -> bool:
+        Args:
+            df (pd.DataFrame): DataFrame to save.
+            
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            timestamp = datetime.utcnow().strftime('%Y%m%dT%H%M%S')
+            file_name = f"trips_{timestamp}.csv"
+            file_path = self.data_dir / file_name
+            df.to_csv(file_path, index = False)
+            self.logger.info(f"Saved DataFrame to {file_path.name}")
+            return True
+        
+        except Exception as e:
+            self.logger.error(f"Error saving DataFrame: {str(e)}")
+            return False
+    
+    def run(self) -> Tuple[bool, Optional[pd.DataFrame]]:
         """
         Execute the complete data pipeline with parallel processing.
         
         Returns:
-            bool: True if successful, False otherwise.
+            Tuple[bool, Optional[pd.DataFrame]]: 
+                - First element is True if successful, False otherwise
+                - Second element is the combined DataFrame if successful, None otherwise
         """
-        
         try:
             file_links = self.get_file_links()
             if not file_links:
@@ -286,11 +309,22 @@ class DataPipeline:
                         
             if not processed_dfs:
                 self.logger.error("No data processed.")
-                return True # Considered successful as there is no new data to process
+                return True, None # Considered successful as there is no new data to process
             
             # Combine all processed DataFrames
             combined_df = pd.concat(processed_dfs, ignore_index = True)
-            return self.store_dataframe(combined_df)
+            self.logger.info(f"Combined DataFrame has {len(combined_df)} records.")
+            
+            # Save the combined DataFrame to the data directory
+            save_success = self.save_dataframe(combined_df)
+            if not save_success:
+                self.logger.error("Error saving DataFrame.")
+                return False, None
+            
+            # Store the combined DataFrame to the database
+            store_success = self.store_dataframe(combined_df)
+            
+            return store_success, combined_df
         
         except Exception as e:
             self.logger.error(f"Pipeline failed: {str(e)}")
@@ -314,9 +348,13 @@ if __name__ == '__main__':
     }
     
     pipeline = DataPipeline(config)
-    success = pipeline.run()
+    success, df = pipeline.run()
     
     if success:
         logging.info("Pipeline completed successfully.")
+        if df is not None:
+            logging.info(f"DataFrame has {len(df)} records.")
+        else:
+            logging.info("No new data to process.")
     else:
         logging.error("Pipeline failed.")

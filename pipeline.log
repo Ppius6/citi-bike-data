@@ -417,3 +417,239 @@
 2024-11-09 12:47:10,295 - INFO - [DataPipeline] - CSV already exists: JC-202410-citibike-tripdata.csv
 2024-11-09 12:47:10,296 - ERROR - [DataPipeline] - No data processed.
 2024-11-09 12:47:10,297 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 19:09:07,409 - INFO - [DataPipeline] - CSV already exists: JC-202102-citibike-tripdata.csv
+2024-11-09 19:09:07,409 - INFO - [DataPipeline] - CSV already exists: JC-202103-citibike-tripdata.csv
+2024-11-09 19:09:07,410 - INFO - [DataPipeline] - CSV already exists: JC-202104-citibike-tripdata.csv
+2024-11-09 19:09:07,411 - INFO - [DataPipeline] - CSV already exists: JC-202105-citibike-tripdata.csv
+2024-11-09 19:09:07,412 - INFO - [DataPipeline] - CSV already exists: JC-202106-citibike-tripdata.csv
+2024-11-09 19:09:07,412 - INFO - [DataPipeline] - CSV already exists: JC-202107-citibike-tripdata.csv
+2024-11-09 19:09:07,413 - INFO - [DataPipeline] - CSV already exists: JC-202108-citibike-tripdata.csv
+2024-11-09 19:09:07,414 - INFO - [DataPipeline] - CSV already exists: JC-202109-citibike-tripdata.csv
+2024-11-09 19:09:07,414 - INFO - [DataPipeline] - CSV already exists: JC-202110-citibike-tripdata.csv
+2024-11-09 19:09:07,415 - INFO - [DataPipeline] - CSV already exists: JC-202111-citibike-tripdata.csv
+2024-11-09 19:09:07,415 - INFO - [DataPipeline] - CSV already exists: JC-202112-citibike-tripdata.csv
+2024-11-09 19:09:07,416 - INFO - [DataPipeline] - CSV already exists: JC-202201-citibike-tripdata.csv
+2024-11-09 19:09:07,416 - INFO - [DataPipeline] - CSV already exists: JC-202202-citibike-tripdata.csv
+2024-11-09 19:09:07,417 - INFO - [DataPipeline] - CSV already exists: JC-202203-citibike-tripdata.csv
+2024-11-09 19:09:07,417 - INFO - [DataPipeline] - CSV already exists: JC-202204-citibike-tripdata.csv
+2024-11-09 19:09:07,417 - INFO - [DataPipeline] - CSV already exists: JC-202205-citibike-tripdata.csv
+2024-11-09 19:09:07,418 - INFO - [DataPipeline] - CSV already exists: JC-202206-citibike-tripdata.csv
+2024-11-09 19:09:07,418 - INFO - [DataPipeline] - CSV already exists: JC-202207-citbike-tripdata.csv
+2024-11-09 19:09:07,419 - INFO - [DataPipeline] - CSV already exists: JC-202208-citibike-tripdata.csv
+2024-11-09 19:09:07,419 - INFO - [DataPipeline] - CSV already exists: JC-202209-citibike-tripdata.csv
+2024-11-09 19:09:07,419 - INFO - [DataPipeline] - CSV already exists: JC-202210-citibike-tripdata.csv
+2024-11-09 19:09:07,419 - INFO - [DataPipeline] - CSV already exists: JC-202211-citibike-tripdata.csv
+2024-11-09 19:09:07,420 - INFO - [DataPipeline] - CSV already exists: JC-202212-citibike-tripdata.csv
+2024-11-09 19:09:07,420 - INFO - [DataPipeline] - CSV already exists: JC-202301-citibike-tripdata.csv
+2024-11-09 19:09:07,420 - INFO - [DataPipeline] - CSV already exists: JC-202302-citibike-tripdata.csv
+2024-11-09 19:09:07,421 - INFO - [DataPipeline] - CSV already exists: JC-202303-citibike-tripdata.csv
+2024-11-09 19:09:07,421 - INFO - [DataPipeline] - CSV already exists: JC-202304-citibike-tripdata.csv
+2024-11-09 19:09:07,422 - INFO - [DataPipeline] - CSV already exists: JC-202305-citibike-tripdata.csv
+2024-11-09 19:09:07,422 - INFO - [DataPipeline] - CSV already exists: JC-202306-citibike-tripdata.csv
+2024-11-09 19:09:07,422 - INFO - [DataPipeline] - CSV already exists: JC-202307-citibike-tripdata.csv
+2024-11-09 19:09:07,423 - INFO - [DataPipeline] - CSV already exists: JC-202308-citibike-tripdata.csv
+2024-11-09 19:09:07,423 - INFO - [DataPipeline] - CSV already exists: JC-202309-citibike-tripdata.csv
+2024-11-09 19:09:07,423 - INFO - [DataPipeline] - CSV already exists: JC-202310-citibike-tripdata.csv
+2024-11-09 19:09:07,424 - INFO - [DataPipeline] - CSV already exists: JC-202311-citibike-tripdata.csv
+2024-11-09 19:09:07,424 - INFO - [DataPipeline] - CSV already exists: JC-202312-citibike-tripdata.csv
+2024-11-09 19:09:07,425 - INFO - [DataPipeline] - CSV already exists: JC-202401-citibike-tripdata.csv
+2024-11-09 19:09:07,425 - INFO - [DataPipeline] - CSV already exists: JC-202402-citibike-tripdata.csv
+2024-11-09 19:09:07,426 - INFO - [DataPipeline] - CSV already exists: JC-202403-citibike-tripdata.csv
+2024-11-09 19:09:07,426 - INFO - [DataPipeline] - CSV already exists: JC-202404-citibike-tripdata.csv
+2024-11-09 19:09:07,427 - INFO - [DataPipeline] - CSV already exists: JC-202405-citibike-tripdata.csv
+2024-11-09 19:09:07,427 - INFO - [DataPipeline] - CSV already exists: JC-202406-citibike-tripdata.csv
+2024-11-09 19:09:07,428 - INFO - [DataPipeline] - CSV already exists: JC-202407-citibike-tripdata.csv
+2024-11-09 19:09:07,428 - INFO - [DataPipeline] - CSV already exists: JC-202408-citibike-tripdata.csv
+2024-11-09 19:09:07,428 - INFO - [DataPipeline] - CSV already exists: JC-202409-citibike-tripdata.csv
+2024-11-09 19:09:07,429 - INFO - [DataPipeline] - CSV already exists: JC-202410-citibike-tripdata.csv
+2024-11-09 19:09:07,434 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 19:59:19,021 - INFO - [DataPipeline] - CSV already exists: JC-202102-citibike-tripdata.csv
+2024-11-09 19:59:19,021 - INFO - [DataPipeline] - CSV already exists: JC-202103-citibike-tripdata.csv
+2024-11-09 19:59:19,022 - INFO - [DataPipeline] - CSV already exists: JC-202104-citibike-tripdata.csv
+2024-11-09 19:59:19,023 - INFO - [DataPipeline] - CSV already exists: JC-202105-citibike-tripdata.csv
+2024-11-09 19:59:19,023 - INFO - [DataPipeline] - CSV already exists: JC-202106-citibike-tripdata.csv
+2024-11-09 19:59:19,023 - INFO - [DataPipeline] - CSV already exists: JC-202107-citibike-tripdata.csv
+2024-11-09 19:59:19,024 - INFO - [DataPipeline] - CSV already exists: JC-202108-citibike-tripdata.csv
+2024-11-09 19:59:19,024 - INFO - [DataPipeline] - CSV already exists: JC-202109-citibike-tripdata.csv
+2024-11-09 19:59:19,024 - INFO - [DataPipeline] - CSV already exists: JC-202110-citibike-tripdata.csv
+2024-11-09 19:59:19,025 - INFO - [DataPipeline] - CSV already exists: JC-202111-citibike-tripdata.csv
+2024-11-09 19:59:19,025 - INFO - [DataPipeline] - CSV already exists: JC-202112-citibike-tripdata.csv
+2024-11-09 19:59:19,025 - INFO - [DataPipeline] - CSV already exists: JC-202201-citibike-tripdata.csv
+2024-11-09 19:59:19,026 - INFO - [DataPipeline] - CSV already exists: JC-202202-citibike-tripdata.csv
+2024-11-09 19:59:19,026 - INFO - [DataPipeline] - CSV already exists: JC-202203-citibike-tripdata.csv
+2024-11-09 19:59:19,026 - INFO - [DataPipeline] - CSV already exists: JC-202204-citibike-tripdata.csv
+2024-11-09 19:59:19,027 - INFO - [DataPipeline] - CSV already exists: JC-202205-citibike-tripdata.csv
+2024-11-09 19:59:19,027 - INFO - [DataPipeline] - CSV already exists: JC-202206-citibike-tripdata.csv
+2024-11-09 19:59:19,027 - INFO - [DataPipeline] - CSV already exists: JC-202207-citbike-tripdata.csv
+2024-11-09 19:59:19,028 - INFO - [DataPipeline] - CSV already exists: JC-202208-citibike-tripdata.csv
+2024-11-09 19:59:19,028 - INFO - [DataPipeline] - CSV already exists: JC-202209-citibike-tripdata.csv
+2024-11-09 19:59:19,029 - INFO - [DataPipeline] - CSV already exists: JC-202210-citibike-tripdata.csv
+2024-11-09 19:59:19,029 - INFO - [DataPipeline] - CSV already exists: JC-202211-citibike-tripdata.csv
+2024-11-09 19:59:19,029 - INFO - [DataPipeline] - CSV already exists: JC-202212-citibike-tripdata.csv
+2024-11-09 19:59:19,030 - INFO - [DataPipeline] - CSV already exists: JC-202301-citibike-tripdata.csv
+2024-11-09 19:59:19,030 - INFO - [DataPipeline] - CSV already exists: JC-202302-citibike-tripdata.csv
+2024-11-09 19:59:19,030 - INFO - [DataPipeline] - CSV already exists: JC-202303-citibike-tripdata.csv
+2024-11-09 19:59:19,031 - INFO - [DataPipeline] - CSV already exists: JC-202304-citibike-tripdata.csv
+2024-11-09 19:59:19,031 - INFO - [DataPipeline] - CSV already exists: JC-202305-citibike-tripdata.csv
+2024-11-09 19:59:19,032 - INFO - [DataPipeline] - CSV already exists: JC-202306-citibike-tripdata.csv
+2024-11-09 19:59:19,032 - INFO - [DataPipeline] - CSV already exists: JC-202307-citibike-tripdata.csv
+2024-11-09 19:59:19,033 - INFO - [DataPipeline] - CSV already exists: JC-202308-citibike-tripdata.csv
+2024-11-09 19:59:19,033 - INFO - [DataPipeline] - CSV already exists: JC-202309-citibike-tripdata.csv
+2024-11-09 19:59:19,035 - INFO - [DataPipeline] - CSV already exists: JC-202310-citibike-tripdata.csv
+2024-11-09 19:59:19,035 - INFO - [DataPipeline] - CSV already exists: JC-202311-citibike-tripdata.csv
+2024-11-09 19:59:19,036 - INFO - [DataPipeline] - CSV already exists: JC-202312-citibike-tripdata.csv
+2024-11-09 19:59:19,036 - INFO - [DataPipeline] - CSV already exists: JC-202401-citibike-tripdata.csv
+2024-11-09 19:59:19,036 - INFO - [DataPipeline] - CSV already exists: JC-202402-citibike-tripdata.csv
+2024-11-09 19:59:19,037 - INFO - [DataPipeline] - CSV already exists: JC-202403-citibike-tripdata.csv
+2024-11-09 19:59:19,037 - INFO - [DataPipeline] - CSV already exists: JC-202404-citibike-tripdata.csv
+2024-11-09 19:59:19,037 - INFO - [DataPipeline] - CSV already exists: JC-202405-citibike-tripdata.csv
+2024-11-09 19:59:19,038 - INFO - [DataPipeline] - CSV already exists: JC-202406-citibike-tripdata.csv
+2024-11-09 19:59:19,038 - INFO - [DataPipeline] - CSV already exists: JC-202407-citibike-tripdata.csv
+2024-11-09 19:59:19,039 - INFO - [DataPipeline] - CSV already exists: JC-202408-citibike-tripdata.csv
+2024-11-09 19:59:19,039 - INFO - [DataPipeline] - CSV already exists: JC-202409-citibike-tripdata.csv
+2024-11-09 19:59:19,039 - INFO - [DataPipeline] - CSV already exists: JC-202410-citibike-tripdata.csv
+2024-11-09 19:59:19,040 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 19:59:19,041 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 20:08:25,509 - INFO - [DataPipeline] - CSV already exists: JC-202102-citibike-tripdata.csv
+2024-11-09 20:08:25,509 - INFO - [DataPipeline] - CSV already exists: JC-202103-citibike-tripdata.csv
+2024-11-09 20:08:25,509 - INFO - [DataPipeline] - CSV already exists: JC-202104-citibike-tripdata.csv
+2024-11-09 20:08:25,510 - INFO - [DataPipeline] - CSV already exists: JC-202105-citibike-tripdata.csv
+2024-11-09 20:08:25,511 - INFO - [DataPipeline] - CSV already exists: JC-202106-citibike-tripdata.csv
+2024-11-09 20:08:25,511 - INFO - [DataPipeline] - CSV already exists: JC-202107-citibike-tripdata.csv
+2024-11-09 20:08:25,511 - INFO - [DataPipeline] - CSV already exists: JC-202108-citibike-tripdata.csv
+2024-11-09 20:08:25,512 - INFO - [DataPipeline] - CSV already exists: JC-202109-citibike-tripdata.csv
+2024-11-09 20:08:25,512 - INFO - [DataPipeline] - CSV already exists: JC-202110-citibike-tripdata.csv
+2024-11-09 20:08:25,512 - INFO - [DataPipeline] - CSV already exists: JC-202111-citibike-tripdata.csv
+2024-11-09 20:08:25,513 - INFO - [DataPipeline] - CSV already exists: JC-202112-citibike-tripdata.csv
+2024-11-09 20:08:25,513 - INFO - [DataPipeline] - CSV already exists: JC-202201-citibike-tripdata.csv
+2024-11-09 20:08:25,513 - INFO - [DataPipeline] - CSV already exists: JC-202202-citibike-tripdata.csv
+2024-11-09 20:08:25,514 - INFO - [DataPipeline] - CSV already exists: JC-202203-citibike-tripdata.csv
+2024-11-09 20:08:25,514 - INFO - [DataPipeline] - CSV already exists: JC-202204-citibike-tripdata.csv
+2024-11-09 20:08:25,514 - INFO - [DataPipeline] - CSV already exists: JC-202205-citibike-tripdata.csv
+2024-11-09 20:08:25,514 - INFO - [DataPipeline] - CSV already exists: JC-202206-citibike-tripdata.csv
+2024-11-09 20:08:25,515 - INFO - [DataPipeline] - CSV already exists: JC-202207-citbike-tripdata.csv
+2024-11-09 20:08:25,515 - INFO - [DataPipeline] - CSV already exists: JC-202208-citibike-tripdata.csv
+2024-11-09 20:08:25,516 - INFO - [DataPipeline] - CSV already exists: JC-202209-citibike-tripdata.csv
+2024-11-09 20:08:25,516 - INFO - [DataPipeline] - CSV already exists: JC-202210-citibike-tripdata.csv
+2024-11-09 20:08:25,517 - INFO - [DataPipeline] - CSV already exists: JC-202211-citibike-tripdata.csv
+2024-11-09 20:08:25,517 - INFO - [DataPipeline] - CSV already exists: JC-202212-citibike-tripdata.csv
+2024-11-09 20:08:25,518 - INFO - [DataPipeline] - CSV already exists: JC-202301-citibike-tripdata.csv
+2024-11-09 20:08:25,518 - INFO - [DataPipeline] - CSV already exists: JC-202302-citibike-tripdata.csv
+2024-11-09 20:08:25,518 - INFO - [DataPipeline] - CSV already exists: JC-202303-citibike-tripdata.csv
+2024-11-09 20:08:25,519 - INFO - [DataPipeline] - CSV already exists: JC-202304-citibike-tripdata.csv
+2024-11-09 20:08:25,519 - INFO - [DataPipeline] - CSV already exists: JC-202305-citibike-tripdata.csv
+2024-11-09 20:08:25,520 - INFO - [DataPipeline] - CSV already exists: JC-202306-citibike-tripdata.csv
+2024-11-09 20:08:25,520 - INFO - [DataPipeline] - CSV already exists: JC-202307-citibike-tripdata.csv
+2024-11-09 20:08:25,521 - INFO - [DataPipeline] - CSV already exists: JC-202308-citibike-tripdata.csv
+2024-11-09 20:08:25,521 - INFO - [DataPipeline] - CSV already exists: JC-202309-citibike-tripdata.csv
+2024-11-09 20:08:25,522 - INFO - [DataPipeline] - CSV already exists: JC-202310-citibike-tripdata.csv
+2024-11-09 20:08:25,523 - INFO - [DataPipeline] - CSV already exists: JC-202311-citibike-tripdata.csv
+2024-11-09 20:08:25,525 - INFO - [DataPipeline] - CSV already exists: JC-202312-citibike-tripdata.csv
+2024-11-09 20:08:25,525 - INFO - [DataPipeline] - CSV already exists: JC-202401-citibike-tripdata.csv
+2024-11-09 20:08:25,527 - INFO - [DataPipeline] - CSV already exists: JC-202403-citibike-tripdata.csv
+2024-11-09 20:08:25,528 - INFO - [DataPipeline] - CSV already exists: JC-202402-citibike-tripdata.csv
+2024-11-09 20:08:25,528 - INFO - [DataPipeline] - CSV already exists: JC-202404-citibike-tripdata.csv
+2024-11-09 20:08:25,529 - INFO - [DataPipeline] - CSV already exists: JC-202405-citibike-tripdata.csv
+2024-11-09 20:08:25,529 - INFO - [DataPipeline] - CSV already exists: JC-202406-citibike-tripdata.csv
+2024-11-09 20:08:25,530 - INFO - [DataPipeline] - CSV already exists: JC-202407-citibike-tripdata.csv
+2024-11-09 20:08:25,530 - INFO - [DataPipeline] - CSV already exists: JC-202408-citibike-tripdata.csv
+2024-11-09 20:08:25,531 - INFO - [DataPipeline] - CSV already exists: JC-202409-citibike-tripdata.csv
+2024-11-09 20:08:25,531 - INFO - [DataPipeline] - CSV already exists: JC-202410-citibike-tripdata.csv
+2024-11-09 20:08:25,539 - ERROR - [DataPipeline] - No data processed.
+2024-11-09 20:08:25,540 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 20:08:25,540 - INFO - [root] - No new data to process.
+2024-11-09 20:10:33,260 - INFO - [DataPipeline] - Downloaded Zip file: JC-202102-citibike-tripdata.csv.zip
+2024-11-09 20:10:33,697 - INFO - [DataPipeline] - Downloaded Zip file: JC-202103-citibike-tripdata.csv.zip
+2024-11-09 20:10:34,097 - INFO - [DataPipeline] - Downloaded Zip file: JC-202104-citibike-tripdata.csv.zip
+2024-11-09 20:10:34,348 - INFO - [DataPipeline] - Downloaded Zip file: JC-202105-citibike-tripdata.csv.zip
+2024-11-09 20:10:35,994 - INFO - [DataPipeline] - Downloaded Zip file: JC-202106-citibike-tripdata.csv.zip
+2024-11-09 20:10:36,871 - INFO - [DataPipeline] - Downloaded Zip file: JC-202108-citibike-tripdata.csv.zip
+2024-11-09 20:10:37,158 - INFO - [DataPipeline] - Downloaded Zip file: JC-202109-citibike-tripdata.csv.zip
+2024-11-09 20:10:39,485 - INFO - [DataPipeline] - Downloaded Zip file: JC-202111-citibike-tripdata.csv.zip
+2024-11-09 20:10:39,867 - INFO - [DataPipeline] - Downloaded Zip file: JC-202112-citibike-tripdata.csv.zip
+2024-11-09 20:10:41,685 - INFO - [DataPipeline] - Downloaded Zip file: JC-202201-citibike-tripdata.csv.zip
+2024-11-09 20:10:42,021 - INFO - [DataPipeline] - Downloaded Zip file: JC-202202-citibike-tripdata.csv.zip
+2024-11-09 20:10:43,829 - INFO - [DataPipeline] - Downloaded Zip file: JC-202203-citibike-tripdata.csv.zip
+2024-11-09 20:10:44,715 - INFO - [DataPipeline] - Downloaded Zip file: JC-202204-citibike-tripdata.csv.zip
+2024-11-09 20:10:45,472 - INFO - [DataPipeline] - Downloaded Zip file: JC-202110-citibike-tripdata.csv.zip
+2024-11-09 20:10:46,127 - INFO - [DataPipeline] - Downloaded Zip file: JC-202107-citibike-tripdata.csv.zip
+2024-11-09 20:10:46,270 - INFO - [DataPipeline] - Downloaded Zip file: JC-202205-citibike-tripdata.csv.zip
+2024-11-09 20:10:48,520 - INFO - [DataPipeline] - Downloaded Zip file: JC-202207-citbike-tripdata.csv.zip
+2024-11-09 20:10:48,941 - INFO - [DataPipeline] - Downloaded Zip file: JC-202208-citibike-tripdata.csv.zip
+2024-11-09 20:10:49,288 - INFO - [DataPipeline] - Downloaded Zip file: JC-202209-citibike-tripdata.csv.zip
+2024-11-09 20:10:49,570 - INFO - [DataPipeline] - Downloaded Zip file: JC-202206-citibike-tripdata.csv.zip
+2024-11-09 20:10:51,100 - INFO - [DataPipeline] - Downloaded Zip file: JC-202210-citibike-tripdata.csv.zip
+2024-11-09 20:10:51,912 - INFO - [DataPipeline] - Downloaded Zip file: JC-202212-citibike-tripdata.csv.zip
+2024-11-09 20:10:52,080 - INFO - [DataPipeline] - Downloaded Zip file: JC-202211-citibike-tripdata.csv.zip
+2024-11-09 20:10:52,122 - INFO - [DataPipeline] - Downloaded Zip file: JC-202301-citibike-tripdata.csv.zip
+2024-11-09 20:10:54,554 - INFO - [DataPipeline] - Downloaded Zip file: JC-202304-citibike-tripdata.csv.zip
+2024-11-09 20:10:54,585 - INFO - [DataPipeline] - Downloaded Zip file: JC-202303-citibike-tripdata.csv.zip
+2024-11-09 20:10:54,910 - INFO - [DataPipeline] - Downloaded Zip file: JC-202305-citibike-tripdata.csv.zip
+2024-11-09 20:10:57,344 - INFO - [DataPipeline] - Downloaded Zip file: JC-202306-citibike-tripdata.csv.zip
+2024-11-09 20:10:57,670 - INFO - [DataPipeline] - Downloaded Zip file: JC-202307-citibike-tripdata.csv.zip
+2024-11-09 20:10:58,200 - INFO - [DataPipeline] - Downloaded Zip file: JC-202308-citibike-tripdata.csv.zip
+2024-11-09 20:10:59,327 - INFO - [DataPipeline] - Downloaded Zip file: JC-202302-citibike-tripdata.csv.zip
+2024-11-09 20:11:01,136 - INFO - [DataPipeline] - Downloaded Zip file: JC-202309-citibike-tripdata.csv.zip
+2024-11-09 20:11:02,092 - INFO - [DataPipeline] - Downloaded Zip file: JC-202310-citibike-tripdata.csv.zip
+2024-11-09 20:11:03,429 - INFO - [DataPipeline] - Downloaded Zip file: JC-202401-citibike-tripdata.csv.zip
+2024-11-09 20:11:04,527 - INFO - [DataPipeline] - Downloaded Zip file: JC-202402-citibike-tripdata.csv.zip
+2024-11-09 20:11:06,505 - INFO - [DataPipeline] - Downloaded Zip file: JC-202403-citibike-tripdata.csv.zip
+2024-11-09 20:11:07,047 - INFO - [DataPipeline] - Downloaded Zip file: JC-202404-citibike-tripdata.csv.zip
+2024-11-09 20:11:07,381 - INFO - [DataPipeline] - Downloaded Zip file: JC-202312-citibike-tripdata.csv.zip
+2024-11-09 20:11:09,223 - INFO - [DataPipeline] - Downloaded Zip file: JC-202405-citibike-tripdata.csv.zip
+2024-11-09 20:11:11,531 - INFO - [DataPipeline] - Downloaded Zip file: JC-202406-citibike-tripdata.csv.zip
+2024-11-09 20:11:12,041 - INFO - [DataPipeline] - Downloaded Zip file: JC-202408-citibike-tripdata.csv.zip
+2024-11-09 20:11:13,461 - INFO - [DataPipeline] - Downloaded Zip file: JC-202311-citibike-tripdata.csv.zip
+2024-11-09 20:11:14,543 - INFO - [DataPipeline] - Downloaded Zip file: JC-202409-citibike-tripdata.csv.zip
+2024-11-09 20:11:15,056 - INFO - [DataPipeline] - Downloaded Zip file: JC-202410-citibike-tripdata.csv.zip
+2024-11-09 20:11:21,537 - INFO - [DataPipeline] - Downloaded Zip file: JC-202407-citibike-tripdata.csv.zip
+2024-11-09 20:11:21,577 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202102-citibike-tripdata.csv.zip
+2024-11-09 20:11:21,682 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202103-citibike-tripdata.csv.zip
+2024-11-09 20:11:21,842 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202104-citibike-tripdata.csv.zip
+2024-11-09 20:11:22,046 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202105-citibike-tripdata.csv.zip
+2024-11-09 20:11:22,401 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202106-citibike-tripdata.csv.zip
+2024-11-09 20:11:23,037 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202107-citibike-tripdata.csv.zip
+2024-11-09 20:11:23,951 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202108-citibike-tripdata.csv.zip
+2024-11-09 20:11:24,615 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202109-citibike-tripdata.csv.zip
+2024-11-09 20:11:25,330 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202110-citibike-tripdata.csv.zip
+2024-11-09 20:11:25,983 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202111-citibike-tripdata.csv.zip
+2024-11-09 20:11:26,407 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202112-citibike-tripdata.csv.zip
+2024-11-09 20:11:26,728 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202201-citibike-tripdata.csv.zip
+2024-11-09 20:11:26,929 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202202-citibike-tripdata.csv.zip
+2024-11-09 20:11:27,196 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202203-citibike-tripdata.csv.zip
+2024-11-09 20:11:27,579 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202204-citibike-tripdata.csv.zip
+2024-11-09 20:11:28,037 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202205-citibike-tripdata.csv.zip
+2024-11-09 20:11:28,653 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202206-citibike-tripdata.csv.zip
+2024-11-09 20:11:29,364 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202207-citbike-tripdata.csv.zip
+2024-11-09 20:11:30,064 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202208-citibike-tripdata.csv.zip
+2024-11-09 20:11:30,867 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202209-citibike-tripdata.csv.zip
+2024-11-09 20:11:31,609 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202210-citibike-tripdata.csv.zip
+2024-11-09 20:11:32,207 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202211-citibike-tripdata.csv.zip
+2024-11-09 20:11:32,758 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202212-citibike-tripdata.csv.zip
+2024-11-09 20:11:33,112 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202301-citibike-tripdata.csv.zip
+2024-11-09 20:11:33,559 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202302-citibike-tripdata.csv.zip
+2024-11-09 20:11:33,940 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202303-citibike-tripdata.csv.zip
+2024-11-09 20:11:34,410 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202304-citibike-tripdata.csv.zip
+2024-11-09 20:11:35,011 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202305-citibike-tripdata.csv.zip
+2024-11-09 20:11:35,695 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202306-citibike-tripdata.csv.zip
+2024-11-09 20:11:36,456 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202307-citibike-tripdata.csv.zip
+2024-11-09 20:11:37,204 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202308-citibike-tripdata.csv.zip
+2024-11-09 20:11:37,978 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202309-citibike-tripdata.csv.zip
+2024-11-09 20:11:38,674 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202310-citibike-tripdata.csv.zip
+2024-11-09 20:11:39,399 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202311-citibike-tripdata.csv.zip
+2024-11-09 20:11:39,938 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202312-citibike-tripdata.csv.zip
+2024-11-09 20:11:40,378 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202401-citibike-tripdata.csv.zip
+2024-11-09 20:11:40,780 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202402-citibike-tripdata.csv.zip
+2024-11-09 20:11:41,214 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202403-citibike-tripdata.csv.zip
+2024-11-09 20:11:41,749 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202404-citibike-tripdata.csv.zip
+2024-11-09 20:11:42,310 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202405-citibike-tripdata.csv.zip
+2024-11-09 20:11:43,013 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202406-citibike-tripdata.csv.zip
+2024-11-09 20:11:43,884 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202407-citibike-tripdata.csv.zip
+2024-11-09 20:11:44,698 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202408-citibike-tripdata.csv.zip
+2024-11-09 20:11:45,493 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202409-citibike-tripdata.csv.zip
+2024-11-09 20:11:46,375 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202410-citibike-tripdata.csv.zip
+2024-11-09 20:11:47,356 - INFO - [DataPipeline] - Combined DataFrame has 3429479 records.
+2024-11-09 20:12:51,512 - INFO - [DataPipeline] - Saved DataFrame to trips_20241109T171147.csv
+2024-11-09 20:12:52,304 - INFO - [DataPipeline] - No new data to store.
+2024-11-09 20:12:52,401 - INFO - [root] - Pipeline completed successfully.
+2024-11-09 20:12:52,402 - INFO - [root] - DataFrame has 3429479 records.

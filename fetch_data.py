@@ -7,6 +7,7 @@ import pandas as pd
 from sqlalchemy import create_engine, MetaData, Table, Column, String, Float, DateTime, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.postgresql import insert
 import logging
 import time
 from pathlib import Path
@@ -218,8 +219,8 @@ class DataPipeline:
         
     def store_dataframe(self, df: pd.DataFrame) -> bool:
         """
-        Store DataFrame to database with efficient batching and error handling.
-        
+        Store DataFrame to database with duplicate prevention, efficient batching and error handling.
+    
         Args:
             df (pd.DataFrame): DataFrame to store
             
@@ -230,16 +231,48 @@ class DataPipeline:
         if df.empty:
             self.logger.info("No data to store.")
             return True
-        
-        latest_date = self.get_latest_processed_date()
-        if latest_date:
-            df = df[df['started_at'] > latest_date]
-            if df.empty:
-                self.logger.info("No new data to store.")
-                return True
-            
+
         try:
+            # Check for duplicates
+            initial_count = len(df)
+            duplicate_rides = df[df['ride_id'].duplicated(keep = False)]
+            
+            if not duplicate_rides.empty:
+                self.logger.warning(
+                    f"Found {len(duplicate_rides)} duplicate ride IDs. "
+                    "Keeping only the first occurrence of each ride_id."
+                )
+                
+                # Logging duplicate rides for reference
+                if len(duplicate_rides) > 0:
+                    sample_duplicates = duplicate_rides.groupby('ride_id').head(2).head(5)
+                    self.logger.debug(f"Sample duplicate rides:\n{sample_duplicates}")
+                    
+            # Remove duplicates keeping the first occurrence
+            df.drop_duplicates(subset = ['ride_id'], keep = 'first', inplace = True)
+            
+            # Get the latest processed date to avoid duplicates
+            latest_date = self.get_latest_processed_date()
+            if latest_date:
+                df = df[df['started_at'] > latest_date]
+                if df.empty:
+                    self.logger.info("No new data to store.")
+                    return True
+            
+            # Log the final counts
+            final_count = len(df)
+            removed_count = initial_count - final_count
+            
+            if removed_count > 0:
+                self.logger.info(
+                    f"Removed {removed_count} duplicate records "
+                    f"({(removed_count / initial_count) * 100:.2f}% of original data)"
+                )
+                
+            # Store the deduplicated data in chunks
             chunk_size = self.config['db_chunk_size']
+            records_stored = 0
+
             for i in range(0, len(df), chunk_size):
                 chunk = df.iloc[i:i + chunk_size]
                 chunk.to_sql(
@@ -250,7 +283,13 @@ class DataPipeline:
                     method = 'multi'
                 )
                 
-            self.logger.info(f"Stored {len(df)} records.")
+                records_stored += len(chunk)
+                self.logger.info(
+                    f"Stored {records_stored} records out of {final_count} "
+                    f"Progress: {records_stored / len(df)}"
+                )
+                
+            self.logger.info(f"Successfully stored {records_stored} unique records.")
             return True
         
         except Exception as e:
@@ -313,7 +352,10 @@ class DataPipeline:
             
             # Combine all processed DataFrames
             combined_df = pd.concat(processed_dfs, ignore_index = True)
-            self.logger.info(f"Combined DataFrame has {len(combined_df)} records.")
+            
+            combined_df.drop_duplicates(subset = ['ride_id'], inplace = True)
+            
+            self.logger.info(f"Combined DataFrame has {len(combined_df)} records after removing duplicates.")
             
             # Save the combined DataFrame to the data directory
             save_success = self.save_dataframe(combined_df)

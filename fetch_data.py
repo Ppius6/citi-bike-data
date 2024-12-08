@@ -29,6 +29,7 @@ class DataPipeline:
         self.setup_logging()
         self.setup_paths()
         self.engine = self.create_db_engine()
+        self.combined_df = None
         
     def setup_logging(self) -> None:
         """
@@ -217,6 +218,54 @@ class DataPipeline:
             self.logger.error(f"Error fetching latest date: {str(e)}")
             return None
         
+    def get_combined_dataframe(self) -> Optional[pd.DataFrame]:
+        """
+        Retrieve or create a combined DataFrame from existing CSV files.
+        
+        Returns:
+            Optional[pd.DataFrame]: Combined DataFrame if successful, None otherwise.
+        """
+        
+        # Check if a combined DataFrame already exists
+        if self.combined_df is not None:
+            return self.combined_df
+        
+        # Load all CSV files in the data directory
+        csv_files = list(self.data_dir.glob('*.csv'))
+        
+        if not csv_files:
+            self.logger.info("No CSV files found.")
+            return None
+        
+        try:
+            # Read all CSV files into a single DataFrame
+            dfs = []
+            for file in csv_files:
+                df = pd.read_csv(file)
+                dfs.append(df)
+                
+            combined_df = pd.concat(dfs, ignore_index = True)
+            
+            # Remove duplicates
+            combined_df.drop_duplicates(subset = ['ride_id'], inplace = True)
+            
+            # Date parsing with multiple formats
+            date_columns = ['started_at', 'ended_at']
+            for col in date_columns:
+                if col in combined_df.columns:
+                    combined_df[col] = pd.to_datetime(combined_df[col], format = 'mixed', utc = True)
+                    combined_df[col] = combined_df[col].dt.tz_convert('UTC')
+            
+            self.logger.info(f"Combined DataFrame has {len(combined_df)} records after removing duplicates.")
+            
+            self.combined_df = combined_df
+            
+            return combined_df
+        
+        except Exception as e:
+            self.logger.error(f"Error combining DataFrames: {str(e)}")
+            return None
+    
     def store_dataframe(self, df: pd.DataFrame) -> bool:
         """
         Store DataFrame to database with duplicate prevention, efficient batching and error handling.
@@ -295,7 +344,7 @@ class DataPipeline:
         except Exception as e:
             self.logger.error(f"Error storing data: {str(e)}")
             return False
-    
+        
     def save_dataframe(self, df: pd.DataFrame) -> bool:
         """
         Save DataFrame to the data directory as a CSV file.
@@ -307,10 +356,10 @@ class DataPipeline:
             bool: True if successful, False otherwise.
         """
         try:
-            timestamp = datetime.utcnow().strftime('%Y%m%dT%H%M%S')
-            file_name = f"trips_{timestamp}.csv"
+            file_name = self.config.get('output_csv', 'combined_trips.csv')
             file_path = self.data_dir / file_name
             df.to_csv(file_path, index = False)
+            
             self.logger.info(f"Saved DataFrame to {file_path.name}")
             return True
         
@@ -329,9 +378,17 @@ class DataPipeline:
         """
         try:
             file_links = self.get_file_links()
+            
+            # If no new files are found, try to get existing combined DataFrame
             if not file_links:
-                self.logger.info("No new files to download.")
-                return True
+                existing_df = self.get_combined_dataframe()
+                if existing_df is not None:
+                    self.logger.info("Using existing DataFrame.")
+                    self.save_dataframe(existing_df)
+                    return True, existing_df
+                else:
+                    self.logger.info("No new files.")
+                    return True, None
             
             # Process files in parallel
             processed_dfs = []
@@ -347,6 +404,12 @@ class DataPipeline:
                         processed_dfs.append(df)
                         
             if not processed_dfs:
+                # If no new processed files, get existing combined DataFrame
+                existing_df = self.get_combined_dataframe()
+                if existing_df is not None:
+                    self.save_dataframe(existing_df)
+                    return True, existing_df
+                
                 self.logger.error("No data processed.")
                 return True, None # Considered successful as there is no new data to process
             
@@ -366,12 +429,16 @@ class DataPipeline:
             # Store the combined DataFrame to the database
             store_success = self.store_dataframe(combined_df)
             
+            # Update the combined DataFrame if stored successfully
+            if store_success:
+                self.combined_df = combined_df
+                            
             return store_success, combined_df
         
         except Exception as e:
             self.logger.error(f"Pipeline failed: {str(e)}")
-            return False
-        
+            return False, None
+    
 if __name__ == '__main__':
     config = {
         'base_url': 'https://s3.amazonaws.com/tripdata',
@@ -383,6 +450,7 @@ if __name__ == '__main__':
         'max_workers': 4,
         'db_chunk_size': 5000,
         'table_name': 'trips',
+        'output_csv': 'combined_trips.csv',
         'db_name': os.getenv('DB_NAME'),
         'db_user': os.getenv('DB_USER'),
         'db_password': os.getenv('DB_PASSWORD'),
@@ -396,6 +464,8 @@ if __name__ == '__main__':
         logging.info("Pipeline completed successfully.")
         if df is not None:
             logging.info(f"DataFrame has {len(df)} records.")
+            output_csv_path = Path(config['extract_dir']) / config['output_csv']
+            logging.info(f"Combined CSV file saved at: {output_csv_path.resolve()}")
         else:
             logging.info("No new data to process.")
     else:

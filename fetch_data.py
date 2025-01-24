@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from pytz import timezone
 import os
 from zipfile import ZipFile
 import pandas as pd
@@ -100,7 +101,7 @@ class DataPipeline:
                 if attempt < self.config['max_retries'] - 1:
                     time.sleep(2 ** attempt)
                 else:
-                    raise
+                    raise Exception("Max retries exceeded.")
             
     def download_file(self, file_name: str) -> Optional[Path]:
         """
@@ -182,10 +183,11 @@ class DataPipeline:
         
         # Date parsing with multiple formats
         date_columns = ['started_at', 'ended_at']
+        ny_tz = timezone('America/New_York')
         for col in date_columns:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], format = 'mixed', utc = True)
-                df[col] = df[col].dt.tz_convert('UTC')
+                df[col] = df[col].dt.tz_convert(ny_tz)
                 
         # Remove duplicate primary keys
         df = df.drop_duplicates(subset = ['ride_id'])
@@ -211,8 +213,9 @@ class DataPipeline:
                 result = conn.execute (
                     func.max(trips_table.c.started_at)
                 ).scalar()
-                
-            return result.replace(tzinfo = pytz.UTC) if result else None
+            
+            ny_tz = timezone('America/New_York')   
+            return result.astimezone(ny_tz) if result else None
         
         except Exception as e:
             self.logger.error(f"Error fetching latest date: {str(e)}")
@@ -251,10 +254,11 @@ class DataPipeline:
             
             # Date parsing with multiple formats
             date_columns = ['started_at', 'ended_at']
+            ny_tz = timezone('America/New_York')
             for col in date_columns:
                 if col in combined_df.columns:
                     combined_df[col] = pd.to_datetime(combined_df[col], format = 'mixed', utc = True)
-                    combined_df[col] = combined_df[col].dt.tz_convert('UTC')
+                    combined_df[col] = combined_df[col].dt.tz_convert(ny_tz)
             
             self.logger.info(f"Combined DataFrame has {len(combined_df)} records after removing duplicates.")
             

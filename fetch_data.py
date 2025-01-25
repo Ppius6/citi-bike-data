@@ -5,6 +5,8 @@ from pytz import timezone
 import os
 from zipfile import ZipFile
 import pandas as pd
+from sqlalchemy import TIMESTAMP
+from sqlalchemy.dialects.postgresql import TIMESTAMP as PG_TIMESTAMP
 from sqlalchemy import create_engine, MetaData, Table, Column, String, Float, DateTime, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
@@ -286,6 +288,16 @@ class DataPipeline:
             return True
 
         try:
+            ny_tz = timezone('America/New_York')
+            date_cols = ['started_at', 'ended_at']
+            
+            for col in date_cols:
+                if col in date_cols:
+                    df[col] = pd.to_datetime(df[col], utc = True).dt.tz_convert(ny_tz)
+                    df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M:%S%z')
+                    
+            self.logger.info("Date columns converted to NY timezone before storing.")
+                        
             # Check for duplicates
             initial_count = len(df)
             duplicate_rides = df[df['ride_id'].duplicated(keep = False)]
@@ -307,6 +319,7 @@ class DataPipeline:
             # Get the latest processed date to avoid duplicates
             latest_date = self.get_latest_processed_date()
             if latest_date:
+                df['started_at'] = pd.to_datetime(df['started_at'], utc = True)
                 df = df[df['started_at'] > latest_date]
                 if df.empty:
                     self.logger.info("No new data to store.")

@@ -1,101 +1,76 @@
 # Citi Bike Data Pipeline
 
-This project is designed to scrape, process, and store Citi Bike trip data. It downloads CSV files, combines them, and stores the processed data in a PostgreSQL database. The project utilizes several Python libraries for data handling, web scraping, and database interactions.
+This project provides an end-to-end pipeline for downloading, processing, and analyzing Citi Bike trip data. It leverages Apache Airflow for orchestration, dbt for analytics engineering, and Docker for easy deployment. Data is stored in a PostgreSQL database and can be transformed and analyzed using dbt models.
 
-## Table of Contents
+## Project Structure
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Environment Variables](#environment-variables)
-- [Database Configuration](#database-configuration)
-- [Troubleshooting](#troubleshooting)
-- [License](#license)
+- `dags/` — Airflow DAGs for orchestrating the pipeline
+- `data/` — Raw Citi Bike CSV data files
+- `dbt/` — dbt project for analytics engineering
+- `sql/` — SQL scripts (e.g., for database initialization)
+- `fetch_data.py` — Script to fetch and preprocess Citi Bike data
+- `dbt_runner.sh` — Helper script to run dbt commands inside Docker
+- `docker-compose.yaml` — Multi-service orchestration (Airflow, Postgres, Redis, etc.)
+- `Dockerfile.dbt` — Dockerfile for dbt service
+- `requirements.txt` — Python dependencies
 
+## Quick Start
 
-## Features
+### 1. Clone the Repository
 
-- **Data Scraping**: Downloads CSV files from a specified URL.
-- **Data Processing**: Combines multiple CSV files into a single DataFrame.
-- **Database Storage**: Stores processed data into a PostgreSQL database.
-- **Logging**: Comprehensive logging for tracking the progress and issues.
-- **Environment Variable Management**: Uses `.env` file to manage sensitive information like database credentials.
+```bash
+git clone https://github.com/Ppius6/citi-bike-data.git
+cd citi-bike-data
+```
 
-## Requirements
+### 2. Set Up Environment Variables
 
-- Python 3.6 or later
-- PostgreSQL database
-- The following Python packages:
-  - `requests`
-  - `beautifulsoup4`
-  - `python-dotenv`
-  - `pandas`
-  - `sqlalchemy`
-  - `lxml`
-
-## Installation
-
-1. **Clone the Repository**
-
-   ```
-   git clone https://github.com/Ppius6/citi-bike-data.git
-
-   cd citi-bike-data
-   ```
-
-2. **Create and Activate a Virtual Environment**
-
-   ```
-   python -m venv myenv
-   myenv\Scripts\activate  # On Windows
-   source myenv/bin/activate  # On Unix or MacOS
-   ```
-
-3. **Install Dependencies**
-
-    ```
-    pip install -r requirements.txt
-    ```
-
-4. **Set Up Environment Variables**
-    
-    Create a .env file in the root directory with the following content:
-
-    ```
-    DB_NAME=your_database_name
-    DB_USER=your_database_user
-    DB_PASSWORD=your_database_password
-    DB_HOST=your_database_host
-    ```
-
-## Usage
-To run the data pipeline, execute the fetch_data.py script:
+Create a `.env` file in the root directory with your database credentials:
 
 ```
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_HOST=your_database_host
+```
+
+### 3. Build and Start the Pipeline (Docker Compose)
+
+```bash
+docker-compose up --build
+```
+
+This will start all services (Airflow, Postgres, Redis, dbt, etc.).
+
+### 4. Run the Data Fetch Script (Optional)
+
+If you want to fetch data manually:
+
+```bash
 python fetch_data.py
 ```
 
-This script will:
+### 5. Access Airflow UI
 
-- Download the latest data files from the specified URL.
-- Extract and combine the CSV files into a single DataFrame.
-- Insert the data into the specified PostgreSQL database.
+Visit [http://localhost:8080](http://localhost:8080) to monitor and trigger DAGs.
 
-## Environment Variables
-The .env file should contain the following variables:
+## Requirements
 
-- DB_NAME: Name of the PostgreSQL database.
-- DB_USER: Username for the PostgreSQL database.
-- DB_PASSWORD: Password for the PostgreSQL database.
-- DB_HOST: Hostname of the PostgreSQL database.
+- Docker & Docker Compose (recommended)
+- Or, for manual setup: Python 3.6+, PostgreSQL, and dependencies in `requirements.txt`
 
-These variables are used to establish a connection to the PostgreSQL database.
+## Data Processing & Analytics
 
-## Database Configuration
-Ensure that the PostgreSQL database is properly set up and accessible. The database credentials should match those specified in the .env file.
+- Raw data is downloaded to `data/`.
+- Airflow DAGs in `dags/` automate the ETL process.
+- dbt models in `dbt/` enable analytics and transformations.
 
 ## Troubleshooting
 
-- ModuleNotFoundError: Ensure all dependencies are installed and the virtual environment is activated.
-- Database Connection Issues: Verify the database credentials and network connection. Ensure the PostgreSQL server is running and accessible.
+- **ModuleNotFoundError**: Ensure all dependencies are installed and the virtual environment is activated.
+- **Database Connection Issues**: Check your `.env` file and ensure the Postgres service is running.
+- **Docker Issues**: Try `docker-compose down -v` to reset volumes if you encounter persistent errors.
+
+## License
+
+MIT License

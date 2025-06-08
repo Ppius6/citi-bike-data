@@ -1,17 +1,63 @@
-# Ignore the data directory
-/data
+# Data directories and files
+data/
+logs/
 
-# Ignore Python bytecode files
-*.pyc
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
 
-# Ignore environment files
-.env
-
-# Ignore virtual environment directories
+# Virtual environments
 venv/
+env/
 newenv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Ignore system-specific files
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# System files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json

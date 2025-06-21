@@ -6,12 +6,10 @@ This project provides an end-to-end pipeline for downloading, processing, and an
 
 - `dags/` — Airflow DAGs for orchestrating the pipeline
 - `data/` — Raw Citi Bike CSV data files
-- `dbt/` — dbt project for analytics engineering
 - `sql/` — SQL scripts (e.g., for database initialization)
 - `fetch_data.py` — Script to fetch and preprocess Citi Bike data
 - `dbt_runner.sh` — Helper script to run dbt commands inside Docker
 - `docker-compose.yaml` — Multi-service orchestration (Airflow, Postgres, Redis, etc.)
-- `Dockerfile.dbt` — Dockerfile for dbt service
 - `requirements.txt` — Python dependencies
 
 ## Quick Start

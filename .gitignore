@@ -1,4 +1,5 @@
 # Data directories and files
+/data
 data/
 logs/
 
@@ -61,3 +62,6 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Logs
+pipeline.log

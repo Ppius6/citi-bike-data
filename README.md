@@ -1,72 +1,115 @@
 # Citi Bike Data Pipeline
 
-This project provides an end-to-end pipeline for downloading, processing, and analyzing Citi Bike trip data. It leverages Apache Airflow for orchestration, dbt for analytics engineering, and Docker for easy deployment. Data is stored in a PostgreSQL database and can be transformed and analyzed using dbt models.
+This project provides an automated data pipeline for downloading, processing, and storing Citi Bike trip data. It supports two approaches:
+
+1. **Lightweight pipeline** (this branch): Downloads CSV files, processes them, and stores data in PostgreSQL and/or MinIO object storage using a modular Python package.
+2. **Airflow-based pipeline** (see `dags/`): Orchestrates the ETL process using Apache Airflow, dbt for transformations, and Docker Compose for deployment.
 
 ## Project Structure
 
+- `citibike/` — Core Python package for data ingestion, processing, and storage
 - `dags/` — Airflow DAGs for orchestrating the pipeline
-- `data/` — Raw Citi Bike CSV data files
-- `sql/` — SQL scripts (e.g., for database initialization)
-- `fetch_data.py` — Script to fetch and preprocess Citi Bike data
-- `dbt_runner.sh` — Helper script to run dbt commands inside Docker
-- `docker-compose.yaml` — Multi-service orchestration (Airflow, Postgres, Redis, etc.)
+- `sql/` — SQL scripts for database initialization
+- `tests/` — Unit tests
+- `Dockerfile` — Container image for the pipeline
+- `docker-compose.yml` — Services: MinIO, PostgreSQL
 - `requirements.txt` — Python dependencies
 
-## Quick Start
+## Table of Contents
 
-### 1. Clone the Repository
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Environment Variables](#environment-variables)
+- [Database Configuration](#database-configuration)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-```bash
-git clone https://github.com/Ppius6/citi-bike-data.git
-cd citi-bike-data
-```
+## Features
 
-### 2. Set Up Environment Variables
+- **Data Ingestion**: Downloads CSV files from the Citi Bike S3 bucket.
+- **Data Processing**: Combines multiple CSV files into a single DataFrame.
+- **Storage**: Stores processed data in PostgreSQL and/or MinIO (S3-compatible object storage).
+- **Logging**: Comprehensive logging for tracking progress and errors.
+- **Containerized**: Docker and Docker Compose support for easy deployment.
+- **Tested**: Unit tests for ingestion and storage components.
 
-Create a `.env` file in the root directory with your database credentials:
+## Requirements
 
-```
-DB_NAME=your_database_name
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_HOST=your_database_host
-```
+- Python 3.8 or later
+- PostgreSQL database
+- MinIO (optional, for object storage)
+- Docker & Docker Compose (recommended)
+- Python packages listed in `requirements.txt`
 
-### 3. Build and Start the Pipeline (Docker Compose)
+## Installation
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/Ppius6/citi-bike-data.git
+   cd citi-bike-data
+   ```
+
+2. **Create and Activate a Virtual Environment**
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Unix/macOS
+   venv\Scripts\activate     # On Windows
+   ```
+
+3. **Install Dependencies**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set Up Environment Variables**
+
+   Create a `.env` file in the root directory:
+
+   ```
+   DB_NAME=your_database_name
+   DB_USER=your_database_user
+   DB_PASSWORD=your_database_password
+   DB_HOST=your_database_host
+   ```
+
+## Usage
+
+### Run with Docker Compose
 
 ```bash
 docker-compose up --build
 ```
 
-This will start all services (Airflow, Postgres, Redis, dbt, etc.).
+This starts MinIO and PostgreSQL services.
 
-### 4. Run the Data Fetch Script (Optional)
-
-If you want to fetch data manually:
+### Run the Pipeline Manually
 
 ```bash
-python fetch_data.py
+python -m citibike.pipeline
 ```
 
-### 5. Access Airflow UI
+### Run Tests
 
-Visit [http://localhost:8080](http://localhost:8080) to monitor and trigger DAGs.
+```bash
+pytest tests/
+```
 
-## Requirements
+## Environment Variables
 
-- Docker & Docker Compose (recommended)
-- Or, for manual setup: Python 3.6+, PostgreSQL, and dependencies in `requirements.txt`
-
-## Data Processing & Analytics
-
-- Raw data is downloaded to `data/`.
-- Airflow DAGs in `dags/` automate the ETL process.
-- dbt models in `dbt/` enable analytics and transformations.
+- `DB_NAME`: Name of the PostgreSQL database.
+- `DB_USER`: Username for the PostgreSQL database.
+- `DB_PASSWORD`: Password for the PostgreSQL database.
+- `DB_HOST`: Hostname of the PostgreSQL database.
 
 ## Troubleshooting
 
 - **ModuleNotFoundError**: Ensure all dependencies are installed and the virtual environment is activated.
-- **Database Connection Issues**: Check your `.env` file and ensure the Postgres service is running.
+- **Database Connection Issues**: Verify the database credentials and ensure the PostgreSQL server is running.
 - **Docker Issues**: Try `docker-compose down -v` to reset volumes if you encounter persistent errors.
 
 ## License

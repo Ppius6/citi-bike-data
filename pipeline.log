@@ -814,3 +814,136 @@
 2025-01-25 14:31:42,567 - INFO - [root] - Pipeline completed successfully.
 2025-01-25 14:31:42,568 - INFO - [root] - DataFrame has 3569582 records.
 2025-01-25 14:31:42,569 - INFO - [root] - Combined CSV file saved at: C:\Users\piusm\OneDrive\Personal\Personal\citi-bike-data\data\combined_trips.csv
+2026-04-28 10:24:36,559 - INFO - [DataPipeline] - Downloaded Zip file: JC-202102-citibike-tripdata.csv.zip
+2026-04-28 10:24:37,119 - INFO - [DataPipeline] - Downloaded Zip file: JC-202103-citibike-tripdata.csv.zip
+2026-04-28 10:24:37,121 - INFO - [DataPipeline] - Downloaded Zip file: JC-202104-citibike-tripdata.csv.zip
+2026-04-28 10:24:49,281 - INFO - [DataPipeline] - Downloaded Zip file: JC-202107-citibike-tripdata.csv.zip
+2026-04-28 10:24:49,648 - INFO - [DataPipeline] - Downloaded Zip file: JC-202108-citibike-tripdata.csv.zip
+2026-04-28 10:24:53,155 - INFO - [DataPipeline] - Downloaded Zip file: JC-202110-citibike-tripdata.csv.zip
+2026-04-28 10:24:53,158 - INFO - [DataPipeline] - Downloaded Zip file: JC-202109-citibike-tripdata.csv.zip
+2026-04-28 10:24:56,879 - INFO - [DataPipeline] - Downloaded Zip file: JC-202105-citibike-tripdata.csv.zip
+2026-04-28 10:25:00,279 - INFO - [DataPipeline] - Downloaded Zip file: JC-202201-citibike-tripdata.csv.zip
+2026-04-28 10:25:02,408 - INFO - [DataPipeline] - Downloaded Zip file: JC-202202-citibike-tripdata.csv.zip
+2026-04-28 10:25:05,035 - INFO - [DataPipeline] - Downloaded Zip file: JC-202203-citibike-tripdata.csv.zip
+2026-04-28 10:25:07,639 - INFO - [DataPipeline] - Downloaded Zip file: JC-202204-citibike-tripdata.csv.zip
+2026-04-28 10:25:09,844 - INFO - [DataPipeline] - Downloaded Zip file: JC-202112-citibike-tripdata.csv.zip
+2026-04-28 10:25:21,530 - INFO - [DataPipeline] - Downloaded Zip file: JC-202106-citibike-tripdata.csv.zip
+2026-04-28 10:25:24,150 - INFO - [DataPipeline] - Downloaded Zip file: JC-202207-citbike-tripdata.csv.zip
+2026-04-28 10:25:28,682 - INFO - [DataPipeline] - Downloaded Zip file: JC-202111-citibike-tripdata.csv.zip
+2026-04-28 10:25:29,459 - INFO - [DataPipeline] - Downloaded Zip file: JC-202208-citibike-tripdata.csv.zip
+2026-04-28 10:25:31,624 - INFO - [DataPipeline] - Downloaded Zip file: JC-202209-citibike-tripdata.csv.zip
+2026-04-28 10:25:32,162 - INFO - [DataPipeline] - Downloaded Zip file: JC-202210-citibike-tripdata.csv.zip
+2026-04-28 10:25:34,084 - INFO - [DataPipeline] - Downloaded Zip file: JC-202211-citibike-tripdata.csv.zip
+2026-04-28 10:25:34,635 - INFO - [DataPipeline] - Downloaded Zip file: JC-202212-citibike-tripdata.csv.zip
+2026-04-28 10:25:45,149 - INFO - [DataPipeline] - Downloaded Zip file: JC-202205-citibike-tripdata.csv.zip
+2026-04-28 10:25:52,316 - INFO - [DataPipeline] - Downloaded Zip file: JC-202206-citibike-tripdata.csv.zip
+2026-04-28 10:25:55,230 - INFO - [DataPipeline] - Downloaded Zip file: JC-202304-citibike-tripdata.csv.zip
+2026-04-28 10:25:58,716 - INFO - [DataPipeline] - Downloaded Zip file: JC-202301-citibike-tripdata.csv.zip
+2026-04-28 10:26:01,176 - INFO - [DataPipeline] - Downloaded Zip file: JC-202306-citibike-tripdata.csv.zip
+2026-04-28 10:26:04,887 - INFO - [DataPipeline] - Downloaded Zip file: JC-202307-citibike-tripdata.csv.zip
+2026-04-28 10:26:06,235 - INFO - [DataPipeline] - Downloaded Zip file: JC-202302-citibike-tripdata.csv.zip
+2026-04-28 10:26:13,133 - INFO - [DataPipeline] - Downloaded Zip file: JC-202303-citibike-tripdata.csv.zip
+2026-04-28 10:26:14,077 - INFO - [DataPipeline] - Downloaded Zip file: JC-202309-citibike-tripdata.csv.zip
+2026-04-28 10:26:16,674 - INFO - [DataPipeline] - Downloaded Zip file: JC-202310-citibike-tripdata.csv.zip
+2026-04-28 10:26:17,220 - INFO - [DataPipeline] - Downloaded Zip file: JC-202311-citibike-tripdata.csv.zip
+2026-04-28 10:26:19,630 - INFO - [DataPipeline] - Downloaded Zip file: JC-202401-citibike-tripdata.csv.zip
+2026-04-28 10:26:21,909 - INFO - [DataPipeline] - Downloaded Zip file: JC-202402-citibike-tripdata.csv.zip
+2026-04-28 10:26:24,292 - INFO - [DataPipeline] - Downloaded Zip file: JC-202403-citibike-tripdata.csv.zip
+2026-04-28 10:26:26,719 - INFO - [DataPipeline] - Downloaded Zip file: JC-202404-citibike-tripdata.csv.zip
+2026-04-28 10:26:29,140 - INFO - [DataPipeline] - Downloaded Zip file: JC-202405-citibike-tripdata.csv.zip
+2026-04-28 10:26:31,936 - INFO - [DataPipeline] - Downloaded Zip file: JC-202406-citibike-tripdata.csv.zip
+2026-04-28 10:26:34,734 - INFO - [DataPipeline] - Downloaded Zip file: JC-202407-citibike-tripdata.csv.zip
+2026-04-28 10:26:37,949 - INFO - [DataPipeline] - Downloaded Zip file: JC-202408-citibike-tripdata.csv.zip
+2026-04-28 10:26:40,964 - INFO - [DataPipeline] - Downloaded Zip file: JC-202409-citibike-tripdata.csv.zip
+2026-04-28 10:26:42,617 - INFO - [DataPipeline] - Downloaded Zip file: JC-202305-citibike-tripdata.csv.zip
+2026-04-28 10:26:45,484 - INFO - [DataPipeline] - Downloaded Zip file: JC-202411-citibike-tripdata.csv.zip
+2026-04-28 10:26:47,641 - INFO - [DataPipeline] - Downloaded Zip file: JC-202312-citibike-tripdata.csv.zip
+2026-04-28 10:26:50,151 - INFO - [DataPipeline] - Downloaded Zip file: JC-202501-citibike-tripdata.csv.zip
+2026-04-28 10:27:10,875 - INFO - [DataPipeline] - Downloaded Zip file: JC-202412-citibike-tripdata.csv.zip
+2026-04-28 10:27:19,075 - INFO - [DataPipeline] - Downloaded Zip file: JC-202502-citibike-tripdata.csv.zip
+2026-04-28 10:27:21,834 - INFO - [DataPipeline] - Downloaded Zip file: JC-202308-citibike-tripdata.csv.zip
+2026-04-28 10:27:24,429 - INFO - [DataPipeline] - Downloaded Zip file: JC-202505-citibike-tripdata.csv.zip
+2026-04-28 10:27:27,215 - INFO - [DataPipeline] - Downloaded Zip file: JC-202506-citibike-tripdata.csv.zip
+2026-04-28 10:27:30,160 - INFO - [DataPipeline] - Downloaded Zip file: JC-202507-citibike-tripdata.csv.zip
+2026-04-28 10:27:33,043 - INFO - [DataPipeline] - Downloaded Zip file: JC-202508-citibike-tripdata.csv.zip
+2026-04-28 10:27:39,755 - INFO - [DataPipeline] - Downloaded Zip file: JC-202410-citibike-tripdata.csv.zip
+2026-04-28 10:27:42,161 - INFO - [DataPipeline] - Downloaded Zip file: JC-202510-citibike-tripdata.zip
+2026-04-28 10:27:54,914 - INFO - [DataPipeline] - Downloaded Zip file: JC-202503-citibike-tripdata.csv.zip
+2026-04-28 10:28:02,094 - INFO - [DataPipeline] - Downloaded Zip file: JC-202504-citibike-tripdata.csv.zip
+2026-04-28 10:28:04,485 - INFO - [DataPipeline] - Downloaded Zip file: JC-202601-citibike-tripdata.zip
+2026-04-28 10:28:06,954 - INFO - [DataPipeline] - Downloaded Zip file: JC-202602-citibike-tripdata.csv.zip
+2026-04-28 10:28:10,896 - INFO - [DataPipeline] - Downloaded Zip file: JC-202603-citibike-tripdata.csv.zip
+2026-04-28 10:28:15,795 - INFO - [DataPipeline] - Downloaded Zip file: JC-202512-citibike-tripdata.csv.zip
+2026-04-28 10:28:20,091 - INFO - [DataPipeline] - Downloaded Zip file: JC-202511-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,202 - INFO - [DataPipeline] - Downloaded Zip file: JC-202509-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,207 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202102-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,258 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202103-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,307 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202104-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,374 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202105-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,501 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202106-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,709 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202107-citibike-tripdata.csv.zip
+2026-04-28 10:28:35,953 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202108-citibike-tripdata.csv.zip
+2026-04-28 10:28:36,222 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202109-citibike-tripdata.csv.zip
+2026-04-28 10:28:36,502 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202110-citibike-tripdata.csv.zip
+2026-04-28 10:28:36,750 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202111-citibike-tripdata.csv.zip
+2026-04-28 10:28:36,925 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202112-citibike-tripdata.csv.zip
+2026-04-28 10:28:37,059 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202201-citibike-tripdata.csv.zip
+2026-04-28 10:28:37,139 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202202-citibike-tripdata.csv.zip
+2026-04-28 10:28:37,237 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202203-citibike-tripdata.csv.zip
+2026-04-28 10:28:37,393 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202204-citibike-tripdata.csv.zip
+2026-04-28 10:28:37,579 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202205-citibike-tripdata.csv.zip
+2026-04-28 10:28:37,821 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202206-citibike-tripdata.csv.zip
+2026-04-28 10:28:38,162 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202207-citbike-tripdata.csv.zip
+2026-04-28 10:28:38,471 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202208-citibike-tripdata.csv.zip
+2026-04-28 10:28:38,796 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202209-citibike-tripdata.csv.zip
+2026-04-28 10:28:39,088 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202210-citibike-tripdata.csv.zip
+2026-04-28 10:28:39,339 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202211-citibike-tripdata.csv.zip
+2026-04-28 10:28:39,550 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202212-citibike-tripdata.csv.zip
+2026-04-28 10:28:39,690 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202301-citibike-tripdata.csv.zip
+2026-04-28 10:28:39,854 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202302-citibike-tripdata.csv.zip
+2026-04-28 10:28:40,005 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202303-citibike-tripdata.csv.zip
+2026-04-28 10:28:40,189 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202304-citibike-tripdata.csv.zip
+2026-04-28 10:28:40,426 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202305-citibike-tripdata.csv.zip
+2026-04-28 10:28:40,701 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202306-citibike-tripdata.csv.zip
+2026-04-28 10:28:40,982 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202307-citibike-tripdata.csv.zip
+2026-04-28 10:28:41,283 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202308-citibike-tripdata.csv.zip
+2026-04-28 10:28:41,599 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202309-citibike-tripdata.csv.zip
+2026-04-28 10:28:41,870 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202310-citibike-tripdata.csv.zip
+2026-04-28 10:28:42,149 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202311-citibike-tripdata.csv.zip
+2026-04-28 10:28:42,361 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202312-citibike-tripdata.csv.zip
+2026-04-28 10:28:42,532 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202401-citibike-tripdata.csv.zip
+2026-04-28 10:28:42,681 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202402-citibike-tripdata.csv.zip
+2026-04-28 10:28:42,854 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202403-citibike-tripdata.csv.zip
+2026-04-28 10:28:43,050 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202404-citibike-tripdata.csv.zip
+2026-04-28 10:28:43,280 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202405-citibike-tripdata.csv.zip
+2026-04-28 10:28:43,570 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202406-citibike-tripdata.csv.zip
+2026-04-28 10:28:43,902 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202407-citibike-tripdata.csv.zip
+2026-04-28 10:28:44,249 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202408-citibike-tripdata.csv.zip
+2026-04-28 10:28:44,554 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202409-citibike-tripdata.csv.zip
+2026-04-28 10:28:44,898 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202410-citibike-tripdata.csv.zip
+2026-04-28 10:28:45,243 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202411-citibike-tripdata.csv.zip
+2026-04-28 10:28:45,485 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202412-citibike-tripdata.csv.zip
+2026-04-28 10:28:45,652 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202501-citibike-tripdata.csv.zip
+2026-04-28 10:28:45,812 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202502-citibike-tripdata.csv.zip
+2026-04-28 10:28:45,952 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202503-citibike-tripdata.csv.zip
+2026-04-28 10:28:46,174 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202504-citibike-tripdata.csv.zip
+2026-04-28 10:28:46,423 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202505-citibike-tripdata.csv.zip
+2026-04-28 10:28:46,700 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202506-citibike-tripdata.csv.zip
+2026-04-28 10:28:46,996 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202507-citibike-tripdata.csv.zip
+2026-04-28 10:28:47,310 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202508-citibike-tripdata.csv.zip
+2026-04-28 10:28:47,630 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202509-citibike-tripdata.csv.zip
+2026-04-28 10:28:47,970 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202510-citibike-tripdata.zip
+2026-04-28 10:28:48,264 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202511-citibike-tripdata.csv.zip
+2026-04-28 10:28:48,483 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202512-citibike-tripdata.csv.zip
+2026-04-28 10:28:48,669 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202601-citibike-tripdata.zip
+2026-04-28 10:28:48,783 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202602-citibike-tripdata.csv.zip
+2026-04-28 10:28:48,874 - INFO - [DataPipeline] - Extracted CSV file from ZIP: JC-202603-citibike-tripdata.csv.zip
+2026-04-28 10:28:51,049 - INFO - [DataPipeline] - Combined DataFrame has 4700506 records after removing duplicates.
+2026-04-28 10:30:19,282 - INFO - [DataPipeline] - Date columns converted to NY timezone before storing.
+2026-04-28 10:30:22,021 - ERROR - [DataPipeline] - Error fetching latest date: (psycopg2.OperationalError) could not translate host name "None" to address: nodename nor servname provided, or not known
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-28 10:30:22,047 - ERROR - [DataPipeline] - Error storing data: (psycopg2.OperationalError) could not translate host name "None" to address: nodename nor servname provided, or not known
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-28 10:30:22,047 - ERROR - [root] - Pipeline failed.

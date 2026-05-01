@@ -5,6 +5,7 @@ from typing import Optional
 
 from citibike.config import Config
 from citibike.ingest import Downloader
+from citibike.loader import BronzeLoader
 from citibike.storage import MinIOClient
 
 
@@ -64,26 +65,16 @@ def process_file(
     return key
 
 
-def run(config: Optional[Config] = None) -> bool:
+def run_ingest(config: Config) -> bool:
     """
-    Execute the full Phase 1 pipeline:
-      1. Fetch the file list from the Citi Bike S3 bucket
-      2. Filter out files already in MinIO
-      3. Download, convert, and upload new files in parallel
-
-    Returns True if the run completed without fatal errors.
+    Phase 1 — fetch, download, convert, and upload Parquet files to MinIO.
+    Returns True if completed without fatal errors.
     """
-    if config is None:
-        config = Config()
-
-    setup_logging()
-
     downloader = Downloader(config.source, config.pipeline)
     minio = MinIOClient(config.minio)
 
-    logger.info("Pipeline started.")
+    logger.info("Ingest started.")
 
-    # Step 1 — get the full file list from source
     try:
         file_list = downloader.get_file_list()
     except Exception as e:
@@ -91,10 +82,9 @@ def run(config: Optional[Config] = None) -> bool:
         return False
 
     if not file_list:
-        logger.info("No files found. Exiting.")
+        logger.info("No files found at source.")
         return True
 
-    # Step 2 — filter out files already uploaded to MinIO
     new_files = [
         f
         for f in file_list
@@ -102,12 +92,11 @@ def run(config: Optional[Config] = None) -> bool:
     ]
 
     if not new_files:
-        logger.info("All files already in MinIO. Nothing to do.")
+        logger.info("All files already in MinIO.")
         return True
 
-    logger.info(f"{len(new_files)} new file(s) to process.")
+    logger.info(f"{len(new_files)} new file(s) to ingest.")
 
-    # Step 3 — download, convert, and upload in parallel
     uploaded = []
     failed = []
 
@@ -122,21 +111,66 @@ def run(config: Optional[Config] = None) -> bool:
                 key = future.result()
                 if key:
                     uploaded.append(key)
-                    logger.info(f"Successfully processed: {file_name}")
+                    logger.info(f"Ingested: {file_name}")
                 else:
                     failed.append(file_name)
-                    logger.warning(f"Processing returned no result: {file_name}")
+                    logger.warning(f"Ingest returned no result: {file_name}")
             except Exception as e:
                 failed.append(file_name)
-                logger.error(f"Unhandled error processing {file_name}: {e}")
+                logger.error(f"Unhandled error ingesting {file_name}: {e}")
 
-    # Step 4 — summary
-    logger.info(f"Pipeline complete. Uploaded: {len(uploaded)} | Failed: {len(failed)}")
+    logger.info(f"Ingest complete. Uploaded: {len(uploaded)} | Failed: {len(failed)}")
 
     if failed:
         logger.warning(f"Failed files: {failed}")
 
     return len(failed) == 0
+
+
+def run_bronze_load(config: Config) -> bool:
+    """
+    Load Parquet files from MinIO into Postgres bronze.trips.
+    Returns True if completed without fatal errors.
+    """
+    minio = MinIOClient(config.minio)
+    loader = BronzeLoader(config.postgres, minio)
+
+    logger.info("Bronze load started.")
+    success = loader.run()
+
+    if success:
+        logger.info("Bronze load complete.")
+    else:
+        logger.error("Bronze load finished with failures.")
+
+    return success
+
+
+def run(config: Optional[Config] = None) -> bool:
+    """
+    Execute the full pipeline:
+      1. Ingest — download source files, convert to Parquet, land in MinIO
+      2. Bronze load — read Parquet from MinIO, load into Postgres bronze.trips
+
+    Returns True if both phases completed without fatal errors.
+    """
+
+    if config is None:
+        config = Config()
+
+    setup_logging()
+    logger.info("Pipeline started.")
+
+    if not run_ingest(config):
+        logger.error("Ingest phase failed. Aborting.")
+        return False
+
+    if not run_bronze_load(config):
+        logger.error("Bronze load phase failed.")
+        return False
+
+    logger.info("Pipeline completed successfully.")
+    return True
 
 
 if __name__ == "__main__":

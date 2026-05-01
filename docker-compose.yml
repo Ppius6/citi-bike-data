@@ -7,8 +7,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Web console
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -36,6 +36,25 @@ services:
       timeout: 5s
       retries: 5
 
+  clickhouse:
+      image: clickhouse/clickhouse-server:24.3
+      container_name: citibike-clickhouse
+      ports:
+        - "8123:8123"
+        - "9009:9009"
+      volumes:
+        - clickhouse_data:/var/lib/clickhouse
+        - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml
+        - ./clickhouse/users.xml:/etc/clickhouse-server/users.d/users.xml
+      healthcheck:
+        test: ["CMD", "clickhouse-client", "--port", "9009", "--query", "SELECT 1"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      depends_on:
+        postgres:
+          condition: service_healthy
+
   pipeline:
     build: .
     container_name: citibike-pipeline
@@ -51,6 +70,52 @@ services:
       postgres:
         condition: service_healthy
 
+  prefect-server:
+    image: prefecthq/prefect:3-latest
+    container_name: citibike-prefect
+    command: prefect server start --host 0.0.0.0
+    ports:
+      - "4200:4200"
+    environment:
+      PREFECT_SERVER_DATABASE_CONNECTION_URL: "sqlite+aiosqlite:////root/.prefect/prefect.db"
+    volumes:
+      - prefect_data:/root/.prefect
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4200/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  prefect-worker:
+    build: .                              # Uses the Dockerfile, not prefect image
+    container_name: citibike-prefect-worker
+    command: prefect worker start --pool 'local-pool'
+    env_file: .env
+    environment:
+      PREFECT_API_URL: http://prefect-server:4200/api
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DBT_PROFILES_DIR: /app/dbt/citibike_dbt
+      CLICKHOUSE_HOST: clickhouse
+    volumes:
+      - .:/app                            # Mounts full project so dbt files are accessible
+    working_dir: /app
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+
 volumes:
   minio_data:
   postgres_data:
+  clickhouse_data:
+  prefect_data:

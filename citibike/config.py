@@ -34,19 +34,20 @@ class PipelineConfig:
 class PostgresConfig:
     host: str = os.getenv("DB_HOST", "postgres")
     port: int = int(os.getenv("DB_PORT", "5432"))
-    name: str = os.getenv("DB_NAME", "citibike")
+    name: str = os.getenv("DB_NAME", "citi-bike")
     user: str = os.getenv("DB_USER", "postgres")
-    password: str = os.getenv("DB_PASSWORD", "postgres")
+    password: str = os.getenv("DB_PASSWORD", "")
     bronze_schema: str = "bronze"
     silver_schema: str = "silver"
     chunk_size: int = 5000
-    
+
     @property
     def url(self) -> str:
         return (
             f"postgresql+psycopg2://{self.user}:{self.password}"
             f"@{self.host}:{self.port}/{self.name}"
         )
+
 
 @dataclass
 class Config:

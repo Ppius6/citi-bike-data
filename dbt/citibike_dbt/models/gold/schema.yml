@@ -1,0 +1,70 @@
+version: 2
+
+sources:
+  - name: silver
+    schema: silver
+    tables:
+      - name: silver_trips
+        description: "Bridge table — ClickHouse PostgreSQL engine reading from Postgres silver.silver_trips"
+
+  - name: snapshots
+    schema: snapshots
+    tables:
+      - name: station_snapshot
+        description: "Bridge table — ClickHouse PostgreSQL engine reading from Postgres snapshots.station_snapshot"
+
+models:
+  - name: dim_date
+    description: "Date dimension — every date from 2021-01-01 to today"
+    columns:
+      - name: date_key
+        description: "Surrogate key — MD5 hash of full_date"
+        data_tests:
+          - not_null
+          - unique
+      - name: full_date
+        description: "The actual date"
+        data_tests:
+          - not_null
+
+  - name: dim_station
+    description: "Station dimension with SCD Type 2 history"
+    columns:
+      - name: station_key
+        description: "Surrogate key"
+        data_tests:
+          - not_null
+      - name: station_id
+        description: "Natural key from source"
+        data_tests:
+          - not_null
+
+  - name: dim_rider_type
+    description: "Rider type dimension — member or casual"
+    columns:
+      - name: rider_type_key
+        description: "Surrogate key"
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_bike_type
+    description: "Bike type dimension"
+    columns:
+      - name: bike_type_key
+        description: "Surrogate key"
+        data_tests:
+          - not_null
+          - unique
+
+  - name: fact_trips
+    description: "Fact table — one row per ride, FK references to all dimensions"
+    columns:
+      - name: trip_key
+        description: "Surrogate key for the fact row"
+        data_tests:
+          - not_null
+      - name: ride_id
+        description: "Natural key from source"
+        data_tests:
+          - not_null

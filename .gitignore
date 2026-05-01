@@ -65,3 +65,9 @@ dmypy.json
 
 # Logs
 pipeline.log
+
+# Added by ggshield
+.cache_ggshield
+
+# dbt profiles
+dbt/citibike_dbt/profiles.yml

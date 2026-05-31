@@ -1,0 +1,21 @@
+# Virtual Environments
+env/
+newenv/
+
+# Data Files
+data/
+*.csv
+*.parquet
+
+# Nested dbt Artifacts (The ** tells Docker to look in all subfolders)
+**/target/
+**/dbt_packages/
+**/logs/
+
+# Git and Caches
+.git/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.cache_ggshield/

@@ -31,7 +31,7 @@ deployments:
   schedule:
     cron: "0 6 1 * *"
     timezone: "America/New_York"
-  entrypoint: citibike/flows.py:citibike_pipeline
+  entrypoint: scripts/orchestration/flows.py:citibike_pipeline
   parameters: {}
   work_pool:
     name: local-pool

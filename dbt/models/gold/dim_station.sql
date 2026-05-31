@@ -16,9 +16,7 @@ WITH snapshot AS (
         longitude,
         dbt_valid_from,
         dbt_valid_to,
-        CASE 
-            WHEN dbt_valid_to IS NULL THEN 1 ELSE 0
-        END AS is_current,
+        {{ is_current_flag('dbt_valid_to') }}   AS is_current,
         dbt_scd_id
     FROM {{ source('snapshots', 'station_snapshot') }}
 )

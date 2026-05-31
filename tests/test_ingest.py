@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 import requests
 
-from citibike.ingest import Downloader
+from scripts.ingest import Downloader
 
 
 @pytest.fixture

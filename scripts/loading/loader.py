@@ -5,8 +5,8 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from citibike.config import PostgresConfig
-from citibike.storage import MinIOClient
+from scripts.config.config import PostgresConfig
+from scripts.storage.minio_client import MinIOClient
 
 logger = logging.getLogger(__name__)
 
@@ -22,17 +22,6 @@ class BronzeLoader:
             pool_timeout=30,
             pool_recycle=1800,
         )
-        self._ensure_schema()
-
-    def _ensure_schema(self) -> None:
-        """
-        Create the bronze schema if it does not exist.
-        """
-        with self.engine.begin() as conn:
-            conn.execute(
-                text(f"CREATE SCHEMA IF NOT EXISTS {self.postgres.bronze_schema}")
-            )
-        logger.info(f"Schema '{self.postgres.bronze_schema}' is ready.")
 
     def _table_ref(self) -> str:
         return f"{self.postgres.bronze_schema}.trips"

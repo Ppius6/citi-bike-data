@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from citibike.config import PipelineConfig, SourceConfig
+from scripts.config.config import PipelineConfig, SourceConfig
 
 logger = logging.getLogger(__name__)
 

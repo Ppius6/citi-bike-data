@@ -3,10 +3,10 @@ import logging.config
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
-from citibike.config import Config
-from citibike.ingest import Downloader
-from citibike.loader import BronzeLoader
-from citibike.storage import MinIOClient
+from scripts.config.config import Config
+from scripts.ingestion.ingest import Downloader
+from scripts.loading.loader import BronzeLoader
+from scripts.storage.minio_client import MinIOClient
 
 
 def setup_logging() -> None:

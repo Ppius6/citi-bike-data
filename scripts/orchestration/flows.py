@@ -6,11 +6,11 @@ from prefect import flow, task, get_run_logger
 from prefect.tasks import task_input_hash
 from datetime import timedelta
 
-from citibike.config import Config
-from citibike.pipeline import run_ingest, run_bronze_load
+from scripts.config.config import Config
+from scripts.pipeline import run_ingest, run_bronze_load
 
 # Absolute path to the dbt project
-DBT_PROJECT_DIR = Path(__file__).resolve().parent.parent / "dbt" / "citibike_dbt"
+DBT_PROJECT_DIR = Path(__file__).resolve().parent.parent.parent / "dbt"
 
 
 def run_dbt(command: str) -> bool:
@@ -155,7 +155,7 @@ def dbt_test_task(target: str = "dev", models: str = "") -> bool:
 
 @flow(
     name="citibike_pipeline",
-    description="Full Citi Bike data pipeline — ingest to gold layer",
+    description="Citi Bike data pipeline: Ingest from S3 to MinIO, load to Postgres, transform with dbt, test all layers",
     log_prints=True,
 )
 def citibike_pipeline():

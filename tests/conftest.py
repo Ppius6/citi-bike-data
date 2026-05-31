@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from citibike.config import Config, MinIOConfig, PipelineConfig, SourceConfig
+from scripts.config.config import Config, MinIOConfig, PipelineConfig, SourceConfig
 
 
 @pytest.fixture

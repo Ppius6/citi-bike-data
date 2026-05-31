@@ -31,22 +31,22 @@ cleaned AS (
         LOWER(TRIM(rideable_type)) AS rideable_type,
 
         -- Timezone conversion from UTC to New York
-        started_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS started_at,
-        ended_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS ended_at,
+        {{ convert_to_eastern('started_at') }} AS started_at,
+        {{ convert_to_eastern('ended_at') }} AS ended_at,
 
         -- Derived time dimensions
-        DATE(started_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') AS start_date,
-        EXTRACT(HOUR FROM started_at AT TIME ZONE 'America/New_York')::INT AS start_hour,
-        TO_CHAR(started_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York', 'Day') AS day_of_week,
+        DATE({{ convert_to_eastern('started_at') }}) AS start_date,
+        EXTRACT(HOUR FROM {{ convert_to_eastern('started_at') }})::INT AS start_hour,
+        TO_CHAR({{ convert_to_eastern('started_at') }}, 'Day') AS day_of_week,
 
         -- Ride duration
         ROUND(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60.0, 2) AS ride_duration_minutes,
 
         -- Station fields - nulls preserved 
-        NULLIF(TRIM(start_station_name), '') AS start_station_name,
-        NULLIF(TRIM(start_station_id), '') AS start_station_id,
-        NULLIF(TRIM(end_station_name), '') AS end_station_name,
-        NULLIF(TRIM(end_station_id), '') AS end_station_id,
+        {{ clean_string('start_station_name') }} AS start_station_name,
+        {{ clean_string('start_station_id') }} AS start_station_id,
+        {{ clean_string('end_station_name') }} AS end_station_name,
+        {{ clean_string('end_station_id') }} AS end_station_id,
 
         -- Coordinates
         start_lat,

@@ -6,8 +6,8 @@ from pathlib import Path
 @dataclass
 class MinIOConfig:
     endpoint: str = os.getenv("MINIO_ENDPOINT", "minio:9000")
-    access_key: str = os.getenv("MINIO_ROOT_USER", "minioadmin")
-    secret_key: str = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
+    access_key: str = os.getenv("MINIO_ACCESS_KEY", "data_engineer")
+    secret_key: str = os.getenv("MINIO_SECRET_KEY", "")
     bucket: str = os.getenv("MINIO_BUCKET", "citibike")
     use_ssl: bool = False
 

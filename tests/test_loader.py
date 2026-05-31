@@ -4,8 +4,8 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch, PropertyMock
 from sqlalchemy.exc import SQLAlchemyError
 
-from citibike.config import PostgresConfig
-from citibike.loader import BronzeLoader
+from scripts.config import PostgresConfig
+from scripts.loader import BronzeLoader
 
 
 @pytest.fixture

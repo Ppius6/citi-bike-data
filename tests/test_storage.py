@@ -3,7 +3,7 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch
 from botocore.exceptions import ClientError
 
-from citibike.storage import MinIOClient
+from scripts.storage import MinIOClient
 
 
 def make_client_error(code: str) -> ClientError:

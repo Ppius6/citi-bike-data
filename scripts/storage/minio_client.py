@@ -5,7 +5,7 @@ import boto3
 from botocore.client import Config as BotoConfig
 from botocore.exceptions import ClientError
 
-from citibike.config import MinIOConfig
+from scripts.config.config import MinIOConfig
 
 logger = logging.getLogger(__name__)
 

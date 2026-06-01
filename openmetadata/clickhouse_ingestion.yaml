@@ -1,0 +1,24 @@
+source:
+  type: clickhouse
+  serviceName: citi-bike-clickhouse
+  serviceConnection:
+    config:
+      type: Clickhouse
+      username: data_engineer
+      password: "${CLICKHOUSE_ENGINEER_PASSWORD}"
+      hostPort: clickhouse:8123
+      databaseSchema: gold
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+
+sink:
+  type: metadata-rest
+  config: {}
+
+workflowConfig:
+  openMetadataServerConfig:
+    hostPort: http://openmetadata:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: "${OPENMETADATA_JWT_TOKEN}"

@@ -1,0 +1,20 @@
+# Citi Bike source schema contract
+# Validates extracted CSV data before it lands in MinIO
+
+checks for bronze.trips:
+  - row_count > 0:
+      name: "File has rows"
+  - missing_count(ride_id) = 0:
+      name: "ride_id has no nulls"
+  - missing_count(started_at) = 0:
+      name: "started_at has no nulls"
+  - missing_count(ended_at) = 0:
+      name: "ended_at has no nulls"
+  - invalid_count(member_casual) = 0:
+      valid values: [member, casual]
+      name: "member_casual only contains valid values"
+  - invalid_count(rideable_type) = 0:
+      valid values: [electric_bike, classic_bike, docked_bike]
+      name: "rideable_type only contains valid values"
+  - freshness(started_at) < 40d:
+      name: "Data is not older than expected"

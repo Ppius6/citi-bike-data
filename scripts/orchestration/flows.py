@@ -4,13 +4,40 @@ from pathlib import Path
 
 from prefect import flow, task, get_run_logger
 from prefect.tasks import task_input_hash
-from datetime import timedelta
+from prefect.blocks.notifications import SlackWebhook
 
 from scripts.config.config import Config
 from scripts.pipeline import run_ingest, run_bronze_load
+from scripts.quality.validator import run_quality_checks
+
+from openlineage.client import OpenLineageClient
+from openlineage.client.run import RunEvent, RunState, Run, Job, Dataset
+
+from datetime import datetime, timedelta
+from uuid import uuid4
 
 # Absolute path to the dbt project
 DBT_PROJECT_DIR = Path(__file__).resolve().parent.parent.parent / "dbt"
+
+
+def emit_lineage_event(
+    job_name: str, inputs: list[str], outputs: list[str], state: RunState
+) -> None:
+    try:
+        client = OpenLineageClient.from_environment()
+        client.emit(
+            RunEvent(
+                eventType=state,
+                eventTime=datetime.utcnow().isoformat(),
+                run=Run(runId=str(uuid4())),
+                job=Job(namespace="citibike", name=job_name),
+                producer="https://github.com/Ppius6/citi-bike-data",
+                inputs=[Dataset(namespace="citibike", name=i) for i in inputs],
+                outputs=[Dataset(namespace="citibike", name=o) for o in outputs],
+            )
+        )
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Lineage emission failed (non-fatal): {e}")
 
 
 def run_dbt(command: str) -> bool:
@@ -59,6 +86,12 @@ def ingest_task(config: Config) -> bool:
     success = run_ingest(config)
     if not success:
         raise RuntimeError("Ingest phase failed.")
+    emit_lineage_event(
+        job_name="ingest",
+        inputs=["s3://tripdata"],
+        outputs=["minio://citibike/bronze/"],
+        state=RunState.COMPLETE,
+    )
     return success
 
 
@@ -74,6 +107,44 @@ def bronze_load_task(config: Config) -> bool:
     success = run_bronze_load(config)
     if not success:
         raise RuntimeError("Bronze load phase failed.")
+    emit_lineage_event(
+        job_name="bronze_load",
+        inputs=["minio://citibike/bronze/"],
+        outputs=["postgres://bronze.trips"],
+        state=RunState.COMPLETE,
+    )
+    return success
+
+
+@task(
+    name="quality_check_bronze",
+    description="Run Soda Core quality checks on bronze.trips",
+    retries=1,
+    retry_delay_seconds=30,
+)
+def quality_check_task(config: Config) -> bool:
+    logger = get_run_logger()
+    logger.info("Running quality checks on bronze.trips.")
+
+    checks_path = (
+        Path(__file__).resolve().parent.parent.parent
+        / "scripts"
+        / "quality"
+        / "checks.yml"
+    )
+
+    connection_config = {
+        "host": config.postgres.host,
+        "port": config.postgres.port,
+        "user": config.postgres.user,
+        "password": config.postgres.password,
+        "database": config.postgres.name,
+    }
+
+    success = run_quality_checks("bronze", checks_path, connection_config)
+
+    if not success:
+        raise RuntimeError("Quality checks failed — pipeline halted.")
     return success
 
 
@@ -89,6 +160,12 @@ def dbt_bronze_task() -> bool:
     success = run_dbt("run --select bronze_trips --target dev")
     if not success:
         raise RuntimeError("dbt bronze run failed.")
+    emit_lineage_event(
+        job_name="dbt_bronze",
+        inputs=["postgres://bronze.trips"],
+        outputs=["postgres://bronze.bronze_trips"],
+        state=RunState.COMPLETE,
+    )
     return success
 
 
@@ -104,6 +181,27 @@ def dbt_silver_task() -> bool:
     success = run_dbt("run --select silver_trips --target dev")
     if not success:
         raise RuntimeError("dbt silver run failed.")
+    emit_lineage_event(
+        job_name="dbt_silver",
+        inputs=["postgres://bronze.bronze_trips"],
+        outputs=["postgres://silver.silver_trips"],
+        state=RunState.COMPLETE,
+    )
+    return success
+
+
+@task(
+    name="dbt_elementary",
+    description="Initialise Elementary models in silver schema",
+    retries=1,
+    retry_delay_seconds=30,
+)
+def dbt_elementary_task() -> bool:
+    logger = get_run_logger()
+    logger.info("Running Elementary setup.")
+    success = run_dbt("run --select elementary --target dev")
+    if not success:
+        raise RuntimeError("Elementary setup failed.")
     return success
 
 
@@ -119,6 +217,12 @@ def dbt_snapshot_task() -> bool:
     success = run_dbt("snapshot --target dev")
     if not success:
         raise RuntimeError("dbt snapshot failed.")
+    emit_lineage_event(
+        job_name="dbt_snapshot",
+        inputs=["postgres://silver.silver_trips"],
+        outputs=["postgres://snapshots.station_snapshot"],
+        state=RunState.COMPLETE,
+    )
     return success
 
 
@@ -134,6 +238,12 @@ def dbt_gold_task() -> bool:
     success = run_dbt("run --select gold.* --target clickhouse")
     if not success:
         raise RuntimeError("dbt gold run failed.")
+    emit_lineage_event(
+        job_name="dbt_gold",
+        inputs=["postgres://silver.silver_trips"],
+        outputs=["clickhouse://gold.fact_trips"],
+        state=RunState.COMPLETE,
+    )
     return success
 
 
@@ -153,10 +263,23 @@ def dbt_test_task(target: str = "dev", models: str = "") -> bool:
     return success
 
 
+def alert_on_failure(flow, flow_run, state):
+    try:
+        slack = SlackWebhook.load("citibike-alerts")
+        slack.notify(
+            f"Pipeline failed: {flow_run.name}\n"
+            f"State: {state.message}\n"
+            f"View: http://localhost:4200/runs/flow-run/{flow_run.id}"
+        )
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Slack alert failed (non-fatal): {e}")
+
+
 @flow(
     name="citibike_pipeline",
     description="Citi Bike data pipeline: Ingest from S3 to MinIO, load to Postgres, transform with dbt, test all layers",
     log_prints=True,
+    on_failure=[alert_on_failure],
 )
 def citibike_pipeline():
     logger = get_run_logger()
@@ -169,8 +292,10 @@ def citibike_pipeline():
 
     # Bronze and silver in Postgres
     bronze_load_task(config)
+    quality_check_task(config)
     dbt_bronze_task()
     dbt_silver_task()
+    dbt_elementary_task()
 
     # Snapshot and Gold in ClickHouse
     dbt_snapshot_task()

@@ -8,6 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from scripts.config.config import PostgresConfig
 from scripts.storage.minio_client import MinIOClient
 
+import time
+from datetime import datetime
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,17 +89,13 @@ class BronzeLoader:
             return False
 
     def run(self) -> bool:
-        """
-        Load all Parquet files from the bronze MinIO prefix into
-        Postgres bronze.trips, skipping files already loaded.
+        start_time = time.time()
 
-        Returns:
-            bool: True if all files loaded successfully.
-        """
         all_keys = self.minio.list_objects(prefix="bronze/")
 
         if not all_keys:
-            logger.info("No Parquet files found in MiniO bronze/.")
+            logger.info("No Parquet files found in MinIO bronze/.")
+            self._log_metrics(0, 0, start_time)
             return True
 
         loaded_sources = self.get_loaded_sources()
@@ -112,6 +111,7 @@ class BronzeLoader:
 
         if not new_keys:
             logger.info("All Parquet files already loaded into bronze.trips.")
+            self._log_metrics(0, 0, start_time)
             return True
 
         logger.info(f"{len(new_keys)} new Parquet file(s) to load.")
@@ -122,12 +122,22 @@ class BronzeLoader:
             if not success:
                 failed.append(key)
 
-        logger.info(
-            f"Bronze load complete. "
-            f"Loaded: {len(new_keys) - len(failed)} | failed: {len(failed)}"
-        )
+        loaded = len(new_keys) - len(failed)
+        logger.info(f"Bronze load complete. Loaded: {loaded} | Failed: {len(failed)}")
 
         if failed:
             logger.warning(f"Failed keys: {failed}")
 
+        self._log_metrics(loaded, len(failed), start_time)
         return len(failed) == 0
+
+    def _log_metrics(
+        self, files_loaded: int, files_failed: int, start_time: float
+    ) -> None:
+        duration = time.time() - start_time
+        logger.info(f"METRIC pipeline.bronze_load.duration_seconds={duration:.2f}")
+        logger.info(f"METRIC pipeline.bronze_load.files_loaded={files_loaded}")
+        logger.info(f"METRIC pipeline.bronze_load.files_failed={files_failed}")
+        logger.info(
+            f"METRIC pipeline.bronze_load.timestamp={datetime.utcnow().isoformat()}"
+        )

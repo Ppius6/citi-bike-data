@@ -1,0 +1,16 @@
+[project]
+name = "citi-bike-data"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.136.3",
+    "openlineage-python>=1.47.1",
+    "pandas>=3.0.3",
+    "prefect>=3.7.2",
+    "pytest>=9.0.3",
+    "soda-core>=3.5.6",
+    "soda-core-postgres>=3.5.6",
+    "uvicorn>=0.48.0",
+]

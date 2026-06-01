@@ -1,0 +1,24 @@
+source:
+  type: dbt
+  serviceName: citi-bike-postgres
+  sourceConfig:
+    config:
+      type: DBT
+      dbtConfigSource:
+        dbtConfigType: local
+        dbtCatalogFilePath: /opt/dbt/target/catalog.json
+        dbtManifestFilePath: /opt/dbt/target/manifest.json
+        dbtRunResultsFilePath: /opt/dbt/target/run_results.json
+      dbtUpdateDescriptions: true
+      includeTags: true
+
+sink:
+  type: metadata-rest
+  config: {}
+
+workflowConfig:
+  openMetadataServerConfig:
+    hostPort: http://openmetadata:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: "${OPENMETADATA_JWT_TOKEN}"

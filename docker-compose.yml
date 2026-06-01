@@ -26,10 +26,13 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD}
+      ANALYST_PASSWORD: ${ANALYST_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/sql/init.sh:/docker-entrypoint-initdb.d/init.sh
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME}"]
       interval: 10s
@@ -46,6 +49,7 @@ services:
         - clickhouse_data:/var/lib/clickhouse
         - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml
         - ./clickhouse/users.xml:/etc/clickhouse-server/users.d/users.xml
+        - ./clickhouse/init.sh:/docker-entrypoint-initdb.d/init.sh
       healthcheck:
         test: ["CMD", "clickhouse-client", "--port", "9009", "--query", "SELECT 1"]
         interval: 10s
@@ -114,9 +118,70 @@ services:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+    
+  elasticsearch:
+      image: elasticsearch:7.16.3
+      container_name: citibike-elasticsearch
+      environment:
+        - discovery.type=single-node
+        - xpack.security.enabled=false
+        - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      ports:
+        - "9200:9200"
+      volumes:
+        - elasticsearch_data:/usr/share/elasticsearch/data
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+  openmetadata:
+    image: openmetadata/server:1.5.0
+    container_name: citibike-openmetadata
+    ports:
+      - "8585:8585"
+      - "8586:8586"
+    environment:
+      DB_DRIVER_CLASS: org.postgresql.Driver
+      DB_SCHEME: postgresql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_USER_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      OM_DATABASE: openmetadata_db
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_SCHEME: http
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: citibike-minio-init
+    env_file: .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_ANALYST_KEY: ${MINIO_ANALYST_KEY}
+      MINIO_ANALYST_SECRET: ${MINIO_ANALYST_SECRET}
+    volumes:
+      - ./scripts/minio/init.sh:/init.sh
+    entrypoint: /bin/sh /init.sh
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: on-failure
 
 volumes:
   minio_data:
   postgres_data:
   clickhouse_data:
   prefect_data:
+  elasticsearch_data:

@@ -3,7 +3,7 @@
         materialized='table',
         schema='gold',
         engine='MergeTree()',
-        order_by='station_id'
+        order_by='station_key'
     )
 }}
 
@@ -22,13 +22,13 @@ WITH snapshot AS (
 )
 
 SELECT 
-    station_key,
+    assumeNotNull(station_key)      AS station_key,
     station_id,
     station_name,
     latitude,
     longitude,
-    dbt_valid_from AS valid_from,
-    dbt_valid_to AS valid_to,
+    dbt_valid_from                  AS valid_from,
+    dbt_valid_to                    AS valid_to,
     is_current,
     dbt_scd_id
 FROM snapshot

@@ -6,12 +6,19 @@ models:
       Cleaned, deduplicated, and typed Citi Bike trip data.
       Timezone converted to America/New_York.
       Rides with invalid durations or missing coordinates are excluded.
+    config:
+      elementary:
+        timestamp_column: started_at
     columns:
       - name: ride_id
         description: "Unique identifier for each ride"
         data_tests:
           - not_null
           - unique
+          - elementary.column_anomalies:
+              column_anomalies:
+                - null_count
+                - null_percent
       - name: rideable_type
         description: "Type of bike"
         data_tests:

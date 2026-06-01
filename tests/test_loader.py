@@ -1,16 +1,17 @@
+from io import BytesIO
+from unittest.mock import MagicMock, PropertyMock, patch
+
 import pandas as pd
 import pytest
-from io import BytesIO
-from unittest.mock import MagicMock, patch, PropertyMock
 from sqlalchemy.exc import SQLAlchemyError
 
-from scripts.config import PostgresConfig
-from scripts.loader import BronzeLoader
+from scripts.config.config import PostgresConfig
+from scripts.loading.loader import BronzeLoader
 
 
 @pytest.fixture
 def mock_engine():
-    with patch("citibike.loader.create_engine") as mock:
+    with patch("citibike.loading.loader.create_engine") as mock:
         engine = MagicMock()
         mock.return_value = engine
         yield engine

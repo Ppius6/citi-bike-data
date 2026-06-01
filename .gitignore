@@ -23,6 +23,7 @@ newenv/
 ENV/
 env.bak/
 venv.bak/
+ometa_env/
 
 # Environment variables
 .env
@@ -69,5 +70,9 @@ pipeline.log
 # Added by ggshield
 .cache_ggshield
 
-# dbt profiles
-dbt/citibike_dbt/profiles.yml
+# dbt local config
+dbt/profiles.yml
+dbt/.user.yml
+
+# clickhouse credentials
+clickhouse/users.xml

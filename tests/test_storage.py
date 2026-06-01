@@ -3,7 +3,7 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch
 from botocore.exceptions import ClientError
 
-from scripts.storage import MinIOClient
+from scripts.storage.minio_client import MinIOClient
 
 
 def make_client_error(code: str) -> ClientError:
@@ -12,7 +12,7 @@ def make_client_error(code: str) -> ClientError:
 
 @pytest.fixture
 def mock_boto3_client():
-    with patch("citibike.storage.boto3.client") as mock:
+    with patch("citibike.storage.minio_client.boto3.client") as mock:
         yield mock
 
 

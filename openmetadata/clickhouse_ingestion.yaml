@@ -11,6 +11,11 @@ source:
   sourceConfig:
     config:
       type: DatabaseMetadata
+      schemaFilterPattern:
+        excludes:
+          - system
+          - information_schema
+          - INFORMATION_SCHEMA
 
 sink:
   type: metadata-rest

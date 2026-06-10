@@ -4,14 +4,19 @@ source:
   serviceConnection:
     config:
       type: Postgres
-      username: data_engineer
+      username: postgres
       authType:
-        password: "${DB_PASSWORD}"
+        password: "${POSTGRES_ADMIN_PASSWORD}"
       hostPort: postgres:5432
       database: citi-bike
   sourceConfig:
     config:
       type: DatabaseMetadata
+      schemaFilterPattern:
+        includes:
+          - bronze
+          - silver
+          - snapshots
 sink:
   type: metadata-rest
   config: {}

@@ -6,9 +6,8 @@ source:
       type: DBT
       dbtConfigSource:
         dbtConfigType: local
-        dbtCatalogFilePath: /opt/dbt/target/catalog.json
-        dbtManifestFilePath: /opt/dbt/target/manifest_clean.json
-        dbtRunResultsFilePath: /opt/dbt/target/run_results.json
+        dbtCatalogFilePath: /opt/ingestion/config/dbt-artifacts/catalog.json
+        dbtManifestFilePath: /opt/ingestion/config/dbt-artifacts/clickhouse/manifest.json
       dbtUpdateDescriptions: true
       includeTags: true
 

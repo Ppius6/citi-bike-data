@@ -28,6 +28,7 @@ dbt-clickhouse:
   gold.fact_trips              fact table, star schema (4.7M rows)
         ↓
 DBeaver                        connects to Postgres + ClickHouse
+OpenMetadata                   data catalog, lineage, dbt docs
 ```
 
 ---
@@ -42,6 +43,7 @@ DBeaver                        connects to Postgres + ClickHouse
 | Warehouse | ClickHouse 24.3 | Gold layer, columnar analytical queries |
 | Transformation | dbt (postgres + clickhouse) | Bronze → silver → gold models |
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
+| Data Catalog | OpenMetadata 1.5 | Schema catalog, dbt docs, lineage, search (Elasticsearch) |
 | Containerisation | Docker Compose | Full stack, single command startup |
 
 ---
@@ -50,36 +52,44 @@ DBeaver                        connects to Postgres + ClickHouse
 
 ```
 citi-bike-data/
-├── citibike/                  source package
-│   ├── config.py              dataclass-based config, env var driven
-│   ├── ingest.py              S3 fetch, zip extract, Parquet conversion
-│   ├── storage.py             MinIO client wrapper
-│   ├── loader.py              MinIO → Postgres bronze loader
-│   ├── pipeline.py            ingest + load orchestration entry point
-│   └── flows.py               Prefect flow and task definitions
+├── scripts/
+│   ├── config/                 dataclass-based config, env var driven
+│   ├── ingestion/               S3 fetch, zip extract, Parquet conversion
+│   ├── storage/                 MinIO client wrapper
+│   ├── loading/                 MinIO → Postgres bronze loader
+│   ├── quality/                 Soda data quality checks
+│   ├── orchestration/           Prefect flow and task definitions
+│   ├── openmetadata/             OpenMetadata ingestion runner (ingest.sh)
+│   ├── sql/                      Postgres init: schemas + roles
+│   ├── minio/                    MinIO bucket + policy init
+│   ├── clean_manifest.py        dbt manifest splitter for OpenMetadata
+│   └── pipeline.py               ingest + load orchestration entry point
 ├── dbt/
-│   └── citibike_dbt/
-│       ├── models/
-│       │   ├── bronze/        bronze_trips.sql
-│       │   ├── silver/        silver_trips.sql (incremental + merge)
-│       │   └── gold/          dim_date, dim_station, dim_rider_type,
-│       │                      dim_bike_type, fact_trips
-│       ├── snapshots/         station_snapshot.sql (SCD Type 2)
-│       ├── macros/            generate_schema_name.sql
-│       ├── dbt_project.yml
-│       └── profiles.yml
+│   ├── models/
+│   │   ├── bronze/             bronze_trips.sql
+│   │   ├── silver/             silver_trips.sql (incremental + merge)
+│   │   └── gold/                dim_date, dim_station, dim_rider_type,
+│   │                            dim_bike_type, fact_trips
+│   ├── snapshots/               station_snapshot.sql (SCD Type 2)
+│   ├── macros/
+│   ├── dbt_project.yml
+│   └── profiles.yml
+├── openmetadata/                 ingestion configs (postgres, clickhouse, minio, dbt)
 ├── clickhouse/
 │   ├── config.xml
 │   └── users.xml
+├── minio/policies/                analyst + engineer access policies
+├── docs/
+│   └── data_register.md
 ├── tests/
 │   ├── conftest.py
 │   ├── test_ingest.py
-│   └── test_storage.py
+│   ├── test_storage.py
 │   └── test_loader.py
 ├── docker-compose.yml
 ├── Dockerfile
 ├── prefect.yaml
-└── requirements.txt
+└── pyproject.toml
 ```
 
 ---
@@ -87,7 +97,7 @@ citi-bike-data/
 ## Prerequisites
 
 - Docker Desktop
-- Python 3.11+
+- Python 3.12+
 - dbt-core, dbt-postgres, dbt-clickhouse
 - Prefect 3
 
@@ -100,8 +110,7 @@ citi-bike-data/
 ```bash
 git clone <repo>
 cd citi-bike-data
-cp .env.example .env
-# Edit .env with your credentials
+# Create a .env file with the variables listed below
 ```
 
 **2. Start the full stack**
@@ -116,6 +125,7 @@ Services started:
 - Prefect UI → <http://localhost:4200>
 - Postgres → localhost:5432
 - ClickHouse → localhost:8123 (HTTP), localhost:9009 (native)
+- OpenMetadata UI → <http://localhost:8585>
 
 **3. Run the pipeline manually**
 
@@ -124,6 +134,14 @@ prefect deployment run 'citibike_pipeline/citibike-monthly'
 ```
 
 Watch progress at <http://localhost:4200>
+
+**4. Ingest metadata into OpenMetadata (optional)**
+
+```bash
+./scripts/openmetadata/ingest.sh all
+```
+
+Browse the catalog, lineage, and dbt docs at <http://localhost:8585>
 
 ---
 
@@ -134,17 +152,26 @@ Create a `.env` file at the project root:
 ```bash
 # Postgres
 DB_NAME=citi-bike
-DB_USER=postgres
-DB_PASSWORD=your_password
 DB_HOST=postgres
+POSTGRES_ADMIN_PASSWORD=your_admin_password
+DB_PASSWORD=your_data_engineer_password
+ANALYST_PASSWORD=your_data_analyst_password
 
 # MinIO
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=minioadmin
 MINIO_BUCKET=citibike
+MINIO_ACCESS_KEY=your_engineer_access_key
+MINIO_SECRET_KEY=your_engineer_secret_key
+MINIO_ANALYST_KEY=your_analyst_access_key
+MINIO_ANALYST_SECRET=your_analyst_secret_key
 
 # ClickHouse
 CLICKHOUSE_HOST=clickhouse
+CLICKHOUSE_ENGINEER_PASSWORD=your_clickhouse_password
+
+# OpenMetadata (Settings → Bots → ingestion-bot in OM UI)
+OPENMETADATA_JWT_TOKEN=your_jwt_token
 ```
 
 ---
@@ -199,17 +226,49 @@ The pipeline runs on the 1st of every month at 06:00 AM (New York time).
 
 ```
 Task execution order:
-1. ingest          download + convert to Parquet → MinIO
-2. bronze_load     MinIO → Postgres bronze.trips
-3. dbt_bronze      bronze.trips → bronze.bronze_trips
-4. dbt_silver      bronze_trips → silver.silver_trips (incremental)
-5. dbt_snapshot    silver_trips → snapshots.station_snapshot (SCD Type 2)
-6. dbt_gold        silver → ClickHouse gold layer (5 models)
-7. dbt_test_dev    12 tests on bronze + silver
-8. dbt_test_ch     11 tests on gold
+1.  ingest              download + convert to Parquet → MinIO
+2.  bronze_load         MinIO → Postgres bronze.trips
+3.  quality_check       Soda checks on bronze.trips
+4.  dbt_bronze          bronze.trips → bronze.bronze_trips
+5.  dbt_silver          bronze_trips → silver.silver_trips (incremental)
+6.  dbt_elementary      Elementary monitoring models in silver
+7.  dbt_snapshot        silver_trips → snapshots.station_snapshot (SCD Type 2)
+8.  dbt_gold            silver → ClickHouse gold layer (5 models)
+9.  dbt_test_dev        12 tests on bronze + silver
+10. dbt_test_ch         11 tests on gold
+11. om_ingest_postgres  refresh OpenMetadata: Postgres schemas
+12. om_ingest_clickhouse refresh OpenMetadata: ClickHouse schemas
+13. om_ingest_minio     refresh OpenMetadata: MinIO storage
+14. dbt_docs_generate   regenerate dbt manifest/catalog
+15. clean_dbt_manifest  split manifest into Postgres + ClickHouse artifacts
+16. om_ingest_dbt_*     refresh OpenMetadata: dbt docs + lineage
 ```
 
-Each task has automatic retries. A failure in any task stops the flow from proceeding — ensuring no downstream layer is built on bad data.
+Each pipeline task (1–10) has automatic retries, and a failure stops the flow before any downstream layer is built on bad data. The catalog refresh tasks (11–16) are best-effort: failures are logged but won't fail the run, since a stale catalog shouldn't block the data pipeline.
+
+---
+
+## Data Catalog (OpenMetadata)
+
+OpenMetadata indexes the Postgres (bronze/silver/snapshots) and ClickHouse (gold) schemas, plus dbt model docs, descriptions, tests, and column-level lineage between the two databases.
+
+The catalog refreshes automatically as the last stage of `citibike_pipeline` (see [Orchestration](#orchestration)). The `prefect-worker` container launches a short-lived `citibike-om-ingestion` container per workflow via the Docker socket — kept separate because OpenMetadata's ingestion framework pins dependency versions (SQLAlchemy 1.4, protobuf 4) that conflict with Prefect/dbt's. This requires:
+
+- `/var/run/docker.sock` mounted into `prefect-worker` (already set in `docker-compose.yml`)
+- `PROJECT_ROOT` set to the project's host path (defaults to `${PWD}` — run `docker compose up` from the project root)
+
+To run ingestion manually instead:
+
+```bash
+# Generate fresh dbt artifacts, then ingest everything
+cd dbt && dbt docs generate --profiles-dir . && cd ..
+./scripts/openmetadata/ingest.sh all
+
+# Or run a single workflow
+./scripts/openmetadata/ingest.sh dbt-postgres
+```
+
+Open <http://localhost:8585> and sign in with the admin credentials configured on first run. The ingestion workflows are defined in `openmetadata/*.yaml`; `scripts/clean_manifest.py` splits the dbt manifest into Postgres and ClickHouse artifacts compatible with OpenMetadata 1.5's dbt manifest schema.
 
 ---
 

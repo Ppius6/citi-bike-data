@@ -9,6 +9,10 @@ from prefect.blocks.notifications import SlackWebhook
 from scripts.config.config import Config
 from scripts.pipeline import run_ingest, run_bronze_load
 from scripts.quality.validator import run_quality_checks
+from scripts.clean_manifest import main as clean_dbt_manifest
+from scripts.openmetadata.ingest import run_ingestion as run_om_ingestion
+
+import docker
 
 from openlineage.client import OpenLineageClient
 from openlineage.client.run import RunEvent, RunState, Run, Job, Dataset
@@ -263,6 +267,61 @@ def dbt_test_task(target: str = "dev", models: str = "") -> bool:
     return success
 
 
+@task(
+    name="dbt_docs_generate",
+    description="Generate dbt manifest/catalog artifacts for OpenMetadata",
+    retries=1,
+    retry_delay_seconds=30,
+)
+def dbt_docs_generate_task() -> bool:
+    logger = get_run_logger()
+    logger.info("Generating dbt docs artifacts.")
+    success = run_dbt("docs generate --target dev")
+    if not success:
+        raise RuntimeError("dbt docs generate failed.")
+    return success
+
+
+@task(
+    name="clean_dbt_manifest",
+    description="Split dbt manifest/catalog into Postgres and ClickHouse artifacts for OpenMetadata",
+    retries=1,
+    retry_delay_seconds=15,
+)
+def clean_manifest_task() -> bool:
+    logger = get_run_logger()
+    logger.info("Splitting dbt manifest for OpenMetadata ingestion.")
+    clean_dbt_manifest()
+    return True
+
+
+@task(
+    name="openmetadata_ingest",
+    description="Run an OpenMetadata ingestion workflow in the citibike-om-ingestion image",
+    retries=1,
+    retry_delay_seconds=30,
+)
+def om_ingest_task(config_name: str) -> bool:
+    """Refresh one OpenMetadata ingestion workflow.
+
+    Catalog refresh is best-effort: failures are logged but don't fail the
+    pipeline, since they shouldn't block the data from landing in bronze/
+    silver/gold.
+    """
+    logger = get_run_logger()
+    logger.info(f"Running OpenMetadata ingestion: {config_name}")
+    try:
+        output = run_om_ingestion(config_name)
+        logger.info(output)
+        return True
+    except docker.errors.ContainerError as e:
+        logger.warning(f"OpenMetadata ingestion failed for {config_name}: {e.stderr}")
+        return False
+    except Exception as e:
+        logger.warning(f"OpenMetadata ingestion failed for {config_name}: {e}")
+        return False
+
+
 def alert_on_failure(flow, flow_run, state):
     try:
         slack = SlackWebhook.load("citibike-alerts")
@@ -304,6 +363,15 @@ def citibike_pipeline():
     # Tests across all layers
     dbt_test_task(target="dev", models="bronze_trips silver_trips")
     dbt_test_task(target="clickhouse", models="gold.*")
+
+    # Refresh the OpenMetadata catalog: schemas, dbt docs, lineage
+    om_ingest_task("postgres_ingestion.yaml")
+    om_ingest_task("clickhouse_ingestion.yaml")
+    om_ingest_task("minio_ingestion.yaml")
+    dbt_docs_generate_task()
+    clean_manifest_task()
+    om_ingest_task("dbt_postgres_ingestion.yaml")
+    om_ingest_task("dbt_clickhouse_ingestion.yaml")
 
     logger.info("Pipeline flow completed successfully.")
 

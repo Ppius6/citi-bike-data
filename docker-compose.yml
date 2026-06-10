@@ -106,8 +106,12 @@ services:
       DBT_PROFILES_DIR: /app/dbt
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_ENGINEER_PASSWORD: ${CLICKHOUSE_ENGINEER_PASSWORD}
+      # Host path to the project root, used to bind-mount ./openmetadata
+      # into the OM ingestion container spawned via the Docker socket below.
+      PROJECT_ROOT: ${PWD}
     volumes:
       - .:/app # Mounts full project so dbt files are accessible
+      - /var/run/docker.sock:/var/run/docker.sock # Lets Prefect launch the OM ingestion container
     working_dir: /app
     depends_on:
       prefect-server:
@@ -118,6 +122,8 @@ services:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+      openmetadata:
+        condition: service_started
     
   elasticsearch:
       image: elasticsearch:8.11.4
@@ -139,6 +145,7 @@ services:
   openmetadata:
     image: openmetadata/server:1.5.0
     container_name: citibike-openmetadata
+    command: ["-c", "./bootstrap/openmetadata-ops.sh migrate && /openmetadata-start.sh"]
     ports:
       - "8585:8585"
       - "8586:8586"
@@ -153,6 +160,11 @@ services:
       ELASTICSEARCH_HOST: elasticsearch
       ELASTICSEARCH_PORT: 9200
       ELASTICSEARCH_SCHEME: http
+      OPENMETADATA_INITIAL_USER_IMPORT: true
+      AUTHENTICATION_PROVIDER: basic
+      AUTHORIZER_CLASS_NAME: org.openmetadata.service.security.DefaultAuthorizer
+      AUTHORIZER_ADMIN_PRINCIPALS: "[admin]"
+      AUTHENTICATION_PUBLIC_KEYS: "[http://openmetadata:8585/api/v1/system/config/jwks]"
     depends_on:
       postgres:
         condition: service_healthy

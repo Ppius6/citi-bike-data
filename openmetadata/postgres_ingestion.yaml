@@ -12,15 +12,9 @@ source:
   sourceConfig:
     config:
       type: DatabaseMetadata
-      schemaFilterPattern:
-        includes:
-          - silver
-          - snapshots
-
 sink:
   type: metadata-rest
   config: {}
-
 workflowConfig:
   openMetadataServerConfig:
     hostPort: http://openmetadata:8585/api

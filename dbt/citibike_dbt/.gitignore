@@ -1,0 +1,5 @@
+
+target/
+dbt_packages/
+logs/
+dbt/citibike_dbt/dbt_packages/

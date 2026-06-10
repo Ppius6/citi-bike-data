@@ -19,6 +19,12 @@ models:
               column_anomalies:
                 - null_count
                 - null_percent
+              # ride_id is enforced not_null/unique, so this metric is a
+              # constant 0 — anomaly detection has no real baseline to learn
+              # from yet. Warn instead of failing until enough run history
+              # builds up to revisit this check.
+              config:
+                severity: warn
       - name: rideable_type
         description: "Type of bike"
         data_tests:

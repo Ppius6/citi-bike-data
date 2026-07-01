@@ -42,6 +42,11 @@ services:
   clickhouse:
       image: clickhouse/clickhouse-server:24.3
       container_name: citibike-clickhouse
+      env_file: .env
+      environment:
+        CLICKHOUSE_ENGINEER_PASSWORD: ${CLICKHOUSE_ENGINEER_PASSWORD}
+        ANALYST_PASSWORD: ${ANALYST_PASSWORD}
+        AI_AGENT_PASSWORD: ${AI_AGENT_PASSWORD}
       ports:
         - "8123:8123"
         - "9009:9009"
@@ -58,6 +63,30 @@ services:
       depends_on:
         postgres:
           condition: service_healthy
+
+  agent-api:
+    build:
+      context: ./agent/backend
+    container_name: citibike-agent-api
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_HTTP_PORT: 8123
+      AI_AGENT_PASSWORD: ${AI_AGENT_PASSWORD}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./agent/frontend
+    container_name: citibike-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - agent-api
 
   pipeline:
     build: .

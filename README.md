@@ -29,6 +29,11 @@ dbt-clickhouse:
         ↓
 DBeaver                        connects to Postgres + ClickHouse
 OpenMetadata                   data catalog, lineage, dbt docs
+        ↓
+agent/backend (FastAPI)        DeepSeek tool-calling agent, read-only ai_agent
+                                ClickHouse user scoped to gold.* only
+        ↓
+agent/frontend (React + TS)    minimal chat UI → http://localhost:3000
 ```
 
 ---
@@ -44,6 +49,8 @@ OpenMetadata                   data catalog, lineage, dbt docs
 | Transformation | dbt (postgres + clickhouse) | Bronze → silver → gold models |
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
 | Data Catalog | OpenMetadata 1.5 | Schema catalog, dbt docs, lineage, search (Elasticsearch) |
+| Chat Agent | FastAPI + DeepSeek (OpenAI-compatible) | Tool-calling agent that writes/executes read-only SQL against the gold layer |
+| Chat UI | React + Vite + TypeScript | Minimal dark/light chat frontend (Inter/Outfit/JetBrains Mono), served via nginx |
 | Containerisation | Docker Compose | Full stack, single command startup |
 
 ---
@@ -75,9 +82,24 @@ citi-bike-data/
 │   ├── dbt_project.yml
 │   └── profiles.yml
 ├── openmetadata/                 ingestion configs (postgres, clickhouse, minio, dbt)
+├── agent/
+│   ├── backend/                 FastAPI + DeepSeek tool-calling agent
+│   │   ├── database.py          live gold.* schema introspection + read-only SQL execution/guardrails
+│   │   ├── agent.py             system instructions, tool loop, DeepSeek client
+│   │   ├── server.py            FastAPI app — POST /api/chat
+│   │   ├── main.py              standalone CLI chat loop
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
+│   └── frontend/                React + Vite + TypeScript chat UI
+│       ├── src/
+│       │   ├── App.tsx          chat state, message list, composer, dark/light theme toggle
+│       │   └── markdownLite.ts  safe **bold**/bullet renderer for agent replies
+│       ├── nginx.conf           serves the build, proxies /api → agent-api
+│       └── Dockerfile
 ├── clickhouse/
 │   ├── config.xml
-│   └── users.xml
+│   ├── users.xml
+│   └── init.sh                   creates data_engineer / data_analyst / ai_agent users
 ├── minio/policies/                analyst + engineer access policies
 ├── docs/
 │   └── data_register.md
@@ -98,8 +120,10 @@ citi-bike-data/
 
 - Docker Desktop
 - Python 3.12+
+- Node.js 22+ (only needed for local frontend dev outside Docker)
 - dbt-core, dbt-postgres, dbt-clickhouse
 - Prefect 3
+- A DeepSeek API key (for the chat agent)
 
 ---
 
@@ -126,6 +150,8 @@ Services started:
 - Postgres → localhost:5432
 - ClickHouse → localhost:8123 (HTTP), localhost:9009 (native)
 - OpenMetadata UI → <http://localhost:8585>
+- Chat agent API → <http://localhost:8000> (see [Chat Agent](#chat-agent))
+- Chat UI → <http://localhost:3000>
 
 **3. Run the pipeline manually**
 
@@ -169,6 +195,12 @@ MINIO_ANALYST_SECRET=your_analyst_secret_key
 # ClickHouse
 CLICKHOUSE_HOST=clickhouse
 CLICKHOUSE_ENGINEER_PASSWORD=your_clickhouse_password
+
+# ClickHouse — read-only chat agent user (SELECT on gold.* only, server-enforced readonly=2)
+AI_AGENT_PASSWORD=your_ai_agent_password
+
+# DeepSeek (chat agent LLM)
+DEEPSEEK_API_KEY=your_deepseek_api_key
 
 # OpenMetadata (Settings → Bots → ingestion-bot in OM UI)
 OPENMETADATA_JWT_TOKEN=your_jwt_token
@@ -246,6 +278,12 @@ Task execution order:
 
 Each pipeline task (1–10) has automatic retries, and a failure stops the flow before any downstream layer is built on bad data. The catalog refresh tasks (11–16) are best-effort: failures are logged but won't fail the run, since a stale catalog shouldn't block the data pipeline.
 
+![Completed pipeline run in the Prefect UI](files/pipeline.png)
+
+An example of the orchestration is viewable in the following image:
+
+![Orchestration Flow](files/pipeline.png)
+
 ---
 
 ## Data Catalog (OpenMetadata)
@@ -271,6 +309,54 @@ cd dbt && dbt docs generate --profiles-dir . && cd ..
 Open <http://localhost:8585> and sign in with the admin credentials configured on first run. The ingestion workflows are defined in `openmetadata/*.yaml`; `scripts/clean_manifest.py` splits the dbt manifest into Postgres and ClickHouse artifacts compatible with OpenMetadata 1.5's dbt manifest schema.
 
 ---
+
+## Chat Agent
+
+A minimal chat UI for asking questions about the gold layer in plain English — "What was the average ride duration for casual riders versus members?" — backed by a tool-calling agent that writes and executes the SQL itself. Dark by default with a light-mode toggle, persisted to `localStorage`.
+
+| Light | Dark |
+|---|---|
+| ![Chat agent, light theme](files/agent.png) | ![Chat agent, dark theme](files/agent-2.png) |
+
+```
+web browser → agent/frontend (React + TS, nginx)
+                    ↓ /api/chat (proxied)
+              agent/backend (FastAPI)
+                    ↓ DeepSeek tool-calling loop
+              gold.* (ClickHouse, ai_agent user)
+```
+
+**How it works:**
+
+1. At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt — it reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
+2. `agent/backend/agent.py` sends the user's question to DeepSeek along with that schema context and the join keys between `fact_trips` and its dimensions.
+3. DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn — required for DeepSeek's function-calling to behave correctly across multiple rounds.
+4. `agent/backend/database.py` executes that query against ClickHouse and returns the rows.
+5. DeepSeek reads the results and writes the final plain-English answer, which the UI shows along with a collapsible "SQL used" section.
+
+**Guardrails** (defense in depth — each layer works even if another fails):
+
+- App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements.
+- Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `clickhouse/init.sh`) that is granted `SELECT` on `gold.*` only — no access to `silver`/`snapshots`/`bronze` — and created with `SETTINGS readonly = 2`, which makes ClickHouse itself reject any write statement regardless of what the app layer does.
+- Correctness: ClickHouse string comparisons are case-sensitive, and dimension tables store both a raw value (`rider_type = 'casual'`) and a display value (`rider_type_desc = 'Casual'`). The system prompt instructs the agent to filter with `lower(column) = lower('value')` unless it's certain of exact casing, so a wrong guess returns the right rows instead of silently returning zero.
+
+**Run standalone (CLI, no Docker):**
+
+```bash
+cd agent/backend
+pip install -r requirements.txt
+python main.py
+```
+
+**Run via Docker Compose** (part of `docker compose up -d`, see [Quickstart](#quickstart)): the `agent-api` service builds from `agent/backend/`, and `web` builds from `agent/frontend/` and serves the UI at <http://localhost:3000>, with nginx proxying `/api/*` to `agent-api`.
+
+---
+
+The UI of the agent is as shown below.
+
+![Chat Agent UI](files/agent.png)
+
+![Chat Agent UI](files/agent-2.png)
 
 ## DBeaver Connections
 

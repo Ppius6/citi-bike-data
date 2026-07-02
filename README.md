@@ -328,13 +328,13 @@ web browser → agent/frontend (React + TS, nginx)
 
 **How it works:**
 
-1. At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt — it reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
+1. At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt which reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
 2. `agent/backend/agent.py` sends the user's question to DeepSeek along with that schema context and the join keys between `fact_trips` and its dimensions.
-3. DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn — required for DeepSeek's function-calling to behave correctly across multiple rounds.
+3. DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn which is required for DeepSeek's function-calling to behave correctly across multiple rounds.
 4. `agent/backend/database.py` executes that query against ClickHouse and returns the rows.
 5. DeepSeek reads the results and writes the final plain-English answer, which the UI shows along with a collapsible "SQL used" section.
 
-**Guardrails** (defense in depth — each layer works even if another fails):
+**Guardrails** (defense in depth where each layer works even if another fails):
 
 - App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements.
 - Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `clickhouse/init.sh`) that is granted `SELECT` on `gold.*` only — no access to `silver`/`snapshots`/`bronze` — and created with `SETTINGS readonly = 2`, which makes ClickHouse itself reject any write statement regardless of what the app layer does.

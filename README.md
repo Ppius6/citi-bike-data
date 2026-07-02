@@ -6,35 +6,7 @@ A production-grade lakehouse pipeline that ingests Citi Bike trip data from S3, 
 
 ## Architecture
 
-```
-Citi Bike S3 (source)
-        ↓
-[Prefect — monthly schedule]
-        ↓
-ingest.py → MinIO              raw Parquet files (bronze layer)
-        ↓
-loader.py → Postgres           bronze.trips (5.4M rows)
-        ↓
-dbt-postgres:
-  bronze.bronze_trips          exact copy of source, typed
-  silver.silver_trips          cleaned, deduplicated, timezone-corrected
-  snapshots.station_snapshot   SCD Type 2 station history
-        ↓
-dbt-clickhouse:
-  gold.dim_date                date dimension (date spine)
-  gold.dim_station             station dimension with SCD Type 2
-  gold.dim_rider_type          rider type dimension
-  gold.dim_bike_type           bike type dimension
-  gold.fact_trips              fact table, star schema (4.7M rows)
-        ↓
-DBeaver                        connects to Postgres + ClickHouse
-OpenMetadata                   data catalog, lineage, dbt docs
-        ↓
-agent/backend (FastAPI)        DeepSeek tool-calling agent, read-only ai_agent
-                                ClickHouse user scoped to gold.* only
-        ↓
-agent/frontend (React + TS)    minimal chat UI → http://localhost:3000
-```
+![Architecture](files/main-architecture.png)
 
 ---
 
@@ -254,33 +226,13 @@ dbt test --target clickhouse --select gold.* --profiles-dir .
 
 ## Orchestration
 
-The pipeline runs on the 1st of every month at 06:00 AM (New York time).
-
-```
-Task execution order:
-1.  ingest              download + convert to Parquet → MinIO
-2.  bronze_load         MinIO → Postgres bronze.trips
-3.  quality_check       Soda checks on bronze.trips
-4.  dbt_bronze          bronze.trips → bronze.bronze_trips
-5.  dbt_silver          bronze_trips → silver.silver_trips (incremental)
-6.  dbt_elementary      Elementary monitoring models in silver
-7.  dbt_snapshot        silver_trips → snapshots.station_snapshot (SCD Type 2)
-8.  dbt_gold            silver → ClickHouse gold layer (5 models)
-9.  dbt_test_dev        12 tests on bronze + silver
-10. dbt_test_ch         11 tests on gold
-11. om_ingest_postgres  refresh OpenMetadata: Postgres schemas
-12. om_ingest_clickhouse refresh OpenMetadata: ClickHouse schemas
-13. om_ingest_minio     refresh OpenMetadata: MinIO storage
-14. dbt_docs_generate   regenerate dbt manifest/catalog
-15. clean_dbt_manifest  split manifest into Postgres + ClickHouse artifacts
-16. om_ingest_dbt_*     refresh OpenMetadata: dbt docs + lineage
-```
+The pipeline can be scheduled to run once every month since the data is published once every month.
 
 Each pipeline task (1–10) has automatic retries, and a failure stops the flow before any downstream layer is built on bad data. The catalog refresh tasks (11–16) are best-effort: failures are logged but won't fail the run, since a stale catalog shouldn't block the data pipeline.
 
 ![Completed pipeline run in the Prefect UI](files/pipeline.png)
 
-An example of the orchestration is viewable in the following image:
+A full orchestration is viewable in the following image:
 
 ![Orchestration Flow](files/pipeline.png)
 
@@ -318,13 +270,9 @@ A minimal chat UI for asking questions about the gold layer in plain English —
 |---|---|
 | ![Chat agent, light theme](files/agent.png) | ![Chat agent, dark theme](files/agent-2.png) |
 
-```
-web browser → agent/frontend (React + TS, nginx)
-                    ↓ /api/chat (proxied)
-              agent/backend (FastAPI)
-                    ↓ DeepSeek tool-calling loop
-              gold.* (ClickHouse, ai_agent user)
-```
+### Architecture
+
+![Architecture](files/ai-agent-architecture.png)
 
 **How it works:**
 

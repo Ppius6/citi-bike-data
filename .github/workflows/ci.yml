@@ -83,8 +83,14 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      # No custom users.xml here (service containers start before checkout,
+      # so repo config isn't available to mount yet) — the vanilla image
+      # enforces a random/protected default-user password without this,
+      # unlike our local dev setup's blank-password users.xml.
       clickhouse:
         image: clickhouse/clickhouse-server:24.3
+        env:
+          CLICKHOUSE_SKIP_USER_SETUP: "1"
         ports:
           - 8123:8123
           - 9009:9000

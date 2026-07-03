@@ -1,6 +1,6 @@
 # Citi Bike Data Pipeline
 
-A hybrid warehouse pipeline — MinIO as an object-store landing zone, Postgres for the mutable bronze/silver layers, ClickHouse for the gold star schema — that ingests Citi Bike trip data from S3, transforms it through bronze, silver, and gold layers, and serves analytical queries. Fully orchestrated with Prefect and containerised with Docker Compose. (See [Key Design Decisions](#key-design-decisions) for why bronze is Postgres rather than ClickHouse querying Parquet directly.)
+A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres for the mutable bronze/silver layers, ClickHouse for the gold star schema, that ingests Citi Bike trip data from S3, transforms it through bronze, silver, and gold layers, and serves analytical queries. Fully orchestrated with Prefect and containerised with Docker Compose. (See [Key Design Decisions](#key-design-decisions) for why bronze is Postgres rather than ClickHouse querying Parquet directly.)
 
 ---
 
@@ -20,7 +20,7 @@ A hybrid warehouse pipeline — MinIO as an object-store landing zone, Postgres 
 | Warehouse | ClickHouse 24.3 | Gold layer, columnar analytical queries |
 | Transformation | dbt (postgres + clickhouse) | Bronze → silver → gold models |
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
-| Data Catalog | dbt docs | Model docs, column descriptions, tests, and lineage generated from the project itself |
+| Data Catalog | dbt docs | Model docs, column descriptions, tests, and lineage — live at [ppius6.github.io/citi-bike-data](https://ppius6.github.io/citi-bike-data/) |
 | Chat Agent | FastAPI + DeepSeek (OpenAI-compatible) | Tool-calling agent that writes/executes read-only SQL against the gold layer |
 | Chat UI | React + Vite + TypeScript | Minimal dark/light chat frontend (Inter/Outfit/JetBrains Mono), served via nginx |
 | Containerisation | Docker Compose | Full stack, single command startup |
@@ -137,7 +137,9 @@ Watch progress at <http://localhost:4200>
 
 **4. Browse the data catalog (dbt docs)**
 
-Regenerated automatically at the end of every pipeline run:
+Live at **<https://ppius6.github.io/citi-bike-data/>** — model docs, column descriptions, tests, and lineage, published automatically by CI on every push to `main` (see `.github/workflows/ci.yml`'s `deploy-docs` job).
+
+To generate and browse a local copy instead (useful while iterating on models before pushing):
 
 ```bash
 cd dbt && dbt docs generate --profiles-dir . --target dev && dbt docs serve --profiles-dir .
@@ -312,4 +314,4 @@ pytest agent/backend/tests -v
 
 **ClickHouse bridge tables.** Gold models read from Postgres silver via ClickHouse's PostgreSQL engine. No data is copied and ClickHouse queries Postgres directly. Only the gold layer is physically stored in ClickHouse.
 
-**Why bronze lives in Postgres, not queried straight off MinIO's Parquet.** ClickHouse can query S3-compatible object storage directly via its S3 table engine, so an obvious question is why this pipeline hops through a Postgres bronze table at all instead of pointing ClickHouse straight at the raw Parquet files. The answer is that Postgres gives the rest of the pipeline a mutable staging surface: dbt's incremental models need `MERGE`/upsert semantics keyed on `ride_id`, Soda's quality checks run as row-level SQL assertions against a real table, and re-loading a corrected file means updating rows in place rather than re-deriving the whole layer from immutable object storage. Object storage is the right fit for gold, where the shape is fixed and queries are append-mostly — it's the wrong fit for bronze, where the whole point is DML.
+**Why bronze lives in Postgres, not queried straight off MinIO's Parquet.** ClickHouse can query S3-compatible object storage directly via its S3 table engine, so an obvious question is why this pipeline hops through a Postgres bronze table at all instead of pointing ClickHouse straight at the raw Parquet files. The answer is that Postgres gives the rest of the pipeline a mutable staging surface: dbt's incremental models need `MERGE`/upsert semantics keyed on `ride_id`, Soda's quality checks run as row-level SQL assertions against a real table, and re-loading a corrected file means updating rows in place rather than re-deriving the whole layer from immutable object storage. Object storage is the right fit for gold, where the shape is fixed and queries are append-mostly as it is the wrong fit for bronze, where the whole point is DML.

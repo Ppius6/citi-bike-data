@@ -6,36 +6,7 @@ A hybrid warehouse pipeline — MinIO as an object-store landing zone, Postgres 
 
 ## Architecture
 
-```
-Citi Bike S3 (source)
-        ↓
-[Prefect — monthly schedule]
-        ↓
-ingest.py → MinIO              raw Parquet files (bronze layer)
-        ↓
-loader.py → Postgres           bronze.trips (~9.0M rows, COPY-loaded)
-        ↓
-dbt-postgres:
-  bronze.bronze_trips          exact copy of source, typed
-  silver.int_trips_cleaned     cleaned, deduplicated, timezone-corrected (single incremental scan)
-  silver.silver_trips          valid rows only (view over int_trips_cleaned)
-  silver.silver_trips_rejected quarantined rows + why (view over int_trips_cleaned)
-  snapshots.station_snapshot   SCD Type 2 station history
-        ↓
-dbt-clickhouse:
-  gold.dim_date                date dimension (date spine, integer YYYYMMDD key)
-  gold.dim_station             station dimension with SCD Type 2 (ASOF-joined by ride time)
-  gold.dim_rider_type          rider type dimension
-  gold.dim_bike_type           bike type dimension
-  gold.fact_trips              fact table, star schema (~4.9M rows)
-        ↓
-DBeaver                        connects to Postgres + ClickHouse (least-privilege roles)
-        ↓
-agent/backend (FastAPI)        DeepSeek tool-calling agent, read-only ai_agent
-                                ClickHouse user scoped to gold.* only
-        ↓
-agent/frontend (React + TS)    minimal chat UI → http://localhost:3000
-```
+![Architecture](files/main-architecture.png)
 
 ---
 
@@ -230,7 +201,7 @@ dbt test --target clickhouse --select gold.* --profiles-dir .
 
 ## Orchestration
 
-The pipeline runs on the 1st of every month at 06:00 AM (New York time).
+The pipeline runs on the 1st of every month at 06:00 AM (New York time), since the source data is published on that cadence.
 
 ```
 Task execution order:
@@ -261,23 +232,19 @@ A minimal chat UI for asking questions about the gold layer in plain English —
 |---|---|
 | ![Chat agent, light theme](files/agent.png) | ![Chat agent, dark theme](files/agent-2.png) |
 
-```
-web browser → agent/frontend (React + TS, nginx)
-                    ↓ /api/chat (proxied)
-              agent/backend (FastAPI)
-                    ↓ DeepSeek tool-calling loop
-              gold.* (ClickHouse, ai_agent user)
-```
+### Architecture
+
+![Architecture](files/ai-agent-architecture.png)
 
 **How it works:**
 
-1. At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt — it reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
+1. At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt which reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
 2. `agent/backend/agent.py` sends the user's question to DeepSeek along with that schema context and the join keys between `fact_trips` and its dimensions.
-3. DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn — required for DeepSeek's function-calling to behave correctly across multiple rounds.
+3. DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn which is required for DeepSeek's function-calling to behave correctly across multiple rounds.
 4. `agent/backend/database.py` executes that query against ClickHouse and returns the rows.
 5. DeepSeek reads the results and writes the final plain-English answer, which the UI shows along with a collapsible "SQL used" section.
 
-**Guardrails** (defense in depth — each layer works even if another fails):
+**Guardrails** (defense in depth where each layer works even if another fails):
 
 - App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements — including keywords hidden inside a `WITH ... DELETE` CTE. Covered by 29 guardrail tests in `agent/backend/tests/test_database.py` (statement-count enforcement, every forbidden keyword, case-insensitivity, and word-boundary checks so identifiers like `inserted_at` don't false-positive on `INSERT`).
 - Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `clickhouse/init.sh`) that is granted `SELECT` on `gold.*` only — no access to `silver`/`snapshots`/`bronze` — and created with `SETTINGS readonly = 2`, which makes ClickHouse itself reject any write statement regardless of what the app layer does.

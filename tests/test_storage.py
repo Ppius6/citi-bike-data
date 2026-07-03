@@ -1,6 +1,5 @@
 import pytest
-from io import BytesIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from botocore.exceptions import ClientError
 
 from scripts.storage.minio_client import MinIOClient
@@ -12,7 +11,7 @@ def make_client_error(code: str) -> ClientError:
 
 @pytest.fixture
 def mock_boto3_client():
-    with patch("citibike.storage.minio_client.boto3.client") as mock:
+    with patch("scripts.storage.minio_client.boto3.client") as mock:
         yield mock
 
 
@@ -31,14 +30,14 @@ class TestEnsureBucket:
         self, minio_config, mock_boto3_client
     ):
         mock_boto3_client.return_value.head_bucket.return_value = {}
-        client = MinIOClient(minio_config)
+        MinIOClient(minio_config)
         mock_boto3_client.return_value.create_bucket.assert_not_called()
 
     def test_creates_bucket_if_not_found(self, minio_config, mock_boto3_client):
         mock_boto3_client.return_value.head_bucket.side_effect = make_client_error(
             "404"
         )
-        client = MinIOClient(minio_config)
+        MinIOClient(minio_config)
         mock_boto3_client.return_value.create_bucket.assert_called_once_with(
             Bucket=minio_config.bucket
         )

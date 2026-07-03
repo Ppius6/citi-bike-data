@@ -1,7 +1,5 @@
-import io
 import zipfile
 from io import BytesIO
-from pathlib import Path
 
 import pandas as pd
 import pytest

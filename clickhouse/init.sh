@@ -9,6 +9,50 @@ clickhouse-client --port 9009 --query "CREATE DATABASE IF NOT EXISTS gold"
 clickhouse-client --port 9009 --query "CREATE DATABASE IF NOT EXISTS silver"
 clickhouse-client --port 9009 --query "CREATE DATABASE IF NOT EXISTS snapshots"
 
+# Bridge tables — ClickHouse's PostgreSQL engine reads these live from Postgres,
+# no data copied. dbt's gold models reference them via source(), which assumes
+# they already exist; dbt itself never creates them.
+clickhouse-client --port 9009 --query "
+CREATE TABLE IF NOT EXISTS silver.silver_trips
+(
+    ride_id String,
+    rideable_type String,
+    started_at DateTime64(6),
+    ended_at DateTime64(6),
+    start_date Date,
+    start_hour Int32,
+    day_of_week String,
+    ride_duration_minutes Float64,
+    start_station_name Nullable(String),
+    start_station_id Nullable(String),
+    end_station_name Nullable(String),
+    end_station_id Nullable(String),
+    start_lat Float64,
+    start_lng Float64,
+    end_lat Nullable(Float64),
+    end_lng Nullable(Float64),
+    member_casual String,
+    _source_file String,
+    _ingested_at DateTime64(6)
+)
+ENGINE = PostgreSQL('${DB_HOST}:${DB_PORT}', '${DB_NAME}', 'silver_trips', 'data_engineer', '${DB_PASSWORD}', 'silver')
+"
+
+clickhouse-client --port 9009 --query "
+CREATE TABLE IF NOT EXISTS snapshots.station_snapshot
+(
+    station_id String,
+    station_name String,
+    latitude Float64,
+    longitude Float64,
+    dbt_scd_id String,
+    dbt_updated_at DateTime64(6),
+    dbt_valid_from DateTime64(6),
+    dbt_valid_to Nullable(DateTime64(6))
+)
+ENGINE = PostgreSQL('${DB_HOST}:${DB_PORT}', '${DB_NAME}', 'station_snapshot', 'data_engineer', '${DB_PASSWORD}', 'snapshots')
+"
+
 clickhouse-client --port 9009 --query "GRANT SELECT, INSERT, ALTER, CREATE DATABASE, CREATE TABLE, DROP TABLE ON gold.* TO data_engineer"
 clickhouse-client --port 9009 --query "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE ON silver.* TO data_engineer"
 clickhouse-client --port 9009 --query "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE ON snapshots.* TO data_engineer"

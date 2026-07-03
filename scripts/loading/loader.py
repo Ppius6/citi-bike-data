@@ -1,5 +1,5 @@
 import logging
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -9,7 +9,7 @@ from scripts.config.config import PostgresConfig
 from scripts.storage.minio_client import MinIOClient
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class BronzeLoader:
     def load_parquet(self, key: str) -> bool:
         """
         Download a single Parquet file from MinIO by key,
-        read into a DataFrame, and append to bronze.trips.
+        read into a DataFrame, and bulk-load it into bronze.trips via COPY.
 
         Returns:
             bool: True if successful, False if otherwise.
@@ -66,22 +66,25 @@ class BronzeLoader:
 
             row_count = len(df)
 
-            for i in range(0, row_count, self.postgres.chunk_size):
-                chunk = df.iloc[i : i + self.postgres.chunk_size]
-                chunk.to_sql(
-                    name="trips",
-                    schema=self.postgres.bronze_schema,
-                    con=self.engine,
-                    if_exists="append",
-                    index=False,
-                    method="multi",
-                )
-                logger.info(
-                    f"Loaded {min(i + self.postgres.chunk_size, row_count)}"
-                    f"/{row_count} rows from {key}"
-                )
+            csv_buffer = StringIO()
+            df.to_csv(csv_buffer, index=False, header=False)
+            csv_buffer.seek(0)
 
-            logger.info(f"Successfully loaded {row_count} rows from {key}")
+            columns = ", ".join(df.columns)
+            copy_sql = (
+                f"COPY {self.postgres.bronze_schema}.trips ({columns}) "
+                "FROM STDIN WITH (FORMAT csv)"
+            )
+
+            raw_conn = self.engine.raw_connection()
+            try:
+                with raw_conn.cursor() as cursor:
+                    cursor.copy_expert(copy_sql, csv_buffer)
+                raw_conn.commit()
+            finally:
+                raw_conn.close()
+
+            logger.info(f"Successfully loaded {row_count} rows from {key} via COPY")
             return True
 
         except Exception as e:
@@ -139,5 +142,5 @@ class BronzeLoader:
         logger.info(f"METRIC pipeline.bronze_load.files_loaded={files_loaded}")
         logger.info(f"METRIC pipeline.bronze_load.files_failed={files_failed}")
         logger.info(
-            f"METRIC pipeline.bronze_load.timestamp={datetime.utcnow().isoformat()}"
+            f"METRIC pipeline.bronze_load.timestamp={datetime.now(timezone.utc).isoformat()}"
         )

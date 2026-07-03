@@ -9,39 +9,11 @@ from prefect.blocks.notifications import SlackWebhook
 from scripts.config.config import Config
 from scripts.pipeline import run_ingest, run_bronze_load
 from scripts.quality.validator import run_quality_checks
-from scripts.clean_manifest import main as clean_dbt_manifest
-from scripts.openmetadata.ingest import run_ingestion as run_om_ingestion
 
-import docker
-
-from openlineage.client import OpenLineageClient
-from openlineage.client.run import RunEvent, RunState, Run, Job, Dataset
-
-from datetime import datetime, timedelta
-from uuid import uuid4
+from datetime import timedelta
 
 # Absolute path to the dbt project
 DBT_PROJECT_DIR = Path(__file__).resolve().parent.parent.parent / "dbt"
-
-
-def emit_lineage_event(
-    job_name: str, inputs: list[str], outputs: list[str], state: RunState
-) -> None:
-    try:
-        client = OpenLineageClient.from_environment()
-        client.emit(
-            RunEvent(
-                eventType=state,
-                eventTime=datetime.utcnow().isoformat(),
-                run=Run(runId=str(uuid4())),
-                job=Job(namespace="citibike", name=job_name),
-                producer="https://github.com/Ppius6/citi-bike-data",
-                inputs=[Dataset(namespace="citibike", name=i) for i in inputs],
-                outputs=[Dataset(namespace="citibike", name=o) for o in outputs],
-            )
-        )
-    except Exception as e:
-        logging.getLogger(__name__).warning(f"Lineage emission failed (non-fatal): {e}")
 
 
 def run_dbt(command: str) -> bool:
@@ -90,12 +62,6 @@ def ingest_task(config: Config) -> bool:
     success = run_ingest(config)
     if not success:
         raise RuntimeError("Ingest phase failed.")
-    emit_lineage_event(
-        job_name="ingest",
-        inputs=["s3://tripdata"],
-        outputs=["minio://citibike/bronze/"],
-        state=RunState.COMPLETE,
-    )
     return success
 
 
@@ -111,12 +77,6 @@ def bronze_load_task(config: Config) -> bool:
     success = run_bronze_load(config)
     if not success:
         raise RuntimeError("Bronze load phase failed.")
-    emit_lineage_event(
-        job_name="bronze_load",
-        inputs=["minio://citibike/bronze/"],
-        outputs=["postgres://bronze.trips"],
-        state=RunState.COMPLETE,
-    )
     return success
 
 
@@ -164,12 +124,6 @@ def dbt_bronze_task() -> bool:
     success = run_dbt("run --select bronze_trips --target dev")
     if not success:
         raise RuntimeError("dbt bronze run failed.")
-    emit_lineage_event(
-        job_name="dbt_bronze",
-        inputs=["postgres://bronze.trips"],
-        outputs=["postgres://bronze.bronze_trips"],
-        state=RunState.COMPLETE,
-    )
     return success
 
 
@@ -182,15 +136,11 @@ def dbt_bronze_task() -> bool:
 def dbt_silver_task() -> bool:
     logger = get_run_logger()
     logger.info("Running dbt silver models.")
-    success = run_dbt("run --select silver_trips --target dev")
+    success = run_dbt(
+        "run --select int_trips_cleaned silver_trips silver_trips_rejected --target dev"
+    )
     if not success:
         raise RuntimeError("dbt silver run failed.")
-    emit_lineage_event(
-        job_name="dbt_silver",
-        inputs=["postgres://bronze.bronze_trips"],
-        outputs=["postgres://silver.silver_trips"],
-        state=RunState.COMPLETE,
-    )
     return success
 
 
@@ -221,12 +171,6 @@ def dbt_snapshot_task() -> bool:
     success = run_dbt("snapshot --target dev")
     if not success:
         raise RuntimeError("dbt snapshot failed.")
-    emit_lineage_event(
-        job_name="dbt_snapshot",
-        inputs=["postgres://silver.silver_trips"],
-        outputs=["postgres://snapshots.station_snapshot"],
-        state=RunState.COMPLETE,
-    )
     return success
 
 
@@ -242,12 +186,6 @@ def dbt_gold_task() -> bool:
     success = run_dbt("run --select gold.* --target clickhouse")
     if not success:
         raise RuntimeError("dbt gold run failed.")
-    emit_lineage_event(
-        job_name="dbt_gold",
-        inputs=["postgres://silver.silver_trips"],
-        outputs=["clickhouse://gold.fact_trips"],
-        state=RunState.COMPLETE,
-    )
     return success
 
 
@@ -269,7 +207,7 @@ def dbt_test_task(target: str = "dev", models: str = "") -> bool:
 
 @task(
     name="dbt_docs_generate",
-    description="Generate dbt manifest/catalog artifacts for OpenMetadata",
+    description="Generate dbt docs (model docs, column descriptions, tests, lineage) as the project catalog",
     retries=1,
     retry_delay_seconds=30,
 )
@@ -280,46 +218,6 @@ def dbt_docs_generate_task() -> bool:
     if not success:
         raise RuntimeError("dbt docs generate failed.")
     return success
-
-
-@task(
-    name="clean_dbt_manifest",
-    description="Split dbt manifest/catalog into Postgres and ClickHouse artifacts for OpenMetadata",
-    retries=1,
-    retry_delay_seconds=15,
-)
-def clean_manifest_task() -> bool:
-    logger = get_run_logger()
-    logger.info("Splitting dbt manifest for OpenMetadata ingestion.")
-    clean_dbt_manifest()
-    return True
-
-
-@task(
-    name="openmetadata_ingest",
-    description="Run an OpenMetadata ingestion workflow in the citibike-om-ingestion image",
-    retries=1,
-    retry_delay_seconds=30,
-)
-def om_ingest_task(config_name: str) -> bool:
-    """Refresh one OpenMetadata ingestion workflow.
-
-    Catalog refresh is best-effort: failures are logged but don't fail the
-    pipeline, since they shouldn't block the data from landing in bronze/
-    silver/gold.
-    """
-    logger = get_run_logger()
-    logger.info(f"Running OpenMetadata ingestion: {config_name}")
-    try:
-        output = run_om_ingestion(config_name)
-        logger.info(output)
-        return True
-    except docker.errors.ContainerError as e:
-        logger.warning(f"OpenMetadata ingestion failed for {config_name}: {e.stderr}")
-        return False
-    except Exception as e:
-        logger.warning(f"OpenMetadata ingestion failed for {config_name}: {e}")
-        return False
 
 
 def alert_on_failure(flow, flow_run, state):
@@ -364,14 +262,8 @@ def citibike_pipeline():
     dbt_test_task(target="dev", models="bronze_trips silver_trips")
     dbt_test_task(target="clickhouse", models="gold.*")
 
-    # Refresh the OpenMetadata catalog: schemas, dbt docs, lineage
-    om_ingest_task("postgres_ingestion.yaml")
-    om_ingest_task("clickhouse_ingestion.yaml")
-    om_ingest_task("minio_ingestion.yaml")
+    # Docs as the project catalog
     dbt_docs_generate_task()
-    clean_manifest_task()
-    om_ingest_task("dbt_postgres_ingestion.yaml")
-    om_ingest_task("dbt_clickhouse_ingestion.yaml")
 
     logger.info("Pipeline flow completed successfully.")
 

@@ -24,6 +24,7 @@ SELECT
     end_lng,
     member_casual,
     _source_file,
-    _ingested_at
+    _ingested_at,
+    rejection_reason
 FROM {{ ref('int_trips_cleaned') }}
-WHERE rejection_reason IS NULL
+WHERE rejection_reason IS NOT NULL

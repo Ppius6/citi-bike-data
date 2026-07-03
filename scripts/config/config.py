@@ -39,7 +39,6 @@ class PostgresConfig:
     password: str = os.getenv("DB_PASSWORD", "")
     bronze_schema: str = "bronze"
     silver_schema: str = "silver"
-    chunk_size: int = 5000
 
     @property
     def url(self) -> str:

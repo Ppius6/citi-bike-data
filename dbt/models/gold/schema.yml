@@ -18,7 +18,7 @@ models:
     description: "Date dimension — every date from 2021-01-01 to today"
     columns:
       - name: date_key
-        description: "Surrogate key — MD5 hash of full_date"
+        description: "Surrogate key — YYYYMMDD as UInt32 (e.g. 20230627), not a hash"
         data_tests:
           - not_null
           - unique
@@ -31,11 +31,15 @@ models:
     description: "Station dimension with SCD Type 2 history"
     columns:
       - name: station_key
-        description: "Surrogate key"
+        description: >
+          Surrogate key — one per SCD2 version (sourced from dbt_scd_id), not
+          per station_id. A station with N attribute changes has N rows and
+          N distinct station_keys.
         data_tests:
           - not_null
+          - unique
       - name: station_id
-        description: "Natural key from source"
+        description: "Natural key from source. Not unique — repeats once per SCD2 version of the station."
         data_tests:
           - not_null
 
@@ -47,6 +51,12 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: rider_type
+        description: "Raw rider type value from source"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['member', 'casual']
 
   - name: dim_bike_type
     description: "Bike type dimension"
@@ -56,6 +66,12 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: bike_type
+        description: "Raw bike type value from source"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['classic_bike', 'electric_bike', 'docked_bike']
 
   - name: fact_trips
     description: "Fact table — one row per ride, FK references to all dimensions"
@@ -68,3 +84,42 @@ models:
         description: "Natural key from source"
         data_tests:
           - not_null
+      - name: date_key
+        description: "FK to dim_date, joined on the ride's start_date"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: start_station_key
+        description: >
+          FK to dim_station — the SCD2 version whose valid_from/valid_to
+          window contains started_at, resolved via ASOF JOIN. Rides with no
+          resolvable start station are excluded from fact_trips entirely
+          (see the trips CTE), so this is always populated.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_station')
+              field: station_key
+      - name: end_station_key
+        description: "FK to dim_station, same point-in-time resolution and exclusion rule as start_station_key"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_station')
+              field: station_key
+      - name: rider_type_key
+        description: "FK to dim_rider_type"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_rider_type')
+              field: rider_type_key
+      - name: bike_type_key
+        description: "FK to dim_bike_type"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_bike_type')
+              field: bike_type_key

@@ -4,7 +4,7 @@
             target_schema='snapshots',
             unique_key='station_id',
             strategy='check',
-            check_cols='all',
+            check_cols=['station_name'],
             invalidate_hard_deletes=True
         )
     }}
@@ -39,8 +39,6 @@ all_stations AS (
 
 deduped AS (
     SELECT DISTINCT ON (station_id)
-        {{ dbt_utils.generate_surrogate_key(['station_id']) }} AS
-        station_key,
         station_id,
         station_name,
         latitude,

@@ -1,0 +1,185 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked
+      - run: uv run ruff check .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked
+      - run: uv run pytest tests/ -v
+
+  test-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r agent/backend/requirements-dev.txt
+      - run: pytest agent/backend/tests -v
+
+  dbt-parse:
+    runs-on: ubuntu-latest
+    env:
+      DB_PASSWORD: ci-placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked
+      - name: dbt parse (validates refs, sources, Jinja, YAML schema)
+        working-directory: dbt
+        run: uv run --project .. dbt parse --profiles-dir . --target local
+
+  # Builds the real bronze->silver->snapshot->gold schema against ephemeral,
+  # empty Postgres/ClickHouse service containers (structure only, no real
+  # trip data) purely so dbt docs generate can produce an accurate catalog.json
+  # (column names/types), then publishes the static docs site to GitHub Pages.
+  deploy-docs:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [lint, test, dbt-parse]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: citi-bike
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_admin_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      clickhouse:
+        image: clickhouse/clickhouse-server:24.3
+        ports:
+          - 8123:8123
+          - 9009:9000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --locked
+
+      - name: Wait for ClickHouse
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8123/ping && exit 0
+            sleep 2
+          done
+          echo "ClickHouse did not become ready in time" >&2
+          exit 1
+
+      - name: Set up Postgres schema (bronze/silver/snapshots + roles)
+        env:
+          PGHOST: localhost
+          PGPORT: "5432"
+          PGPASSWORD: ci_admin_password
+          POSTGRES_USER: postgres
+          POSTGRES_DB: citi-bike
+          DB_PASSWORD: ci_engineer_password
+          ANALYST_PASSWORD: ci_analyst_password
+        run: bash scripts/sql/init.sh
+
+      - name: Install clickhouse-client
+        run: |
+          curl https://clickhouse.com/ | sh
+          sudo mv ./clickhouse /usr/local/bin/clickhouse
+          sudo ln -s /usr/local/bin/clickhouse /usr/local/bin/clickhouse-client
+
+      - name: Set up ClickHouse schema (users, databases, bridge tables)
+        env:
+          CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
+          ANALYST_PASSWORD: ci_analyst_password
+          AI_AGENT_PASSWORD: ci_agent_password
+          # Baked into the bridge tables' ENGINE=PostgreSQL(...) connection
+          # string, resolved later by the ClickHouse server itself over the
+          # services' shared network — "postgres" is that service's name,
+          # not reachable under that name from this runner step.
+          DB_HOST: postgres
+          DB_PORT: "5432"
+          DB_NAME: citi-bike
+          DB_PASSWORD: ci_engineer_password
+        run: bash clickhouse/init.sh
+
+      - name: dbt run (bronze/silver/snapshot)
+        working-directory: dbt
+        env:
+          DB_PASSWORD: ci_engineer_password
+        run: |
+          uv run --project .. dbt run --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected --target local --profiles-dir .
+          uv run --project .. dbt snapshot --target local --profiles-dir .
+
+      - name: dbt run (gold)
+        working-directory: dbt
+        env:
+          CLICKHOUSE_HOST: localhost
+          CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
+        run: uv run --project .. dbt run --select gold.* --target clickhouse --profiles-dir .
+
+      # dbt docs generate only builds catalog.json (real column types) for
+      # whichever single target/adapter it's pointed at — a lone run misses
+      # half this project's models, since bronze/silver live in Postgres and
+      # gold lives in ClickHouse. Generate against both and merge the two
+      # catalogs so every model gets real column data in the published docs.
+      - name: dbt docs generate (Postgres layer)
+        working-directory: dbt
+        env:
+          DB_PASSWORD: ci_engineer_password
+        run: |
+          uv run --project .. dbt docs generate --target local --profiles-dir .
+          cp target/catalog.json target/catalog_postgres.json
+
+      - name: dbt docs generate (ClickHouse layer) + merge catalogs
+        working-directory: dbt
+        env:
+          CLICKHOUSE_HOST: localhost
+          CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
+        run: |
+          uv run --project .. dbt docs generate --target clickhouse --profiles-dir .
+          uv run --project .. python -c "
+          import json
+          pg = json.load(open('target/catalog_postgres.json'))
+          ch = json.load(open('target/catalog.json'))
+          pg['nodes'].update(ch['nodes'])
+          pg['sources'].update(ch['sources'])
+          pg['errors'] = (pg.get('errors') or []) + (ch.get('errors') or [])
+          json.dump(pg, open('target/catalog.json', 'w'))
+          "
+          rm target/catalog_postgres.json
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dbt/target
+      - uses: actions/deploy-pages@v4
+        id: deployment

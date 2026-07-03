@@ -1,5 +1,5 @@
 {% macro convert_to_eastern(column) %}
-    {{ column }} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York'
+    {{ column }} AT TIME ZONE 'America/New_York'
 {% endmacro %}
 
 {% macro day_name(col) %}

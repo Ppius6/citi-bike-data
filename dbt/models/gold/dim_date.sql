@@ -22,7 +22,7 @@ max_date AS (
 
 final AS (
     SELECT
-        {{ dbt_utils.generate_surrogate_key(['date_day']) }} AS date_key,
+        toYYYYMMDD(date_day) AS date_key,
         date_day AS full_date,
         toYear(date_day) AS year,
         toMonth(date_day) AS month,

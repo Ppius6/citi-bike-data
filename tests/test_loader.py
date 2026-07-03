@@ -1,5 +1,5 @@
 from io import BytesIO
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -11,7 +11,7 @@ from scripts.loading.loader import BronzeLoader
 
 @pytest.fixture
 def mock_engine():
-    with patch("citibike.loading.loader.create_engine") as mock:
+    with patch("scripts.loading.loader.create_engine") as mock:
         engine = MagicMock()
         mock.return_value = engine
         yield engine
@@ -52,17 +52,7 @@ def postgres_config():
         user="postgres",
         password="postgres",
         bronze_schema="bronze",
-        chunk_size=2,
     )
-
-
-class TestEnsureSchema:
-    def test_creates_schema_on_init(self, postgres_config, mock_minio, mock_engine):
-        conn = mock_engine.begin.return_value.__enter__.return_value
-        BronzeLoader(postgres_config, mock_minio)
-        conn.execute.assert_called_once()
-        call_text = str(conn.execute.call_args[0][0])
-        assert "CREATE SCHEMA IF NOT EXISTS" in call_text
 
 
 class TestGetLoadedSources:
@@ -92,10 +82,17 @@ class TestLoadParquet:
             "Body": MagicMock(read=MagicMock(return_value=parquet_buffer.read()))
         }
 
-        with patch.object(pd.DataFrame, "to_sql") as mock_to_sql:
-            result = loader.load_parquet(
-                "bronze/JC-202102-citibike-tripdata.csv.parquet"
-            )
+        raw_conn = mock_engine.raw_connection.return_value
+        cursor = raw_conn.cursor.return_value.__enter__.return_value
+
+        result = loader.load_parquet("bronze/JC-202102-citibike-tripdata.csv.parquet")
+
+        cursor.copy_expert.assert_called_once()
+        copy_sql = cursor.copy_expert.call_args[0][0]
+        assert copy_sql.startswith("COPY bronze.trips (")
+        assert "FROM STDIN WITH (FORMAT csv)" in copy_sql
+        raw_conn.commit.assert_called_once()
+        raw_conn.close.assert_called_once()
 
         assert result is True
 

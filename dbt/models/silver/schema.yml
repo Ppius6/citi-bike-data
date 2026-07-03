@@ -1,11 +1,30 @@
 version: 2
 
 models:
+  - name: int_trips_cleaned
+    description: >
+      Cleaned, deduplicated, and typed Citi Bike trip data, timezone converted
+      to America/New_York. Incremental — the single scan point over bronze.
+      Holds both valid and invalid rows; rejection_reason is null for rows
+      that pass all validation checks. silver_trips and silver_trips_rejected
+      are thin views that split on this column.
+    columns:
+      - name: ride_id
+        data_tests:
+          - not_null
+          - unique
+      - name: rejection_reason
+        description: >
+          Null if the row passed all checks. Otherwise one of:
+          non_positive_duration, duration_exceeds_24h, missing_start_lat,
+          missing_start_lng.
+
   - name: silver_trips
     description: >
       Cleaned, deduplicated, and typed Citi Bike trip data.
       Timezone converted to America/New_York.
-      Rides with invalid durations or missing coordinates are excluded.
+      Rides with invalid durations or missing coordinates are excluded
+      (see silver_trips_rejected for the excluded rows and why).
     config:
       elementary:
         timestamp_column: started_at
@@ -77,3 +96,23 @@ models:
         description: "Source CSV filename this row originated from"
       - name: _ingested_at
         description: "UTC timestamp when this row was ingested into MinIO"
+
+  - name: silver_trips_rejected
+    description: >
+      Rows that failed validation in int_trips_cleaned (invalid duration or
+      missing coordinates), retained with their rejection_reason instead of
+      being silently dropped — quarantine surface for data-quality reporting.
+    columns:
+      - name: ride_id
+        data_tests:
+          - not_null
+      - name: rejection_reason
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - non_positive_duration
+                  - duration_exceeds_24h
+                  - missing_start_lat
+                  - missing_start_lng

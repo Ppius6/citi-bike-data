@@ -1,8 +1,0 @@
-# Pre-install connectors once to avoid pip dependency conflicts at runtime.
-# Base image ENTRYPOINT is `airflow` — override so `metadata ingest` works.
-FROM openmetadata/ingestion:1.5.0
-
-RUN pip install --no-cache-dir \
-    'openmetadata-ingestion[postgres,clickhouse,s3]==1.5.0.0'
-
-ENTRYPOINT ["metadata"]

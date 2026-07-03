@@ -2,8 +2,8 @@
     config(
         materialized='table',
         schema='gold',
-        engine='ReplacingMergeTree()',
-        order_by='trip_key',
+        engine='MergeTree()',
+        order_by='(date_key, start_station_key)',
     )
 }}
 
@@ -14,8 +14,6 @@ WITH trips AS (
         started_at,
         ended_at,
         start_date,
-        start_hour,
-        day_of_week,
         ride_duration_minutes,
         start_station_id,
         end_station_id,
@@ -27,29 +25,26 @@ WITH trips AS (
         _source_file,
         _ingested_at
     FROM {{ source('silver', 'silver_trips') }}
+    -- A small share of rides (~0.3%) have no station recorded/recoverable
+    -- (see silver's station_lookup backfill) — excluded here so every fact
+    -- row's station FKs are fully resolved, keeping them non-nullable.
+    WHERE start_station_id IS NOT NULL
+      AND end_station_id IS NOT NULL
 ),
 
 dim_date AS (
-    SELECT 
-        date_key, 
+    SELECT
+        date_key,
         full_date
     FROM {{ ref('dim_date') }}
 ),
 
-dim_station_start AS (
+dim_station AS (
     SELECT
         station_key,
-        station_id
+        station_id,
+        valid_from
     FROM {{ ref('dim_station') }}
-    WHERE is_current = 1
-),
-
-dim_station_end AS (
-    SELECT
-        station_key,
-        station_id
-    FROM {{ ref('dim_station') }}
-    WHERE is_current = 1
 ),
 
 dim_rider AS (
@@ -87,8 +82,6 @@ final AS (
 
         -- Measures
         t.ride_duration_minutes,
-        t.start_hour,
-        t.day_of_week,
 
         -- Coordinates
         t.start_lat,
@@ -103,10 +96,12 @@ final AS (
     FROM trips t
     LEFT JOIN dim_date dd
         ON t.start_date = dd.full_date
-    LEFT JOIN dim_station_start ds
+    LEFT ASOF JOIN dim_station ds
         ON t.start_station_id = ds.station_id
-    LEFT JOIN dim_station_end de
+        AND t.started_at >= ds.valid_from
+    LEFT ASOF JOIN dim_station de
         ON t.end_station_id = de.station_id
+        AND t.started_at >= de.valid_from
     LEFT JOIN dim_rider dr
         ON t.member_casual = dr.rider_type
     LEFT JOIN dim_bike db

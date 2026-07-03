@@ -1,6 +1,6 @@
 # Citi Bike Data Pipeline
 
-A production-grade lakehouse pipeline that ingests Citi Bike trip data from S3, transforms it through bronze, silver, and gold layers, and serves a star schema for analytical queries. Fully orchestrated with Prefect and containerised with Docker Compose.
+A hybrid warehouse pipeline — MinIO as an object-store landing zone, Postgres for the mutable bronze/silver layers, ClickHouse for the gold star schema — that ingests Citi Bike trip data from S3, transforms it through bronze, silver, and gold layers, and serves analytical queries. Fully orchestrated with Prefect and containerised with Docker Compose. (See [Key Design Decisions](#key-design-decisions) for why bronze is Postgres rather than ClickHouse querying Parquet directly.)
 
 ---
 
@@ -13,22 +13,23 @@ Citi Bike S3 (source)
         ↓
 ingest.py → MinIO              raw Parquet files (bronze layer)
         ↓
-loader.py → Postgres           bronze.trips (5.4M rows)
+loader.py → Postgres           bronze.trips (~9.0M rows, COPY-loaded)
         ↓
 dbt-postgres:
   bronze.bronze_trips          exact copy of source, typed
-  silver.silver_trips          cleaned, deduplicated, timezone-corrected
+  silver.int_trips_cleaned     cleaned, deduplicated, timezone-corrected (single incremental scan)
+  silver.silver_trips          valid rows only (view over int_trips_cleaned)
+  silver.silver_trips_rejected quarantined rows + why (view over int_trips_cleaned)
   snapshots.station_snapshot   SCD Type 2 station history
         ↓
 dbt-clickhouse:
-  gold.dim_date                date dimension (date spine)
-  gold.dim_station             station dimension with SCD Type 2
+  gold.dim_date                date dimension (date spine, integer YYYYMMDD key)
+  gold.dim_station             station dimension with SCD Type 2 (ASOF-joined by ride time)
   gold.dim_rider_type          rider type dimension
   gold.dim_bike_type           bike type dimension
-  gold.fact_trips              fact table, star schema (4.7M rows)
+  gold.fact_trips              fact table, star schema (~4.9M rows)
         ↓
-DBeaver                        connects to Postgres + ClickHouse
-OpenMetadata                   data catalog, lineage, dbt docs
+DBeaver                        connects to Postgres + ClickHouse (least-privilege roles)
         ↓
 agent/backend (FastAPI)        DeepSeek tool-calling agent, read-only ai_agent
                                 ClickHouse user scoped to gold.* only
@@ -48,7 +49,7 @@ agent/frontend (React + TS)    minimal chat UI → http://localhost:3000
 | Warehouse | ClickHouse 24.3 | Gold layer, columnar analytical queries |
 | Transformation | dbt (postgres + clickhouse) | Bronze → silver → gold models |
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
-| Data Catalog | OpenMetadata 1.5 | Schema catalog, dbt docs, lineage, search (Elasticsearch) |
+| Data Catalog | dbt docs | Model docs, column descriptions, tests, and lineage generated from the project itself |
 | Chat Agent | FastAPI + DeepSeek (OpenAI-compatible) | Tool-calling agent that writes/executes read-only SQL against the gold layer |
 | Chat UI | React + Vite + TypeScript | Minimal dark/light chat frontend (Inter/Outfit/JetBrains Mono), served via nginx |
 | Containerisation | Docker Compose | Full stack, single command startup |
@@ -59,36 +60,38 @@ agent/frontend (React + TS)    minimal chat UI → http://localhost:3000
 
 ```
 citi-bike-data/
+├── .github/workflows/
+│   └── ci.yml                    ruff check, pytest (root + agent), dbt parse
 ├── scripts/
 │   ├── config/                 dataclass-based config, env var driven
 │   ├── ingestion/               S3 fetch, zip extract, Parquet conversion
 │   ├── storage/                 MinIO client wrapper
-│   ├── loading/                 MinIO → Postgres bronze loader
+│   ├── loading/                 MinIO → Postgres bronze loader (COPY-based)
 │   ├── quality/                 Soda data quality checks
 │   ├── orchestration/           Prefect flow and task definitions
-│   ├── openmetadata/             OpenMetadata ingestion runner (ingest.sh)
 │   ├── sql/                      Postgres init: schemas + roles
 │   ├── minio/                    MinIO bucket + policy init
-│   ├── clean_manifest.py        dbt manifest splitter for OpenMetadata
 │   └── pipeline.py               ingest + load orchestration entry point
 ├── dbt/
 │   ├── models/
 │   │   ├── bronze/             bronze_trips.sql
-│   │   ├── silver/             silver_trips.sql (incremental + merge)
+│   │   ├── silver/             int_trips_cleaned.sql (incremental, single scan),
+│   │   │                        silver_trips.sql / silver_trips_rejected.sql (views)
 │   │   └── gold/                dim_date, dim_station, dim_rider_type,
 │   │                            dim_bike_type, fact_trips
 │   ├── snapshots/               station_snapshot.sql (SCD Type 2)
 │   ├── macros/
 │   ├── dbt_project.yml
 │   └── profiles.yml
-├── openmetadata/                 ingestion configs (postgres, clickhouse, minio, dbt)
 ├── agent/
 │   ├── backend/                 FastAPI + DeepSeek tool-calling agent
 │   │   ├── database.py          live gold.* schema introspection + read-only SQL execution/guardrails
 │   │   ├── agent.py             system instructions, tool loop, DeepSeek client
 │   │   ├── server.py            FastAPI app — POST /api/chat
 │   │   ├── main.py              standalone CLI chat loop
+│   │   ├── tests/               guardrail tests for execute_sql_query
 │   │   ├── requirements.txt
+│   │   ├── requirements-dev.txt
 │   │   └── Dockerfile
 │   └── frontend/                React + Vite + TypeScript chat UI
 │       ├── src/
@@ -134,7 +137,8 @@ citi-bike-data/
 ```bash
 git clone <repo>
 cd citi-bike-data
-# Create a .env file with the variables listed below
+cp .env.example .env
+# Fill in the values in .env
 ```
 
 **2. Start the full stack**
@@ -149,7 +153,6 @@ Services started:
 - Prefect UI → <http://localhost:4200>
 - Postgres → localhost:5432
 - ClickHouse → localhost:8123 (HTTP), localhost:9009 (native)
-- OpenMetadata UI → <http://localhost:8585>
 - Chat agent API → <http://localhost:8000> (see [Chat Agent](#chat-agent))
 - Chat UI → <http://localhost:3000>
 
@@ -161,50 +164,23 @@ prefect deployment run 'citibike_pipeline/citibike-monthly'
 
 Watch progress at <http://localhost:4200>
 
-**4. Ingest metadata into OpenMetadata (optional)**
+**4. Browse the data catalog (dbt docs)**
+
+Regenerated automatically at the end of every pipeline run:
 
 ```bash
-./scripts/openmetadata/ingest.sh all
+cd dbt && dbt docs generate --profiles-dir . --target dev && dbt docs serve --profiles-dir .
 ```
-
-Browse the catalog, lineage, and dbt docs at <http://localhost:8585>
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file at the project root:
-
 ```bash
-# Postgres
-DB_NAME=citi-bike
-DB_HOST=postgres
-POSTGRES_ADMIN_PASSWORD=your_admin_password
-DB_PASSWORD=your_data_engineer_password
-ANALYST_PASSWORD=your_data_analyst_password
-
-# MinIO
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
-MINIO_BUCKET=citibike
-MINIO_ACCESS_KEY=your_engineer_access_key
-MINIO_SECRET_KEY=your_engineer_secret_key
-MINIO_ANALYST_KEY=your_analyst_access_key
-MINIO_ANALYST_SECRET=your_analyst_secret_key
-
-# ClickHouse
-CLICKHOUSE_HOST=clickhouse
-CLICKHOUSE_ENGINEER_PASSWORD=your_clickhouse_password
-
-# ClickHouse — read-only chat agent user (SELECT on gold.* only, server-enforced readonly=2)
-AI_AGENT_PASSWORD=your_ai_agent_password
-
-# DeepSeek (chat agent LLM)
-DEEPSEEK_API_KEY=your_deepseek_api_key
-
-# OpenMetadata (Settings → Bots → ingestion-bot in OM UI)
-OPENMETADATA_JWT_TOKEN=your_jwt_token
+cp .env.example .env
 ```
+
+`.env.example` is the source of truth for every variable the stack needs — Postgres (admin, `data_engineer`, `data_analyst` passwords), MinIO (root + engineer/analyst keys), ClickHouse (`data_engineer`/`ai_agent` passwords), and the DeepSeek API key for the chat agent. Fill in real values in `.env`; nothing in the repo besides `.env.example` should contain a real secret.
 
 ---
 
@@ -216,13 +192,13 @@ Raw Citi Bike trip data landed from MinIO Parquet files into Postgres with no tr
 
 ### Silver
 
-Cleaned and typed bronze data. Transformations applied:
+`int_trips_cleaned` is the single incremental scan over bronze — cleaning, dedup, and quarantine flagging all happen here once. `silver_trips` and `silver_trips_rejected` are thin views splitting on `rejection_reason`, so downstream consumers see the same shape as before. Transformations applied:
 
 - Duplicates removed on `ride_id`
-- Timestamps converted from UTC to `America/New_York` to align with local ride times and handle UTC offsets correctly.
+- Timestamps converted from UTC to `America/New_York` (single conversion — the raw column is already `timestamptz`)
 - `ride_duration_minutes` computed
-- Station names and IDs cleaned (`NULLIF` on empty strings)
-- Invalid rides filtered (duration ≤ 0 or > 1440 minutes, missing coordinates)
+- Station names and IDs cleaned (`NULLIF` on empty strings); a missing `station_id` with a surviving `station_name` is backfilled from an unambiguous name→id lookup built from the rest of the data — station IDs don't change over time, so a name seen with exactly one other ID elsewhere is safe to fill in
+- Invalid rides quarantined, not dropped: duration ≤ 0 or > 1440 minutes, missing coordinates → `silver_trips_rejected`, tagged with why
 
 ### Gold (Star Schema)
 
@@ -230,21 +206,21 @@ Business-ready dimensional model in ClickHouse:
 
 | Model | Rows | Description |
 |---|---|---|
-| `dim_date` | ~1,917 | Date spine from 2021-01-01 to latest data |
-| `dim_station` | 927 | Stations with SCD Type 2 history |
+| `dim_date` | ~1,977 | Date spine from 2021-01-01 to latest data, `date_key` as `YYYYMMDD` `UInt32` |
+| `dim_station` | 939 | Stations with SCD Type 2 history, `station_key` unique per version |
 | `dim_rider_type` | 2 | Member / casual |
 | `dim_bike_type` | 3 | Electric / classic / docked |
-| `fact_trips` | ~4.7M | One row per ride, FK to all dimensions |
+| `fact_trips` | ~4.86M | One row per ride, FK to all dimensions, `ORDER BY (date_key, start_station_key)` — rides with no resolvable station are excluded (~0.3%) |
 
 ---
 
 ## dbt Tests
 
-23 data tests across all layers:
+42 data tests across all layers, including `relationships` tests from every `fact_trips` FK to its dimension and `accepted_values` on the dimension enums:
 
 ```bash
 # Postgres layers (bronze + silver)
-dbt test --target dev --select bronze_trips silver_trips --profiles-dir .
+dbt test --target dev --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected --profiles-dir .
 
 # ClickHouse layers (gold)
 dbt test --target clickhouse --select gold.* --profiles-dir .
@@ -259,54 +235,21 @@ The pipeline runs on the 1st of every month at 06:00 AM (New York time).
 ```
 Task execution order:
 1.  ingest              download + convert to Parquet → MinIO
-2.  bronze_load         MinIO → Postgres bronze.trips
+2.  bronze_load         MinIO → Postgres bronze.trips (COPY)
 3.  quality_check       Soda checks on bronze.trips
 4.  dbt_bronze          bronze.trips → bronze.bronze_trips
-5.  dbt_silver          bronze_trips → silver.silver_trips (incremental)
+5.  dbt_silver          bronze_trips → silver.int_trips_cleaned / silver_trips / silver_trips_rejected
 6.  dbt_elementary      Elementary monitoring models in silver
 7.  dbt_snapshot        silver_trips → snapshots.station_snapshot (SCD Type 2)
 8.  dbt_gold            silver → ClickHouse gold layer (5 models)
-9.  dbt_test_dev        12 tests on bronze + silver
-10. dbt_test_ch         11 tests on gold
-11. om_ingest_postgres  refresh OpenMetadata: Postgres schemas
-12. om_ingest_clickhouse refresh OpenMetadata: ClickHouse schemas
-13. om_ingest_minio     refresh OpenMetadata: MinIO storage
-14. dbt_docs_generate   regenerate dbt manifest/catalog
-15. clean_dbt_manifest  split manifest into Postgres + ClickHouse artifacts
-16. om_ingest_dbt_*     refresh OpenMetadata: dbt docs + lineage
+9.  dbt_test_dev        tests on bronze + silver
+10. dbt_test_ch         tests on gold
+11. dbt_docs_generate   regenerate dbt docs (model docs, tests, lineage)
 ```
 
-Each pipeline task (1–10) has automatic retries, and a failure stops the flow before any downstream layer is built on bad data. The catalog refresh tasks (11–16) are best-effort: failures are logged but won't fail the run, since a stale catalog shouldn't block the data pipeline.
+Each task has automatic retries, and a failure stops the flow before any downstream layer is built on bad data.
 
 ![Completed pipeline run in the Prefect UI](files/pipeline.png)
-
-An example of the orchestration is viewable in the following image:
-
-![Orchestration Flow](files/pipeline.png)
-
----
-
-## Data Catalog (OpenMetadata)
-
-OpenMetadata indexes the Postgres (bronze/silver/snapshots) and ClickHouse (gold) schemas, plus dbt model docs, descriptions, tests, and column-level lineage between the two databases.
-
-The catalog refreshes automatically as the last stage of `citibike_pipeline` (see [Orchestration](#orchestration)). The `prefect-worker` container launches a short-lived `citibike-om-ingestion` container per workflow via the Docker socket — kept separate because OpenMetadata's ingestion framework pins dependency versions (SQLAlchemy 1.4, protobuf 4) that conflict with Prefect/dbt's. This requires:
-
-- `/var/run/docker.sock` mounted into `prefect-worker` (already set in `docker-compose.yml`)
-- `PROJECT_ROOT` set to the project's host path (defaults to `${PWD}` — run `docker compose up` from the project root)
-
-To run ingestion manually instead:
-
-```bash
-# Generate fresh dbt artifacts, then ingest everything
-cd dbt && dbt docs generate --profiles-dir . && cd ..
-./scripts/openmetadata/ingest.sh all
-
-# Or run a single workflow
-./scripts/openmetadata/ingest.sh dbt-postgres
-```
-
-Open <http://localhost:8585> and sign in with the admin credentials configured on first run. The ingestion workflows are defined in `openmetadata/*.yaml`; `scripts/clean_manifest.py` splits the dbt manifest into Postgres and ClickHouse artifacts compatible with OpenMetadata 1.5's dbt manifest schema.
 
 ---
 
@@ -336,7 +279,7 @@ web browser → agent/frontend (React + TS, nginx)
 
 **Guardrails** (defense in depth — each layer works even if another fails):
 
-- App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements.
+- App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements — including keywords hidden inside a `WITH ... DELETE` CTE. Covered by 29 guardrail tests in `agent/backend/tests/test_database.py` (statement-count enforcement, every forbidden keyword, case-insensitivity, and word-boundary checks so identifiers like `inserted_at` don't false-positive on `INSERT`).
 - Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `clickhouse/init.sh`) that is granted `SELECT` on `gold.*` only — no access to `silver`/`snapshots`/`bronze` — and created with `SETTINGS readonly = 2`, which makes ClickHouse itself reject any write statement regardless of what the app layer does.
 - Correctness: ClickHouse string comparisons are case-sensitive, and dimension tables store both a raw value (`rider_type = 'casual'`) and a display value (`rider_type_desc = 'Casual'`). The system prompt instructs the agent to filter with `lower(column) = lower('value')` unless it's certain of exact casing, so a wrong guess returns the right rows instead of silently returning zero.
 
@@ -352,13 +295,9 @@ python main.py
 
 ---
 
-The UI of the agent is as shown below.
-
-![Chat Agent UI](files/agent.png)
-
-![Chat Agent UI](files/agent-2.png)
-
 ## DBeaver Connections
+
+Connect with the least-privilege `data_analyst` role for read-only exploration; use `data_engineer` only if you need to write.
 
 **Postgres (bronze + silver)**
 
@@ -367,7 +306,8 @@ The UI of the agent is as shown below.
 | Host | localhost |
 | Port | 5432 |
 | Database | citi-bike |
-| User | postgres |
+| User | `data_analyst` (read-only) or `data_engineer` |
+| Password | `ANALYST_PASSWORD` or `DB_PASSWORD` from `.env` |
 
 **ClickHouse (gold)**
 
@@ -376,18 +316,22 @@ The UI of the agent is as shown below.
 | Host | localhost |
 | Port | 9009 |
 | Database | gold |
-| User | default |
-| Password | (blank) |
+| User | `data_analyst` (read-only) or `data_engineer` |
+| Password | `ANALYST_PASSWORD` or `CLICKHOUSE_ENGINEER_PASSWORD` from `.env` |
 
 ---
 
 ## Running Tests
 
 ```bash
+# Root pipeline (ingest, storage, loader)
 pytest tests/ -v
+
+# Chat agent guardrails (needs agent/backend/requirements-dev.txt)
+pytest agent/backend/tests -v
 ```
 
-23 unit tests covering ingest, storage, and loader modules.
+61 unit tests total: 32 covering ingest, storage, and loader modules; 29 covering the chat agent's SQL guardrails.
 
 ---
 
@@ -397,6 +341,8 @@ pytest tests/ -v
 
 **Medallion architecture.** Bronze is immutable. Silver is replayable from bronze. Gold is replayable from silver. A bug at any layer can be fixed and replayed without re-ingesting from source.
 
-**SCD Type 2 on stations.** Station names and coordinates change over time. dbt snapshots track the full history and each fact row can be joined to the station name that was current at ride time.
+**SCD Type 2 on stations.** Station names and coordinates change over time. dbt snapshots track the full history, and `fact_trips` resolves each ride to the station version that was actually true at ride time via a ClickHouse `ASOF JOIN` on `valid_from`/`valid_to` — not just a lookup of whatever the station's attributes are today. `station_key` is unique per version (sourced from `dbt_scd_id`, not the natural `station_id`), which is what makes the point-in-time join actually mean something.
 
 **ClickHouse bridge tables.** Gold models read from Postgres silver via ClickHouse's PostgreSQL engine. No data is copied and ClickHouse queries Postgres directly. Only the gold layer is physically stored in ClickHouse.
+
+**Why bronze lives in Postgres, not queried straight off MinIO's Parquet.** ClickHouse can query S3-compatible object storage directly via its S3 table engine, so an obvious question is why this pipeline hops through a Postgres bronze table at all instead of pointing ClickHouse straight at the raw Parquet files. The answer is that Postgres gives the rest of the pipeline a mutable staging surface: dbt's incremental models need `MERGE`/upsert semantics keyed on `ride_id`, Soda's quality checks run as row-level SQL assertions against a real table, and re-loading a corrected file means updating rows in place rather than re-deriving the whole layer from immutable object storage. Object storage is the right fit for gold, where the shape is fixed and queries are append-mostly — it's the wrong fit for bronze, where the whole point is DML.

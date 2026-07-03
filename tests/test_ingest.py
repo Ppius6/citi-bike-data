@@ -1,7 +1,6 @@
 import zipfile
 from io import BytesIO
-from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -24,7 +23,7 @@ class TestGetFileList:
             <Key>JC-202103-citibike-tripdata.csv.zip</Key>
         </ListBucketResult>"""
 
-        with patch("citibike.ingestion.ingest.requests.get") as mock_get:
+        with patch("scripts.ingestion.ingest.requests.get") as mock_get:
             mock_get.return_value.status_code = 200
             mock_get.return_value.text = xml
             mock_get.return_value.raise_for_status = MagicMock()
@@ -42,7 +41,7 @@ class TestGetFileList:
             <Key>JC-202001-citibike-tripdata.csv.zip</Key>
         </ListBucketResult>"""
 
-        with patch("citibike.ingestion.ingest.requests.get") as mock_get:
+        with patch("scripts.ingestion.ingest.requests.get") as mock_get:
             mock_get.return_value.status_code = 200
             mock_get.return_value.text = xml
             mock_get.return_value.raise_for_status = MagicMock()
@@ -52,7 +51,7 @@ class TestGetFileList:
         assert result == []
 
     def test_retries_on_failure_then_raises(self, downloader):
-        with patch("citibike.ingestion.ingest.requests.get") as mock_get:
+        with patch("scripts.ingestion.ingest.requests.get") as mock_get:
             mock_get.side_effect = requests.exceptions.ConnectionError("timeout")
 
             with pytest.raises(Exception, match="Max retries exceeded"):
@@ -66,7 +65,7 @@ class TestDownloadToTemp:
         file_name = "JC-202102-citibike-tripdata.csv.zip"
         fake_content = b"fake zip content"
 
-        with patch("citibike.ingestion.ingest.requests.get") as mock_get:
+        with patch("scripts.ingestion.ingest.requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.__enter__ = lambda s: s
             mock_response.__exit__ = MagicMock(return_value=False)
@@ -86,7 +85,7 @@ class TestDownloadToTemp:
         downloader.pipeline.temp_dir.mkdir(parents=True, exist_ok=True)
         existing.write_bytes(b"already here")
 
-        with patch("citibike.ingestion.ingest.requests.get") as mock_get:
+        with patch("scripts.ingestion.ingest.requests.get") as mock_get:
             result = downloader.download_to_temp(file_name)
             mock_get.assert_not_called()
 
@@ -95,7 +94,7 @@ class TestDownloadToTemp:
     def test_returns_none_and_cleans_up_on_failure(self, downloader):
         file_name = "JC-202102-citibike-tripdata.csv.zip"
 
-        with patch("citibike.ingestion.ingest.requests.get") as mock_get:
+        with patch("scripts.ingestion.ingest.requests.get") as mock_get:
             mock_get.side_effect = Exception("network error")
             result = downloader.download_to_temp(file_name)
 

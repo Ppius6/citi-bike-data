@@ -116,10 +116,15 @@ jobs:
           ANALYST_PASSWORD: ci_analyst_password
         run: bash scripts/sql/init.sh
 
+      # Runs in /tmp, not the checkout root: the installer downloads its
+      # binary to a path literally named "clickhouse" in the current
+      # directory, which would otherwise collide with our own clickhouse/
+      # config directory and get `sudo mv`'d out of the checkout.
       - name: Install clickhouse-client
+        working-directory: /tmp
         run: |
           curl https://clickhouse.com/ | sh
-          sudo mv ./clickhouse /usr/local/bin/clickhouse
+          sudo mv /tmp/clickhouse /usr/local/bin/clickhouse
           sudo ln -s /usr/local/bin/clickhouse /usr/local/bin/clickhouse-client
 
       - name: Set up ClickHouse schema (users, databases, bridge tables)

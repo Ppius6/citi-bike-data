@@ -1,0 +1,34 @@
+citibike_dbt:
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DB_HOST', 'postgres') }}"
+      port: "{{ env_var('DB_PORT', '5432') | int }}"
+      dbname: "{{ env_var('DB_NAME', 'citi-bike') }}"
+      user: "{{ env_var('DB_USER', 'data_engineer') }}"
+      pass: "{{ env_var('DB_PASSWORD') }}"
+      schema: silver
+      threads: 4
+
+    local:
+      type: postgres
+      host: localhost
+      port: 5432
+      dbname: citi-bike
+      user: data_engineer
+      pass: "{{ env_var('DB_PASSWORD') }}"
+      schema: silver
+      threads: 4
+    
+    clickhouse:
+      type: clickhouse
+      host: "{{ env_var('CLICKHOUSE_HOST', 'clickhouse') }}"
+      port: 8123
+      user: data_engineer
+      password: "{{ env_var('CLICKHOUSE_ENGINEER_PASSWORD') }}"
+      schema: gold
+      secure: false
+      threads: 4
+      
+  target: local
+    

@@ -8,10 +8,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -62,6 +58,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [lint, test, dbt-parse]
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
       contents: read
       pages: write
@@ -126,12 +125,18 @@ jobs:
       # binary to a path literally named "clickhouse" in the current
       # directory, which would otherwise collide with our own clickhouse/
       # config directory and get `sudo mv`'d out of the checkout.
-      - name: Install clickhouse-client
-        working-directory: /tmp
+      # Pinned to match the clickhouse-server:24.3 image above exactly (both
+      # clickhouse-client and clickhouse-common-static must be pinned
+      # together — the client package depends on an exact-matching
+      # common-static version, and apt otherwise pulls the newest one).
+      # Bump both if the service image tag above changes.
+      - name: Install clickhouse-client (pinned to match the server version)
         run: |
-          curl https://clickhouse.com/ | sh
-          sudo mv /tmp/clickhouse /usr/local/bin/clickhouse
-          sudo ln -s /usr/local/bin/clickhouse /usr/local/bin/clickhouse-client
+          sudo apt-get install -y apt-transport-https ca-certificates gnupg
+          curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | sudo gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | sudo tee /etc/apt/sources.list.d/clickhouse.list
+          sudo apt-get update
+          sudo apt-get install -y clickhouse-client=24.3.18.7 clickhouse-common-static=24.3.18.7
 
       - name: Set up ClickHouse schema (users, databases, bridge tables)
         env:

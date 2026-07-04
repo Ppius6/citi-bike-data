@@ -21,6 +21,7 @@ A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres
 | Transformation | dbt (postgres + clickhouse) | Bronze → silver → gold models |
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
 | Data Catalog | dbt docs | Model docs, column descriptions, tests, and lineage — live at [ppius6.github.io/citi-bike-data](https://ppius6.github.io/citi-bike-data/) |
+| Observability | Soda + dbt tests + Elementary | Landing contract, model assertions, and anomaly/run-history report — live at [.../elementary](https://ppius6.github.io/citi-bike-data/elementary/) |
 | Chat Agent | FastAPI + DeepSeek (OpenAI-compatible) | Tool-calling agent that writes/executes read-only SQL against the gold layer |
 | Chat UI | React + Vite + TypeScript | Minimal dark/light chat frontend (Inter/Outfit/JetBrains Mono), served via nginx |
 | Containerisation | Docker Compose | Full stack, single command startup |
@@ -137,12 +138,16 @@ Watch progress at <http://localhost:4200>
 
 **4. Browse the data catalog (dbt docs)**
 
-Live at **<https://ppius6.github.io/citi-bike-data/>** — model docs, column descriptions, tests, and lineage, published automatically by CI on every push to `main` (see `.github/workflows/ci.yml`'s `deploy-docs` job).
+Live at **<https://ppius6.github.io/citi-bike-data/>** — model docs, column descriptions, tests, and lineage, published automatically by CI on every push to `main` (see `.github/workflows/ci.yml`'s `deploy-docs` job). Elementary's anomaly/run-history report is published alongside it at **<https://ppius6.github.io/citi-bike-data/elementary/>**.
 
-To generate and browse a local copy instead (useful while iterating on models before pushing):
+To generate and browse local copies instead (useful while iterating on models before pushing):
 
 ```bash
 cd dbt && dbt docs generate --profiles-dir . --target dev && dbt docs serve --profiles-dir .
+
+# Elementary report (needs its own `elementary` profile stanza in profiles.yml)
+mkdir -p target/elementary
+edr report --profiles-dir . --project-dir . --profile-target dev --file-path target/elementary/index.html
 ```
 
 ---
@@ -218,6 +223,7 @@ Task execution order:
 9.  dbt_test_dev        tests on bronze + silver
 10. dbt_test_ch         tests on gold
 11. dbt_docs_generate   regenerate dbt docs (model docs, tests, lineage)
+12. elementary_report   regenerate Elementary's anomaly/observability report
 ```
 
 Each task has automatic retries, and a failure stops the flow before any downstream layer is built on bad data.
@@ -315,3 +321,5 @@ pytest agent/backend/tests -v
 **ClickHouse bridge tables.** Gold models read from Postgres silver via ClickHouse's PostgreSQL engine. No data is copied and ClickHouse queries Postgres directly. Only the gold layer is physically stored in ClickHouse.
 
 **Why bronze lives in Postgres, not queried straight off MinIO's Parquet.** ClickHouse can query S3-compatible object storage directly via its S3 table engine, so an obvious question is why this pipeline hops through a Postgres bronze table at all instead of pointing ClickHouse straight at the raw Parquet files. The answer is that Postgres gives the rest of the pipeline a mutable staging surface: dbt's incremental models need `MERGE`/upsert semantics keyed on `ride_id`, Soda's quality checks run as row-level SQL assertions against a real table, and re-loading a corrected file means updating rows in place rather than re-deriving the whole layer from immutable object storage. Object storage is the right fit for gold, where the shape is fixed and queries are append-mostly as it is the wrong fit for bronze, where the whole point is DML.
+
+**Gold intentionally doesn't reconcile 1:1 with silver.** `fact_trips` excludes the small share of rides (~0.3%) whose start or end station can't be resolved to a `dim_station` row even after the name→id backfill (see [Silver](#silver)), so that `start_station_key`/`end_station_key` stay non-nullable and every FK in the fact table is guaranteed resolvable. The tradeoff: `fact_trips`'s row count will never exactly match `silver_trips`'s — a real, known gap, not a bug — and an analyst diffing total ride counts across layers should expect it. The alternative (a sentinel "Unknown" row in `dim_station` so every ride survives into the fact table) was considered and rejected: it would require every station-level query to remember to filter out a synthetic row that doesn't represent an unresolved-but-real station, just an absence of data.

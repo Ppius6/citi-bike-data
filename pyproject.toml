@@ -8,6 +8,7 @@ dependencies = [
     "beautifulsoup4>=4.14.3",
     "boto3>=1.42.97",
     "dbt-clickhouse>=1.10.0",
+    "elementary-data[postgres]>=0.25.0",
     "dbt-core>=1.11.8",
     "dbt-postgres>=1.10.0",
     "lxml>=6.1.0",       # bs4's XML parser backend (BeautifulSoup(..., "xml")); never imported by name

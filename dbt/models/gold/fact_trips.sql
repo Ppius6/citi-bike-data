@@ -82,6 +82,9 @@ final AS (
 
         -- Measures
         t.ride_duration_minutes,
+        -- Great-circle distance; NULL when the end point is unknown, which
+        -- is correct — an unknown endpoint means an unknown distance.
+        round(geoDistance(t.start_lng, t.start_lat, t.end_lng, t.end_lat) / 1000, 2) AS ride_distance_km,
 
         -- Coordinates
         t.start_lat,

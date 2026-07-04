@@ -220,6 +220,39 @@ def dbt_docs_generate_task() -> bool:
     return success
 
 
+@task(
+    name="elementary_report_generate",
+    description="Generate Elementary's anomaly/observability report into target/elementary, published alongside dbt docs",
+    retries=1,
+    retry_delay_seconds=30,
+)
+def elementary_report_task() -> bool:
+    logger = get_run_logger()
+    logger.info("Generating Elementary report.")
+
+    # edr doesn't create parent directories for --file-path itself.
+    (DBT_PROJECT_DIR / "target" / "elementary").mkdir(parents=True, exist_ok=True)
+
+    result = subprocess.run(
+        "edr report --profiles-dir . --project-dir . --profile-target dev "
+        "--file-path target/elementary/index.html --open-browser false",
+        shell=True,
+        cwd=DBT_PROJECT_DIR,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.stdout:
+        logger.info(result.stdout)
+    if result.stderr:
+        logger.warning(result.stderr)
+
+    if result.returncode != 0:
+        logger.error("Elementary report generation failed.")
+        raise RuntimeError("Elementary report generation failed.")
+    return True
+
+
 def alert_on_failure(flow, flow_run, state):
     try:
         slack = SlackWebhook.load("citibike-alerts")
@@ -262,8 +295,9 @@ def citibike_pipeline():
     dbt_test_task(target="dev", models="bronze_trips silver_trips")
     dbt_test_task(target="clickhouse", models="gold.*")
 
-    # Docs as the project catalog
+    # Docs as the project catalog, plus Elementary's observability report
     dbt_docs_generate_task()
+    elementary_report_task()
 
     logger.info("Pipeline flow completed successfully.")
 

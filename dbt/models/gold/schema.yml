@@ -123,3 +123,9 @@ models:
           - relationships:
               to: ref('dim_bike_type')
               field: bike_type_key
+      - name: ride_distance_km
+        description: >
+          Great-circle distance between start and end coordinates
+          (ClickHouse geoDistance), rounded to 2 decimal places. Null when
+          end_lat/end_lng are missing — an unknown endpoint means an
+          unknown distance, not a data-quality failure.

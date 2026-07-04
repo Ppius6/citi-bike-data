@@ -153,13 +153,14 @@ jobs:
           DB_PASSWORD: ci_engineer_password
         run: bash clickhouse/init.sh
 
-      - name: dbt run (bronze/silver/snapshot)
+      - name: dbt run (bronze/silver/snapshot/elementary)
         working-directory: dbt
         env:
           DB_PASSWORD: ci_engineer_password
         run: |
           uv run --project .. dbt run --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected --target local --profiles-dir .
           uv run --project .. dbt snapshot --target local --profiles-dir .
+          uv run --project .. dbt run --select elementary --target local --profiles-dir .
 
       - name: dbt run (gold)
         working-directory: dbt
@@ -198,6 +199,18 @@ jobs:
           json.dump(pg, open('target/catalog.json', 'w'))
           "
           rm target/catalog_postgres.json
+
+      # Elementary's monitoring tables live in Postgres regardless of target;
+      # edr doesn't create parent dirs for --file-path, so mkdir first.
+      # Published into target/elementary/ so the same upload-pages-artifact
+      # step below picks it up alongside dbt docs, reachable at /elementary/.
+      - name: Generate Elementary report
+        working-directory: dbt
+        env:
+          DB_PASSWORD: ci_engineer_password
+        run: |
+          mkdir -p target/elementary
+          uv run --project .. edr report --profiles-dir . --project-dir . --profile-target local --file-path target/elementary/index.html --open-browser false
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

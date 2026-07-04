@@ -169,6 +169,22 @@ jobs:
           CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
         run: uv run --project .. dbt run --select gold.* --target clickhouse --profiles-dir .
 
+      # Elementary's test-results report only has data to show if a `dbt test`
+      # invocation actually happened — `dbt run`/`dbt snapshot` alone leave its
+      # test_results table empty. These run against empty, structure-only
+      # tables (no real trip data in this ephemeral CI environment), so the
+      # assertions themselves aren't meaningful monitoring — this step exists
+      # purely so the published report has real invocation history to render.
+      - name: dbt test (bronze/silver + gold)
+        working-directory: dbt
+        env:
+          DB_PASSWORD: ci_engineer_password
+          CLICKHOUSE_HOST: localhost
+          CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
+        run: |
+          uv run --project .. dbt test --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected --target local --profiles-dir .
+          uv run --project .. dbt test --select gold.* --target clickhouse --profiles-dir .
+
       # dbt docs generate only builds catalog.json (real column types) for
       # whichever single target/adapter it's pointed at — a lone run misses
       # half this project's models, since bronze/silver live in Postgres and

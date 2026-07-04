@@ -6,7 +6,7 @@ A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres
 
 ## Architecture
 
-![Architecture](files/main-architecture.png)
+![Architecture](docs/images/main-architecture.png)
 
 ---
 
@@ -41,8 +41,6 @@ citi-bike-data/
 │   ├── loading/                 MinIO → Postgres bronze loader (COPY-based)
 │   ├── quality/                 Soda data quality checks
 │   ├── orchestration/           Prefect flow and task definitions
-│   ├── sql/                      Postgres init: schemas + roles
-│   ├── minio/                    MinIO bucket + policy init
 │   └── pipeline.py               ingest + load orchestration entry point
 ├── dbt/
 │   ├── models/
@@ -71,12 +69,18 @@ citi-bike-data/
 │       │   └── markdownLite.ts  safe **bold**/bullet renderer for agent replies
 │       ├── nginx.conf           serves the build, proxies /api → agent-api
 │       └── Dockerfile
-├── clickhouse/
-│   ├── config.xml
-│   ├── users.xml
-│   └── init.sh                   creates data_engineer / data_analyst / ai_agent users
-├── minio/policies/                analyst + engineer access policies
+├── infra/
+│   ├── postgres/
+│   │   └── init.sh                schemas + roles
+│   ├── clickhouse/
+│   │   ├── config.xml
+│   │   ├── users.xml
+│   │   └── init.sh                creates data_engineer / data_analyst / ai_agent users
+│   └── minio/
+│       ├── init.sh                bucket + policy init
+│       └── policies/              analyst + engineer access policies
 ├── docs/
+│   ├── images/                    architecture diagrams, chat agent screenshots
 │   └── data_register.md
 ├── tests/
 │   ├── conftest.py
@@ -134,7 +138,7 @@ Services started:
 prefect deployment run 'citibike_pipeline/citibike-monthly'
 ```
 
-Watch progress at <http://localhost:4200>
+Watch progress at <http://localhost:4200> or monitor logs with `docker compose logs -f pipeline`. The pipeline will also run automatically on the 1st of every month at 06:00 AM New York time.
 
 **4. Browse the data catalog (dbt docs)**
 
@@ -228,7 +232,7 @@ Task execution order:
 
 Each task has automatic retries, and a failure stops the flow before any downstream layer is built on bad data.
 
-![Completed pipeline run in the Prefect UI](files/pipeline.png)
+![Completed pipeline run in the Prefect UI](docs/images/pipeline.png)
 
 ---
 
@@ -238,11 +242,11 @@ A minimal chat UI for asking questions about the gold layer in plain English —
 
 | Light | Dark |
 |---|---|
-| ![Chat agent, light theme](files/agent.png) | ![Chat agent, dark theme](files/agent-2.png) |
+| ![Chat agent, light theme](docs/images/agent.png) | ![Chat agent, dark theme](docs/images/agent-2.png) |
 
 ### Architecture
 
-![Architecture](files/ai-agent-architecture.png)
+![Architecture](docs/images/ai-agent-architecture.png)
 
 **How it works:**
 
@@ -255,7 +259,7 @@ A minimal chat UI for asking questions about the gold layer in plain English —
 **Guardrails** (defense in depth where each layer works even if another fails):
 
 - App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements — including keywords hidden inside a `WITH ... DELETE` CTE. Covered by 29 guardrail tests in `agent/backend/tests/test_database.py` (statement-count enforcement, every forbidden keyword, case-insensitivity, and word-boundary checks so identifiers like `inserted_at` don't false-positive on `INSERT`).
-- Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `clickhouse/init.sh`) that is granted `SELECT` on `gold.*` only — no access to `silver`/`snapshots`/`bronze` — and created with `SETTINGS readonly = 2`, which makes ClickHouse itself reject any write statement regardless of what the app layer does.
+- Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `infra/clickhouse/init.sh`) that is granted `SELECT` on `gold.*` only — no access to `silver`/`snapshots`/`bronze` — and created with `SETTINGS readonly = 2`, which makes ClickHouse itself reject any write statement regardless of what the app layer does.
 - Correctness: ClickHouse string comparisons are case-sensitive, and dimension tables store both a raw value (`rider_type = 'casual'`) and a display value (`rider_type_desc = 'Casual'`). The system prompt instructs the agent to filter with `lower(column) = lower('value')` unless it's certain of exact casing, so a wrong guess returns the right rows instead of silently returning zero.
 
 **Run standalone (CLI, no Docker):**
@@ -314,7 +318,7 @@ pytest agent/backend/tests -v
 
 **Idempotency.** Every layer checks before writing. The pipeline is safe to re-run at any time and already-processed files are skipped at every stage.
 
-**Medallion architecture.** Bronze is immutable. Silver is replayable from bronze. Gold is replayable from silver. A bug at any layer can be fixed and replayed without re-ingesting from source.
+**Medallion architecture.** Bronze is immutable. Silver is replayable from bronze. Gold is replayable from silver. A bug at any layer can be fixed and replayed without re-ingesting from source. Empty fields in source CSVs are interpreted as `NULL` at ingestion (`ingest.py`'s `pd.read_csv(..., keep_default_na=False, na_values=[""])`) — source files don't reliably distinguish empty strings from missing values, so no attempt is made to preserve that distinction, and only a truly empty field is coerced, not pandas' broader default list of "NA"/"NULL"/"N/A"-style tokens that could otherwise destroy a real value.
 
 **SCD Type 2 on stations.** Station names and coordinates change over time. dbt snapshots track the full history, and `fact_trips` resolves each ride to the station version that was actually true at ride time via a ClickHouse `ASOF JOIN` on `valid_from`/`valid_to` — not just a lookup of whatever the station's attributes are today. `station_key` is unique per version (sourced from `dbt_scd_id`, not the natural `station_id`), which is what makes the point-in-time join actually mean something.
 

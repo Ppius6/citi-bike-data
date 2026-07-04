@@ -119,7 +119,7 @@ jobs:
           POSTGRES_DB: citi-bike
           DB_PASSWORD: ci_engineer_password
           ANALYST_PASSWORD: ci_analyst_password
-        run: bash scripts/sql/init.sh
+        run: bash infra/postgres/init.sh
 
       # Runs in /tmp, not the checkout root: the installer downloads its
       # binary to a path literally named "clickhouse" in the current
@@ -151,7 +151,7 @@ jobs:
           DB_PORT: "5432"
           DB_NAME: citi-bike
           DB_PASSWORD: ci_engineer_password
-        run: bash clickhouse/init.sh
+        run: bash infra/clickhouse/init.sh
 
       - name: dbt run (bronze/silver/snapshot/elementary)
         working-directory: dbt

@@ -32,7 +32,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/sql/init.sh:/docker-entrypoint-initdb.d/init.sh
+      - ./infra/postgres/init.sh:/docker-entrypoint-initdb.d/init.sh
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME}"]
       interval: 10s
@@ -57,9 +57,9 @@ services:
         - "9009:9009"
       volumes:
         - clickhouse_data:/var/lib/clickhouse
-        - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml
-        - ./clickhouse/users.xml:/etc/clickhouse-server/users.d/users.xml
-        - ./clickhouse/init.sh:/docker-entrypoint-initdb.d/init.sh
+        - ./infra/clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml
+        - ./infra/clickhouse/users.xml:/etc/clickhouse-server/users.d/users.xml
+        - ./infra/clickhouse/init.sh:/docker-entrypoint-initdb.d/init.sh
       healthcheck:
         test: ["CMD", "clickhouse-client", "--port", "9009", "--query", "SELECT 1"]
         interval: 10s
@@ -166,7 +166,7 @@ services:
       MINIO_ANALYST_KEY: ${MINIO_ANALYST_KEY}
       MINIO_ANALYST_SECRET: ${MINIO_ANALYST_SECRET}
     volumes:
-      - ./scripts/minio/init.sh:/init.sh
+      - ./infra/minio/init.sh:/init.sh
     entrypoint: /bin/sh /init.sh
     depends_on:
       minio:

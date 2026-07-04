@@ -63,7 +63,7 @@ class Downloader:
     def download_to_temp(self, file_name: str) -> Optional[Path]:
         """
         Download a zip file to the temp directory.
-        Returns the local path, or None if the download fails.
+        Returns the local path, or None if the download fails after all retries.
         Skips the download if the file already exists in temp.
         """
         zip_path = self.pipeline.temp_dir / file_name
@@ -74,22 +74,29 @@ class Downloader:
 
         url = f"{self.source.base_url}/{file_name}"
 
-        try:
-            with requests.get(
-                url, stream=True, timeout=self.source.request_timeout
-            ) as r:
-                r.raise_for_status()
-                with open(zip_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=self.source.chunk_size):
-                        f.write(chunk)
-            logger.info(f"Downloaded: {file_name}")
-            return zip_path
+        for attempt in range(self.source.max_retries):
+            try:
+                with requests.get(
+                    url, stream=True, timeout=self.source.request_timeout
+                ) as r:
+                    r.raise_for_status()
+                    with open(zip_path, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=self.source.chunk_size):
+                            f.write(chunk)
+                logger.info(f"Downloaded: {file_name}")
+                return zip_path
 
-        except Exception as e:
-            logger.error(f"Failed to download {file_name}: {e}")
-            if zip_path.exists():
-                zip_path.unlink()
-            return None
+            except Exception as e:
+                logger.error(
+                    f"Attempt {attempt + 1} to download {file_name} failed: {e}"
+                )
+                if zip_path.exists():
+                    zip_path.unlink()
+                if attempt < self.source.max_retries - 1:
+                    time.sleep(2**attempt)
+
+        logger.error(f"Max retries exceeded downloading {file_name}.")
+        return None
 
     def to_parquet_buffer(self, zip_path: Path) -> Optional[tuple[BytesIO, str]]:
         """
@@ -143,7 +150,13 @@ class Downloader:
         Applies only the minimum necessary typing — timezone conversion
         and cleaning belong in the silver layer (dbt).
         """
-        df = pd.read_csv(file_path, low_memory=False)
+        # keep_default_na=False + na_values=[""]: pandas' default na_values
+        # list also treats literal strings like "NA", "NULL", "N/A", "none"
+        # as missing — silently destroying real station names/IDs that
+        # happen to match one of those tokens. Narrow the coercion to
+        # exactly one deliberate rule: empty fields become NULL, everything
+        # else survives verbatim.
+        df = pd.read_csv(file_path, low_memory=False, keep_default_na=False, na_values=[""])
 
         for col in ["started_at", "ended_at"]:
             if col in df.columns:

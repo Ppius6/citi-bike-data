@@ -100,6 +100,27 @@ class TestDownloadToTemp:
 
         assert result is None
         assert not (downloader.pipeline.temp_dir / file_name).exists()
+        assert mock_get.call_count == downloader.source.max_retries
+
+    def test_retries_transient_failure_then_succeeds(self, downloader):
+        # A one-off SSL/connection blip on a single file shouldn't sink the
+        # whole ingest run — retry with the same backoff as get_file_list.
+        file_name = "JC-202102-citibike-tripdata.csv.zip"
+        fake_content = b"fake zip content"
+
+        mock_response = MagicMock()
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = MagicMock(return_value=False)
+        mock_response.iter_content.return_value = [fake_content]
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("scripts.ingestion.ingest.requests.get") as mock_get:
+            mock_get.side_effect = [Exception("transient SSL error"), mock_response]
+            result = downloader.download_to_temp(file_name)
+
+        assert result is not None
+        assert result.read_bytes() == fake_content
+        assert mock_get.call_count == 2
 
 
 class TestToParquetBuffer:
@@ -157,3 +178,23 @@ class TestReadCsv:
         df = downloader._read_csv(csv_path)
 
         assert len(df) == len(sample_dataframe)
+
+    def test_only_empty_fields_become_null(self, downloader, tmp_path):
+        # pandas' default na_values list treats literal strings like "NA",
+        # "NULL", "N/A" as missing too — which would silently destroy a
+        # real station name/ID that happens to match one of those tokens.
+        # The pinned convention is narrower: only a truly empty field is
+        # NULL; every other string, including these lookalikes, survives.
+        csv_path = tmp_path / "test.csv"
+        csv_path.write_text(
+            "ride_id,start_station_name,started_at,ended_at,member_casual\n"
+            "r1,,2021-02-01 08:00:00,2021-02-01 08:30:00,member\n"
+            "r2,NA,2021-02-01 09:00:00,2021-02-01 09:30:00,member\n"
+            "r3,NULL,2021-02-01 10:00:00,2021-02-01 10:30:00,member\n"
+        )
+
+        df = downloader._read_csv(csv_path)
+
+        assert pd.isna(df.loc[df["ride_id"] == "r1", "start_station_name"].iloc[0])
+        assert df.loc[df["ride_id"] == "r2", "start_station_name"].iloc[0] == "NA"
+        assert df.loc[df["ride_id"] == "r3", "start_station_name"].iloc[0] == "NULL"

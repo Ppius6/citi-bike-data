@@ -4,6 +4,12 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  # Manual retry always mints a fresh run ID with no prior artifact history —
+  # unlike "Re-run failed jobs" on an existing run, which re-uploads into the
+  # same run and can leave deploy-pages seeing duplicate "github-pages"
+  # artifacts. Prefer this (or a new commit) over rerunning a failed
+  # deploy-docs job.
+  workflow_dispatch:
 
 permissions:
   contents: read

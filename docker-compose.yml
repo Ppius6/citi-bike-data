@@ -80,6 +80,8 @@ services:
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
     ports:
       - "8000:8000"
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
     depends_on:
       clickhouse:
         condition: service_healthy
@@ -178,3 +180,4 @@ volumes:
   postgres_data:
   clickhouse_data:
   prefect_data:
+  huggingface_cache:

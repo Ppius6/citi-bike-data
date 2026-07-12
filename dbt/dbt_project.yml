@@ -41,6 +41,9 @@ models:
     gold:
       +materialized: table
       +schema: gold
+      +persist_docs:
+        relation: true
+        columns: true
 
 snapshots:
   citibike_dbt:

@@ -2,7 +2,7 @@
 import json
 import os
 from openai import OpenAI
-from database import get_db_schema, execute_sql_query
+from database import get_db_schema, execute_sql_query, retrieve_memory, save_memory
 
 # DeepSeek client (OpenAI-compatible API, pointed at DeepSeek's base_url)
 client = OpenAI(
@@ -52,13 +52,30 @@ Keep formatting simple: plain sentences and "- " bullet lists with **bold** for 
 MAX_TOOL_ITERATIONS = 5
 
 
-def run_bike_agent(user_question: str) -> dict:
+def run_bike_agent(user_question: str, history: list[dict] = None) -> dict:
     """Runs the agent loop and returns {"answer": str, "queries": list[str]}."""
+    history = history or []
+    
+    # 1. Retrieve long-term memory for few-shot examples
+    memories = retrieve_memory(user_question)
+    memory_context = ""
+    if memories:
+        memory_context = "\n\nCRITICAL: Here are some proven successful SQL queries for similar past questions. Use them as reference if helpful:\n"
+        for mem in memories:
+            # We indent the query for readability in the prompt
+            memory_context += f"- Question: {mem['question']}\n  Query: {mem['query']}\n"
+
     messages = [
-        {"role": "system", "content": SYSTEM_INSTRUCTIONS},
-        {"role": "user", "content": user_question}
+        {"role": "system", "content": SYSTEM_INSTRUCTIONS + memory_context}
     ]
+    
+    for msg in history:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+        
+    messages.append({"role": "user", "content": user_question})
+
     executed_queries = []
+    last_successful_query = None
 
     # The orchestration loop: keep calling the model — with `tools` present on every
     # turn — until it stops requesting tool calls and returns a final answer.
@@ -73,6 +90,8 @@ def run_bike_agent(user_question: str) -> dict:
         response_message = response.choices[0].message
 
         if not response_message.tool_calls:
+            if last_successful_query:
+                save_memory(user_question, last_successful_query)
             return {"answer": response_message.content, "queries": executed_queries}
 
         messages.append(response_message)
@@ -86,6 +105,10 @@ def run_bike_agent(user_question: str) -> dict:
                 executed_queries.append(generated_sql)
 
                 query_result = execute_sql_query(generated_sql)
+                
+                # Track the last successful query to save if the agent resolves the question
+                if not str(query_result).startswith("Error") and not str(query_result).startswith("Database Error"):
+                    last_successful_query = generated_sql
             else:
                 query_result = f"Error: unknown tool '{tool_call.function.name}'"
 

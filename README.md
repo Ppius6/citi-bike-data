@@ -22,8 +22,8 @@ A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
 | Data Catalog | dbt docs | Model docs, column descriptions, tests, and lineage — live at [ppius6.github.io/citi-bike-data](https://ppius6.github.io/citi-bike-data/) |
 | Observability | Soda + dbt tests + Elementary | Landing contract, model assertions, and anomaly/run-history report — live at [.../elementary](https://ppius6.github.io/citi-bike-data/elementary/) |
-| Chat Agent | FastAPI + DeepSeek (OpenAI-compatible) | Tool-calling agent that writes/executes read-only SQL against the gold layer |
-| Chat UI | React + Vite + TypeScript | Minimal dark/light chat frontend (Inter/Outfit/JetBrains Mono), served via nginx |
+| Chat Agent | FastAPI + DeepSeek + sentence-transformers | Tool-calling agent that writes read-only SQL against the gold layer, with long-term vector memory |
+| Chat UI | React + Vite + TypeScript | Chat frontend, served via nginx |
 | Containerisation | Docker Compose | Full stack, single command startup |
 
 ---
@@ -210,6 +210,18 @@ dbt test --target clickhouse --select gold.* --profiles-dir .
 
 ---
 
+## Data Quality, Observability, and Governance
+
+- **Soda** runs data quality checks right after data lands in the bronze layer using Soda Core  integrated into the pipeline using Soda's YAML-based check definitions. It runs immediately after the raw data is loaded into the postgres `bronze.trips` table from MinIO, but before any dbt models start running.
+
+- **dbt tests** checks run on every layer i.e., ensuring primary keys are unique, foreign keys in the fact table actually match the dimension tables, and the enum values are correct. These tests are separated into two groups, `dev` (for postgres layers) and `ch` (for clickhouse layers).
+
+- **Elementary** plugs into dbt to monitor anomalies and report on our pipeline's run history. It runs after the `bronze` and `silver` dbt models have executed.
+
+- **Data Catalog (dbt docs)** automatically generates a searcheable website mapping out of every table, column, and lineage graph (how data flows from source to destination) 
+
+See the dbt docs deployed at <https://ppius6.github.io/citi-bike-data/> and also the elementary report at <https://ppius6.github.io/citi-bike-data/elementary/>.
+
 ## Orchestration
 
 The pipeline runs on the 1st of every month at 06:00 AM (New York time), since the source data is published on that cadence.
@@ -250,17 +262,18 @@ A minimal chat UI for asking questions about the gold layer in plain English —
 
 **How it works:**
 
-1. At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt which reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
-2. `agent/backend/agent.py` sends the user's question to DeepSeek along with that schema context and the join keys between `fact_trips` and its dimensions.
-3. DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn which is required for DeepSeek's function-calling to behave correctly across multiple rounds.
-4. `agent/backend/database.py` executes that query against ClickHouse and returns the rows.
-5. DeepSeek reads the results and writes the final plain-English answer, which the UI shows along with a collapsible "SQL used" section.
+1. **Initialization:** At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt which reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
+2. **Memory Retrieval:** The agent embeds the user's question using a local `sentence-transformers` model (`all-MiniLM-L6-v2`) and searches the `agent.memory` table in ClickHouse using `cosineDistance`. The most semantically similar past questions are retrieved and their corresponding SQL queries are injected into the system prompt as proven few-shot examples.
+3. **Query Generation:** `agent/backend/agent.py` sends the user's question and the entire chat history (for conversational context) to DeepSeek along with the schema context and retrieved memory examples.
+4. **Execution Loop:** DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn which is required for DeepSeek's function-calling to behave correctly across multiple rounds.
+5. **Memory Storage:** Once the agent finishes executing exploratory queries and successfully produces the final plain-English answer, the single most successful query is embedded and saved back to the `agent.memory` ClickHouse table for future reference.
 
 **Guardrails** (defense in depth where each layer works even if another fails):
 
 - App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements — including keywords hidden inside a `WITH ... DELETE` CTE. Covered by 29 guardrail tests in `agent/backend/tests/test_database.py` (statement-count enforcement, every forbidden keyword, case-insensitivity, and word-boundary checks so identifiers like `inserted_at` don't false-positive on `INSERT`).
-- Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `infra/clickhouse/init.sh`) that is granted `SELECT` on `gold.*` only — no access to `silver`/`snapshots`/`bronze` — and created with `SETTINGS readonly = 2`, which makes ClickHouse itself reject any write statement regardless of what the app layer does.
+- Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `infra/clickhouse/init.sh`) that is granted `SELECT` on `gold.*` and `INSERT`/`SELECT` on `agent.memory`. It is created without restricted readonly settings to allow it to persist memories, relying completely on explicit table-level RBAC grants to prevent unauthorized writes.
 - Correctness: ClickHouse string comparisons are case-sensitive, and dimension tables store both a raw value (`rider_type = 'casual'`) and a display value (`rider_type_desc = 'Casual'`). The system prompt instructs the agent to filter with `lower(column) = lower('value')` unless it's certain of exact casing, so a wrong guess returns the right rows instead of silently returning zero.
+- Vector Pollution: The agent tracks its exploratory tool calls and only commits the final, successful query to its long-term memory to prevent memorizing confused exploratory queries.
 
 **Run standalone (CLI, no Docker):**
 
@@ -297,20 +310,6 @@ Connect with the least-privilege `data_analyst` role for read-only exploration; 
 | Database | gold |
 | User | `data_analyst` (read-only) or `data_engineer` |
 | Password | `ANALYST_PASSWORD` or `CLICKHOUSE_ENGINEER_PASSWORD` from `.env` |
-
----
-
-## Running Tests
-
-```bash
-# Root pipeline (ingest, storage, loader)
-pytest tests/ -v
-
-# Chat agent guardrails (needs agent/backend/requirements-dev.txt)
-pytest agent/backend/tests -v
-```
-
-61 unit tests total: 32 covering ingest, storage, and loader modules; 29 covering the chat agent's SQL guardrails.
 
 ---
 

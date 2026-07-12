@@ -58,21 +58,26 @@ def get_db_schema() -> str:
 
     columns = client.query(
         """
-        SELECT table, name, type
+        SELECT table, name, type, comment
         FROM system.columns
         WHERE database = 'gold'
         ORDER BY table, position
         """
     ).result_rows
 
-    tables: dict[str, list[tuple[str, str]]] = {}
-    for table, name, col_type in columns:
-        tables.setdefault(table, []).append((name, col_type))
+    tables: dict[str, list[tuple[str, str, str]]] = {}
+    for table, name, col_type, comment in columns:
+        tables.setdefault(table, []).append((name, col_type, comment))
 
-    lines = [
-        f"TABLE gold.{table} ({', '.join(f'{name} {col_type}' for name, col_type in cols)});"
-        for table, cols in tables.items()
-    ]
+    lines = []
+    for table, cols in tables.items():
+        col_strings = []
+        for name, col_type, comment in cols:
+            col_str = f"{name} {col_type}"
+            if comment:
+                col_str += f" COMMENT '{comment}'"
+            col_strings.append(col_str)
+        lines.append(f"TABLE gold.{table} (\n  " + ",\n  ".join(col_strings) + "\n);")
 
     enum_notes = []
     for table, column in ENUM_COLUMNS:
@@ -115,3 +120,46 @@ def execute_sql_query(query: str) -> str:
         return output
     except Exception as e:
         return f"Database Error: {str(e)}"
+
+def save_memory(question: str, query: str) -> None:
+    """Saves a successful question-query pair into long-term vector memory."""
+    from memory import embed_text  # Local import to avoid initialization overhead if not needed
+    try:
+        embedding = embed_text(question)
+        client = _get_client()
+        
+        # ClickHouse connect insert syntax: client.insert('table', data, column_names)
+        # where data is a list of rows, and each row is a list/tuple of values.
+        client.insert(
+            'agent.memory',
+            [[question, query, embedding]],
+            column_names=['question', 'query', 'embedding']
+        )
+    except Exception as e:
+        print(f"Warning: Failed to save memory to ClickHouse: {e}")
+
+def retrieve_memory(question: str, limit: int = 3) -> list[dict]:
+    """Retrieves the most similar past question-query pairs from memory."""
+    from memory import embed_text
+    try:
+        embedding = embed_text(question)
+        client = _get_client()
+        
+        # Find similar queries using cosineDistance
+        result = client.query(
+            f"""
+            SELECT question, query, cosineDistance(embedding, {{vector:Array(Float32)}}) as dist
+            FROM agent.memory
+            ORDER BY dist ASC
+            LIMIT {limit}
+            """,
+            parameters={'vector': embedding}
+        )
+        
+        return [
+            {"question": row[0], "query": row[1], "distance": row[2]}
+            for row in result.result_rows
+        ]
+    except Exception as e:
+        # It's okay if this fails (e.g. table empty or doesn't exist yet)
+        return []

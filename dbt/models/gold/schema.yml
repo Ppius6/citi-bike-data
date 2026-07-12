@@ -26,6 +26,26 @@ models:
         description: "The actual date"
         data_tests:
           - not_null
+      - name: year
+        description: "The year of the date"
+      - name: month
+        description: "The month of the date (1-12)"
+      - name: day
+        description: "The day of the month (1-31)"
+      - name: quarter
+        description: "The quarter of the year (1-4)"
+      - name: week_of_year
+        description: "The ISO week of the year"
+      - name: day_of_week_num
+        description: "The day of the week as a number (1-7, where 1 is Monday)"
+      - name: day_name
+        description: "The name of the day (e.g. Monday)"
+      - name: month_name
+        description: "The name of the month (e.g. January)"
+      - name: is_weekend
+        description: "1 if the date is a weekend (Saturday or Sunday), 0 otherwise"
+      - name: season
+        description: "The season of the year (Winter, Spring, Summer, Fall)"
 
   - name: dim_station
     description: "Station dimension with SCD Type 2 history"
@@ -42,6 +62,18 @@ models:
         description: "Natural key from source. Not unique — repeats once per SCD2 version of the station."
         data_tests:
           - not_null
+      - name: station_name
+        description: "The name of the station"
+      - name: latitude
+        description: "The latitude coordinate of the station"
+      - name: longitude
+        description: "The longitude coordinate of the station"
+      - name: valid_from
+        description: "The start timestamp when this version of the station became active"
+      - name: valid_to
+        description: "The end timestamp when this version of the station was replaced, or null if current"
+      - name: is_current
+        description: "True if this is the currently active version of the station"
 
   - name: dim_rider_type
     description: "Rider type dimension — member or casual"
@@ -57,6 +89,8 @@ models:
           - accepted_values:
               arguments:
                 values: ['member', 'casual']
+      - name: rider_type_desc
+        description: "Human-readable description of the rider type (e.g. Member, Casual)"
 
   - name: dim_bike_type
     description: "Bike type dimension"
@@ -72,6 +106,8 @@ models:
           - accepted_values:
               arguments:
                 values: ['classic_bike', 'electric_bike', 'docked_bike']
+      - name: bike_type_desc
+        description: "Human-readable description of the bike type (e.g. Classic Bike, Electric Bike)"
 
   - name: fact_trips
     description: "Fact table — one row per ride, FK references to all dimensions"
@@ -129,3 +165,21 @@ models:
           (ClickHouse geoDistance), rounded to 2 decimal places. Null when
           end_lat/end_lng are missing — an unknown endpoint means an
           unknown distance, not a data-quality failure.
+      - name: started_at
+        description: "The timestamp when the ride started (America/New_York timezone)"
+      - name: ended_at
+        description: "The timestamp when the ride ended (America/New_York timezone)"
+      - name: ride_duration_minutes
+        description: "The duration of the ride in minutes"
+      - name: start_lat
+        description: "The latitude coordinate where the ride started"
+      - name: start_lng
+        description: "The longitude coordinate where the ride started"
+      - name: end_lat
+        description: "The latitude coordinate where the ride ended"
+      - name: end_lng
+        description: "The longitude coordinate where the ride ended"
+      - name: _source_file
+        description: "The raw source file this record was ingested from"
+      - name: _ingested_at
+        description: "The timestamp when this record was ingested into the system"

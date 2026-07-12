@@ -22,9 +22,14 @@ app.add_middleware(
 )
 
 
+class MessageDict(BaseModel):
+    role: str
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
-
+    history: list[MessageDict] = []
 
 class ChatResponse(BaseModel):
     answer: str
@@ -38,5 +43,6 @@ def health() -> dict:
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
-    result = run_bike_agent(request.message)
+    history_dicts = [{"role": msg.role, "content": msg.content} for msg in request.history]
+    result = run_bike_agent(request.message, history=history_dicts)
     return ChatResponse(answer=result["answer"], queries=result["queries"])

@@ -52,11 +52,18 @@ function App() {
     setIsLoading(true)
     scrollToBottom()
 
+    const history = messages
+      .filter((m) => m !== INITIAL_MESSAGE)
+      .map((m) => ({
+        role: m.role === 'agent' ? 'assistant' : 'user',
+        content: m.text,
+      }))
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: question }),
+        body: JSON.stringify({ message: question, history }),
       })
       if (!res.ok) throw new Error(`Request failed: ${res.status}`)
       const data: ChatResponse = await res.json()

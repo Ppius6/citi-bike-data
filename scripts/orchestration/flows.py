@@ -113,6 +113,27 @@ def quality_check_task(config: Config) -> bool:
 
 
 @task(
+    name="dbt_deps",
+    description="Clean and install dbt dependencies to prevent package collisions",
+    retries=1,
+    retry_delay_seconds=30,
+)
+def dbt_deps_task() -> bool:
+    logger = get_run_logger()
+    logger.info("Running dbt clean and dbt deps.")
+    # Run clean first to avoid macro collisions during package updates
+    success_clean = run_dbt("clean")
+    if not success_clean:
+        logger.warning("dbt clean failed, but attempting to continue.")
+    
+    success_deps = run_dbt("deps")
+    if not success_deps:
+        raise RuntimeError("dbt deps failed.")
+    return success_deps
+
+
+
+@task(
     name="dbt_bronze",
     description="Run dbt bronze models against Postgres",
     retries=2,
@@ -283,6 +304,7 @@ def citibike_pipeline():
     # Bronze and silver in Postgres
     bronze_load_task(config)
     quality_check_task(config)
+    dbt_deps_task()
     dbt_bronze_task()
     dbt_silver_task()
     dbt_elementary_task()

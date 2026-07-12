@@ -3,11 +3,26 @@ set -e
 
 clickhouse-client --port 9009 --query "CREATE USER IF NOT EXISTS data_engineer IDENTIFIED BY '${CLICKHOUSE_ENGINEER_PASSWORD}'"
 clickhouse-client --port 9009 --query "CREATE USER IF NOT EXISTS data_analyst IDENTIFIED BY '${ANALYST_PASSWORD}'"
-clickhouse-client --port 9009 --query "CREATE USER IF NOT EXISTS ai_agent IDENTIFIED BY '${AI_AGENT_PASSWORD}' SETTINGS readonly = 2"
+clickhouse-client --port 9009 --query "CREATE USER IF NOT EXISTS ai_agent IDENTIFIED BY '${AI_AGENT_PASSWORD}'"
 
 clickhouse-client --port 9009 --query "CREATE DATABASE IF NOT EXISTS gold"
 clickhouse-client --port 9009 --query "CREATE DATABASE IF NOT EXISTS silver"
 clickhouse-client --port 9009 --query "CREATE DATABASE IF NOT EXISTS snapshots"
+clickhouse-client --port 9009 --query "CREATE DATABASE IF NOT EXISTS agent"
+
+# Agent Memory Table
+clickhouse-client --port 9009 --query "
+CREATE TABLE IF NOT EXISTS agent.memory
+(
+    id UUID DEFAULT generateUUIDv4(),
+    question String,
+    query String,
+    embedding Array(Float32),
+    created_at DateTime DEFAULT now()
+)
+ENGINE = MergeTree()
+ORDER BY id
+"
 
 # Bridge tables — ClickHouse's PostgreSQL engine reads these live from Postgres,
 # no data copied. dbt's gold models reference them via source(), which assumes
@@ -64,5 +79,6 @@ clickhouse-client --port 9009 --query "GRANT SELECT ON silver.* TO data_analyst"
 clickhouse-client --port 9009 --query "GRANT SELECT ON gold.* TO ai_agent"
 clickhouse-client --port 9009 --query "GRANT SELECT ON system.columns TO ai_agent"
 clickhouse-client --port 9009 --query "GRANT SELECT ON system.tables TO ai_agent"
+clickhouse-client --port 9009 --query "GRANT SELECT, INSERT ON agent.memory TO ai_agent"
 
 echo "ClickHouse init complete."

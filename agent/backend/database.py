@@ -56,14 +56,12 @@ def get_db_schema() -> str:
     drifts from the actual dbt models. Called once at process startup."""
     client = _get_client()
 
-    columns = client.query(
-        """
+    columns = client.query("""
         SELECT table, name, type, comment
         FROM system.columns
         WHERE database = 'gold'
         ORDER BY table, position
-        """
-    ).result_rows
+        """).result_rows
 
     tables: dict[str, list[tuple[str, str, str]]] = {}
     for table, name, col_type, comment in columns:
@@ -121,30 +119,36 @@ def execute_sql_query(query: str) -> str:
     except Exception as e:
         return f"Database Error: {str(e)}"
 
+
 def save_memory(question: str, query: str) -> None:
     """Saves a successful question-query pair into long-term vector memory."""
-    from memory import embed_text  # Local import to avoid initialization overhead if not needed
+    from memory import (
+        embed_text,
+    )  # Local import to avoid initialization overhead if not needed
+
     try:
         embedding = embed_text(question)
         client = _get_client()
-        
+
         # ClickHouse connect insert syntax: client.insert('table', data, column_names)
         # where data is a list of rows, and each row is a list/tuple of values.
         client.insert(
-            'agent.memory',
+            "agent.memory",
             [[question, query, embedding]],
-            column_names=['question', 'query', 'embedding']
+            column_names=["question", "query", "embedding"],
         )
     except Exception as e:
         print(f"Warning: Failed to save memory to ClickHouse: {e}")
 
+
 def retrieve_memory(question: str, limit: int = 3) -> list[dict]:
     """Retrieves the most similar past question-query pairs from memory."""
     from memory import embed_text
+
     try:
         embedding = embed_text(question)
         client = _get_client()
-        
+
         # Find similar queries using cosineDistance
         result = client.query(
             f"""
@@ -153,13 +157,13 @@ def retrieve_memory(question: str, limit: int = 3) -> list[dict]:
             ORDER BY dist ASC
             LIMIT {limit}
             """,
-            parameters={'vector': embedding}
+            parameters={"vector": embedding},
         )
-        
+
         return [
             {"question": row[0], "query": row[1], "distance": row[2]}
             for row in result.result_rows
         ]
     except Exception as e:
-        # It's okay if this fails (e.g. table empty or doesn't exist yet)
+        print(f"Warning: Failed to retrieve memory from ClickHouse: {e}")
         return []

@@ -54,6 +54,20 @@ ENGINE = PostgreSQL('${DB_HOST}:${DB_PORT}', '${DB_NAME}', 'silver_trips', 'data
 "
 
 clickhouse-client --port 9009 --query "
+CREATE TABLE IF NOT EXISTS silver.silver_weather
+(
+    observation_time DateTime64(6),
+    temperature_c Float64,
+    precipitation_mm Float64,
+    wind_speed_kmh Float64,
+    weather_code Int32,
+    is_daylight Bool,
+    _ingested_at DateTime64(6)
+)
+ENGINE = PostgreSQL('${DB_HOST}:${DB_PORT}', '${DB_NAME}', 'silver_weather', 'data_engineer', '${DB_PASSWORD}', 'silver')
+"
+
+clickhouse-client --port 9009 --query "
 CREATE TABLE IF NOT EXISTS snapshots.station_snapshot
 (
     station_id String,

@@ -61,6 +61,17 @@ dim_bike AS (
     FROM {{ ref('dim_bike_type') }}
 ),
 
+weather AS (
+    SELECT
+        observation_time,
+        temperature_c,
+        precipitation_mm,
+        wind_speed_kmh,
+        weather_code,
+        is_daylight
+    FROM {{ source('silver', 'silver_weather') }}
+),
+
 final AS (
     SELECT
         -- Surrogate key
@@ -92,6 +103,13 @@ final AS (
         t.end_lat,
         t.end_lng,
 
+        -- Weather
+        w.temperature_c,
+        w.precipitation_mm,
+        w.wind_speed_kmh,
+        w.weather_code,
+        w.is_daylight,
+
         -- Metadata
         t._source_file,
         t._ingested_at
@@ -109,6 +127,8 @@ final AS (
         ON t.member_casual = dr.rider_type
     LEFT JOIN dim_bike db
         ON t.rideable_type = db.bike_type
+    LEFT JOIN weather w
+        ON toStartOfHour(t.started_at) = w.observation_time
 )
 
 SELECT * FROM final

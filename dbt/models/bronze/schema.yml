@@ -37,6 +37,23 @@ sources:
             description: "Name of the source CSV file this row came from"
           - name: _ingested_at
             description: "UTC timestamp when this row was ingested into MinIO"
+      - name: weather
+        description: "Raw hourly weather data from Open-Meteo API"
+        columns:
+          - name: observation_time
+            description: "Hourly timestamp of the weather observation in UTC"
+          - name: temperature_c
+            description: "Temperature in Celsius"
+          - name: precipitation_mm
+            description: "Precipitation (rain/snow) in mm"
+          - name: wind_speed_kmh
+            description: "Wind speed in km/h"
+          - name: weather_code
+            description: "WMO Weather interpretation code"
+          - name: is_daylight
+            description: "True if it was daytime during this hour"
+          - name: _ingested_at
+            description: "UTC timestamp when this row was ingested"
 
 models:
   - name: bronze_trips
@@ -44,5 +61,12 @@ models:
     columns:
       - name: ride_id
         description: "Unique identifier for each ride"
+        data_tests:
+          - not_null
+  - name: bronze_weather
+    description: "Direct select from bronze.weather — the dbt entry point for weather data"
+    columns:
+      - name: observation_time
+        description: "Hourly timestamp of the weather observation"
         data_tests:
           - not_null

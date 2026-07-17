@@ -38,6 +38,16 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         _ingested_at timestamptz
     );
 
+    CREATE TABLE IF NOT EXISTS bronze.weather (
+        observation_time timestamptz,
+        temperature_c double precision,
+        precipitation_mm double precision,
+        wind_speed_kmh double precision,
+        weather_code int,
+        is_daylight boolean,
+        _ingested_at timestamptz
+    );
+
     GRANT SELECT ON ALL TABLES IN SCHEMA bronze TO data_engineer;
     GRANT SELECT ON ALL TABLES IN SCHEMA silver TO data_engineer;
     GRANT SELECT ON ALL TABLES IN SCHEMA snapshots TO data_engineer;

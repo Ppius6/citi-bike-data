@@ -8,6 +8,7 @@ from prefect.blocks.notifications import SlackWebhook
 
 from scripts.config.config import Config
 from scripts.pipeline import run_ingest, run_bronze_load
+from scripts.ingestion.weather import run_weather_ingest
 from scripts.quality.validator import run_quality_checks
 
 from datetime import timedelta
@@ -78,6 +79,16 @@ def bronze_load_task(config: Config) -> bool:
     if not success:
         raise RuntimeError("Bronze load phase failed.")
     return success
+
+@task(
+    name="Ingest Weather Data",
+    description="Fetch historical weather from Open-Meteo and load to silver_weather",
+    retries=2,
+    retry_delay_seconds=30,
+)
+def weather_ingest_task(config: Config):
+    if not run_weather_ingest(config):
+        raise RuntimeError("Weather ingest phase failed.")
 
 
 @task(
@@ -303,6 +314,7 @@ def citibike_pipeline():
 
     # Bronze and silver in Postgres
     bronze_load_task(config)
+    weather_ingest_task(config)
     quality_check_task(config)
     dbt_deps_task()
     dbt_bronze_task()

@@ -116,3 +116,21 @@ models:
                   - duration_exceeds_24h
                   - missing_start_lat
                   - missing_start_lng
+
+  - name: int_weather_cleaned
+    description: >
+      Cleaned and timezone converted weather data.
+    columns:
+      - name: observation_time
+        data_tests:
+          - not_null
+          - unique
+
+  - name: silver_weather
+    description: >
+      Final view of weather data ready for gold layer integration.
+    columns:
+      - name: observation_time
+        data_tests:
+          - not_null
+          - unique

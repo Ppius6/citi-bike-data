@@ -5,7 +5,7 @@ description = "Citi Bike trip data pipeline: S3 ingestion to MinIO, Postgres bro
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "beautifulsoup4>=4.14.3",
+    "beautifulsoup4>=4.12.3",
     "boto3>=1.42.97",
     "dbt-clickhouse>=1.10.0",
     "elementary-data[postgres]>=0.25.0",

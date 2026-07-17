@@ -83,6 +83,13 @@ def get_db_schema() -> str:
         values_list = ", ".join(repr(v[0]) for v in values)
         enum_notes.append(f"gold.{table}.{column} actual values: {values_list}")
 
+    try:
+        date_bounds = client.query("SELECT min(full_date), max(full_date) FROM gold.dim_date").result_rows[0]
+        if date_bounds and date_bounds[0] and date_bounds[1]:
+            enum_notes.append(f"Data coverage: from {date_bounds[0]} to {date_bounds[1]}.")
+    except Exception as e:
+        print(f"Warning: Could not fetch date bounds: {e}")
+
     return "\n".join(lines) + "\n\n" + "\n".join(enum_notes)
 
 

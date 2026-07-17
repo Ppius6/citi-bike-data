@@ -6,6 +6,8 @@ sources:
     tables:
       - name: silver_trips
         description: "Bridge table — ClickHouse PostgreSQL engine reading from Postgres silver.silver_trips"
+      - name: silver_weather
+        description: "Bridge table — ClickHouse PostgreSQL engine reading from Postgres silver.silver_weather"
 
   - name: snapshots
     schema: snapshots
@@ -183,3 +185,13 @@ models:
         description: "The raw source file this record was ingested from"
       - name: _ingested_at
         description: "The timestamp when this record was ingested into the system"
+      - name: temperature_c
+        description: "The temperature in Celsius at the hour the ride started"
+      - name: precipitation_mm
+        description: "The precipitation in mm at the hour the ride started"
+      - name: wind_speed_kmh
+        description: "The wind speed in km/h at the hour the ride started"
+      - name: weather_code
+        description: "The weather code at the hour the ride started"
+      - name: is_daylight
+        description: "True if it was daylight at the hour the ride started"

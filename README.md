@@ -14,7 +14,7 @@ A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres
 
 | Layer | Tool | Role |
 |---|---|---|
-| Source | Citi Bike S3 | Public trip data, monthly zip files |
+| Source | Citi Bike S3 & Open-Meteo | Public trip data (monthly zips) and historical weather API |
 | Data Lake | MinIO | Local S3-compatible object storage |
 | Operational DB | Postgres 16 | Bronze + silver layers, snapshots |
 | Warehouse | ClickHouse 24.3 | Gold layer, columnar analytical queries |
@@ -36,7 +36,7 @@ citi-bike-data/
 │   └── ci.yml                    ruff check, pytest (root + agent), dbt parse
 ├── scripts/
 │   ├── config/                 dataclass-based config, env var driven
-│   ├── ingestion/               S3 fetch, zip extract, Parquet conversion
+│   ├── ingestion/               S3 fetch, zip extract, Parquet conversion, Open-Meteo weather fetch
 │   ├── storage/                 MinIO client wrapper
 │   ├── loading/                 MinIO → Postgres bronze loader (COPY-based)
 │   ├── quality/                 Soda data quality checks
@@ -174,7 +174,7 @@ Raw Citi Bike trip data landed from MinIO Parquet files into Postgres with no tr
 
 ### Silver
 
-`int_trips_cleaned` is the single incremental scan over bronze — cleaning, dedup, and quarantine flagging all happen here once. `silver_trips` and `silver_trips_rejected` are thin views splitting on `rejection_reason`, so downstream consumers see the same shape as before. Transformations applied:
+`int_trips_cleaned` is the single incremental scan over bronze — cleaning, dedup, and quarantine flagging all happen here once. `silver_trips` and `silver_trips_rejected` are thin views splitting on `rejection_reason`, so downstream consumers see the same shape as before. We also directly ingest hourly historical data into `silver_weather`. Transformations applied:
 
 - Duplicates removed on `ride_id`
 - Timestamps converted from UTC to `America/New_York` (single conversion — the raw column is already `timestamptz`)
@@ -192,7 +192,7 @@ Business-ready dimensional model in ClickHouse:
 | `dim_station` | 939 | Stations with SCD Type 2 history, `station_key` unique per version |
 | `dim_rider_type` | 2 | Member / casual |
 | `dim_bike_type` | 3 | Electric / classic / docked |
-| `fact_trips` | ~4.86M | One row per ride, FK to all dimensions, `ORDER BY (date_key, start_station_key)` — rides with no resolvable station are excluded (~0.3%) |
+| `fact_trips` | ~4.86M | One row per ride, FK to all dimensions, includes hourly weather data (temp, precipitation, wind speed, etc.), `ORDER BY (date_key, start_station_key)` — rides with no resolvable station are excluded (~0.3%) |
 
 ---
 
@@ -230,16 +230,17 @@ The pipeline runs on the 1st of every month at 06:00 AM (New York time), since t
 Task execution order:
 1.  ingest              download + convert to Parquet → MinIO
 2.  bronze_load         MinIO → Postgres bronze.trips (COPY)
-3.  quality_check       Soda checks on bronze.trips
-4.  dbt_bronze          bronze.trips → bronze.bronze_trips
-5.  dbt_silver          bronze_trips → silver.int_trips_cleaned / silver_trips / silver_trips_rejected
-6.  dbt_elementary      Elementary monitoring models in silver
-7.  dbt_snapshot        silver_trips → snapshots.station_snapshot (SCD Type 2)
-8.  dbt_gold            silver → ClickHouse gold layer (5 models)
-9.  dbt_test_dev        tests on bronze + silver
-10. dbt_test_ch         tests on gold
-11. dbt_docs_generate   regenerate dbt docs (model docs, tests, lineage)
-12. elementary_report   regenerate Elementary's anomaly/observability report
+3.  weather_ingest      Open-Meteo API → Postgres silver.silver_weather
+4.  quality_check       Soda checks on bronze.trips
+5.  dbt_bronze          bronze.trips → bronze.bronze_trips
+6.  dbt_silver          bronze_trips → silver.int_trips_cleaned / silver_trips / silver_trips_rejected
+7.  dbt_elementary      Elementary monitoring models in silver
+8.  dbt_snapshot        silver_trips → snapshots.station_snapshot (SCD Type 2)
+9.  dbt_gold            silver → ClickHouse gold layer (5 models)
+10. dbt_test_dev        tests on bronze + silver
+11. dbt_test_ch         tests on gold
+12. dbt_docs_generate   regenerate dbt docs (model docs, tests, lineage)
+13. elementary_report   regenerate Elementary's anomaly/observability report
 ```
 
 Each task has automatic retries, and a failure stops the flow before any downstream layer is built on bad data.

@@ -7,6 +7,7 @@ from scripts.config.config import Config
 from scripts.ingestion.ingest import Downloader
 from scripts.loading.loader import BronzeLoader
 from scripts.storage.minio_client import MinIOClient
+from scripts.ingestion.weather import run_weather_ingest
 
 
 def setup_logging() -> None:
@@ -167,6 +168,11 @@ def run(config: Optional[Config] = None) -> bool:
 
     if not run_bronze_load(config):
         logger.error("Bronze load phase failed.")
+        return False
+
+    logger.info("Starting weather data ingestion.")
+    if not run_weather_ingest(config):
+        logger.error("Weather ingest failed.")
         return False
 
     logger.info("Pipeline completed successfully.")

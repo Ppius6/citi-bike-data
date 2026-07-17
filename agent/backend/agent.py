@@ -42,14 +42,15 @@ CRITICAL JOIN RULES:
 Here is your database schema:
 {get_db_schema()}
 
-Always double-check that your query only contains valid columns listed above.
+Always double-check that your query only contains valid columns listed above. DO NOT hallucinate columns like `humidity` that do not exist in the schema.
+If a user specifies a month and day without a year, default to the most recent available year according to the data coverage dates.
 ClickHouse string comparisons are case-sensitive. Unless you are certain of a column's exact stored
 casing (see the schema notes below), filter with lower(column) = lower('value') instead of a bare '=',
 so a wrong guess about casing returns the right rows instead of zero.
 Keep formatting simple: plain sentences and "- " bullet lists with **bold** for key numbers only. No headers, no tables.
 """
 
-MAX_TOOL_ITERATIONS = 5
+MAX_TOOL_ITERATIONS = 10
 
 
 def run_bike_agent(user_question: str, history: list[dict] = None) -> dict:

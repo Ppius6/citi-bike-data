@@ -479,7 +479,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.14.3" },
+    { name = "beautifulsoup4", specifier = ">=4.12.3" },
     { name = "boto3", specifier = ">=1.42.97" },
     { name = "dbt-clickhouse", specifier = ">=1.10.0" },
     { name = "dbt-core", specifier = ">=1.11.8" },

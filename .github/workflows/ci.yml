@@ -164,7 +164,7 @@ jobs:
         env:
           DB_PASSWORD: ci_engineer_password
         run: |
-          uv run --project .. dbt run --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected --target local --profiles-dir .
+          uv run --project .. dbt run --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected bronze_weather int_weather_cleaned silver_weather --target local --profiles-dir .
           uv run --project .. dbt snapshot --target local --profiles-dir .
           uv run --project .. dbt run --select elementary --target local --profiles-dir .
 
@@ -188,7 +188,7 @@ jobs:
           CLICKHOUSE_HOST: localhost
           CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
         run: |
-          uv run --project .. dbt test --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected --target local --profiles-dir .
+          uv run --project .. dbt test --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected bronze_weather int_weather_cleaned silver_weather --target local --profiles-dir .
           uv run --project .. dbt test --select gold.* --target clickhouse --profiles-dir .
 
       # dbt docs generate only builds catalog.json (real column types) for

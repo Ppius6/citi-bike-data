@@ -28,6 +28,13 @@ models:
     config:
       elementary:
         timestamp_column: started_at
+    data_tests:
+      # No run history yet to learn a baseline from — warn until enough
+      # runs accumulate, same rationale as the ride_id column_anomalies test
+      # below.
+      - elementary.volume_anomalies:
+          config:
+            severity: warn
     columns:
       - name: ride_id
         description: "Unique identifier for each ride"

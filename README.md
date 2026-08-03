@@ -147,11 +147,11 @@ Live at **<https://ppius6.github.io/citi-bike-data/>** — model docs, column de
 To generate and browse local copies instead (useful while iterating on models before pushing):
 
 ```bash
-cd dbt && dbt docs generate --profiles-dir . --target dev && dbt docs serve --profiles-dir .
+cd dbt && uv run dbt docs generate --profiles-dir . --target dev && uv run dbt docs serve --profiles-dir .
 
 # Elementary report (needs its own `elementary` profile stanza in profiles.yml)
 mkdir -p target/elementary
-edr report --profiles-dir . --project-dir . --profile-target dev --file-path target/elementary/index.html
+uv run edr report --profiles-dir . --project-dir . --profile-target dev --file-path target/elementary/index.html
 ```
 
 ---
@@ -198,14 +198,14 @@ Business-ready dimensional model in ClickHouse:
 
 ## dbt Tests
 
-42 data tests across all layers, including `relationships` tests from every `fact_trips` FK to its dimension and `accepted_values` on the dimension enums:
+50 data tests across all layers, including `relationships` tests from every `fact_trips` FK to its dimension, `accepted_values` on the dimension enums, and a reconciliation test asserting `fact_trips`'s row count against `silver_trips`'s — any gap not explained by the known station-less exclusion fails the build:
 
 ```bash
 # Postgres layers (bronze + silver)
-dbt test --target dev --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected --profiles-dir .
+uv run dbt test --target dev --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected bronze_weather int_weather_cleaned silver_weather --profiles-dir .
 
 # ClickHouse layers (gold)
-dbt test --target clickhouse --select gold.* --profiles-dir .
+uv run dbt test --target clickhouse --select gold.* fact_trips_reconciles_with_silver_trips --profiles-dir .
 ```
 
 ---

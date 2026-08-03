@@ -153,7 +153,7 @@ def dbt_deps_task() -> bool:
 def dbt_bronze_task() -> bool:
     logger = get_run_logger()
     logger.info("Running dbt bronze models.")
-    success = run_dbt("run --select bronze_trips --target dev")
+    success = run_dbt("run --select bronze_trips bronze_weather --target dev")
     if not success:
         raise RuntimeError("dbt bronze run failed.")
     return success
@@ -169,7 +169,8 @@ def dbt_silver_task() -> bool:
     logger = get_run_logger()
     logger.info("Running dbt silver models.")
     success = run_dbt(
-        "run --select int_trips_cleaned silver_trips silver_trips_rejected --target dev"
+        "run --select int_trips_cleaned silver_trips silver_trips_rejected "
+        "int_weather_cleaned silver_weather --target dev"
     )
     if not success:
         raise RuntimeError("dbt silver run failed.")
@@ -218,6 +219,23 @@ def dbt_gold_task() -> bool:
     success = run_dbt("run --select gold.* --target clickhouse")
     if not success:
         raise RuntimeError("dbt gold run failed.")
+    return success
+
+
+@task(
+    name="dbt_elementary_clickhouse",
+    description="Initialise Elementary models in ClickHouse — separate from the "
+    "Postgres ones dbt_elementary_task builds, needed for elementary tests "
+    "(e.g. volume_anomalies) on gold models",
+    retries=1,
+    retry_delay_seconds=30,
+)
+def dbt_elementary_clickhouse_task() -> bool:
+    logger = get_run_logger()
+    logger.info("Running Elementary setup against ClickHouse.")
+    success = run_dbt("run --select elementary --target clickhouse")
+    if not success:
+        raise RuntimeError("Elementary setup on ClickHouse failed.")
     return success
 
 
@@ -324,10 +342,15 @@ def citibike_pipeline():
     # Snapshot and Gold in ClickHouse
     dbt_snapshot_task()
     dbt_gold_task()
+    dbt_elementary_clickhouse_task()
 
     # Tests across all layers
-    dbt_test_task(target="dev", models="bronze_trips silver_trips")
-    dbt_test_task(target="clickhouse", models="gold.*")
+    dbt_test_task(
+        target="dev",
+        models="bronze_trips int_trips_cleaned silver_trips silver_trips_rejected "
+        "bronze_weather int_weather_cleaned silver_weather",
+    )
+    dbt_test_task(target="clickhouse", models="gold.* fact_trips_reconciles_with_silver_trips")
 
     # Docs as the project catalog, plus Elementary's observability report
     dbt_docs_generate_task()

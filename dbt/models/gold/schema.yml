@@ -113,6 +113,15 @@ models:
 
   - name: fact_trips
     description: "Fact table — one row per ride, FK references to all dimensions"
+    config:
+      elementary:
+        timestamp_column: started_at
+    data_tests:
+      # No run history yet to learn a baseline from — warn until enough
+      # runs accumulate, same rationale as silver_trips's volume_anomalies.
+      - elementary.volume_anomalies:
+          config:
+            severity: warn
     columns:
       - name: trip_key
         description: "Surrogate key for the fact row"

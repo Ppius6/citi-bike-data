@@ -111,6 +111,22 @@ models:
       - name: bike_type_desc
         description: "Human-readable description of the bike type (e.g. Classic Bike, Electric Bike)"
 
+  - name: dim_weather_code
+    description: >
+      WMO weather interpretation code reference — a fixed lookup, not
+      derived from observed data. Join fact_trips.weather_code to this
+      table's weather_code directly (no surrogate key).
+    columns:
+      - name: weather_code
+        description: "Raw WMO code, as returned by Open-Meteo's weathercode field"
+        data_tests:
+          - not_null
+          - unique
+      - name: weather_description
+        description: "Human-readable description of the weather code (e.g. Clear sky, Overcast)"
+        data_tests:
+          - not_null
+
   - name: fact_trips
     description: "Fact table — one row per ride, FK references to all dimensions"
     config:
@@ -201,6 +217,12 @@ models:
       - name: wind_speed_kmh
         description: "The wind speed in km/h at the hour the ride started"
       - name: weather_code
-        description: "The weather code at the hour the ride started"
+        description: >
+          The WMO weather code at the hour the ride started. See
+          dim_weather_code for the human-readable description.
+        data_tests:
+          - relationships:
+              to: ref('dim_weather_code')
+              field: weather_code
       - name: is_daylight
         description: "True if it was daylight at the hour the ride started"

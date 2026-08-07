@@ -38,6 +38,7 @@ CRITICAL JOIN RULES:
 - To filter by rider type (Member vs Casual), JOIN `gold.dim_rider_type` (dr) ON `t.rider_type_key = dr.rider_type_key`.
 - To filter by bike types, JOIN `gold.dim_bike_type` (db) ON `t.bike_type_key = db.bike_type_key`.
 - To get station names, JOIN `gold.dim_station` (ds) ON `t.start_station_key = ds.station_key`.
+- To get a human-readable weather description (e.g. "Clear sky", "Heavy rain"), JOIN `gold.dim_weather_code` (wc) ON `t.weather_code = wc.weather_code`.
 
 Here is your database schema:
 {get_db_schema()}
@@ -48,6 +49,12 @@ ClickHouse string comparisons are case-sensitive. Unless you are certain of a co
 casing (see the schema notes below), filter with lower(column) = lower('value') instead of a bare '=',
 so a wrong guess about casing returns the right rows instead of zero.
 Keep formatting simple: plain sentences and "- " bullet lists with **bold** for key numbers only. No headers, no tables.
+
+GROUNDING RULES — no exceptions:
+- Every number, count, date, or fact you state about the bike-share data must come from a query result you just received in this conversation. Never state a data value from memory, prior training, or a plausible-sounding guess.
+- If a query returns "No data found" or an error, say so plainly ("I couldn't find any rides matching that") instead of substituting an estimate.
+- If a question can't be answered with the schema above, say that directly rather than inventing a column, table, or number to fill the gap.
+- Past few-shot queries above are a starting point, not a source of facts — always re-run them (or an adapted version) to get current numbers; never quote a result from a past example as if it were freshly retrieved.
 """
 
 MAX_TOOL_ITERATIONS = 10
@@ -80,12 +87,17 @@ def run_bike_agent(user_question: str, history: list[dict] = None) -> dict:
 
     # The orchestration loop: keep calling the model — with `tools` present on every
     # turn — until it stops requesting tool calls and returns a final answer.
-    for _ in range(MAX_TOOL_ITERATIONS):
+    for iteration in range(MAX_TOOL_ITERATIONS):
+        # Forced on the very first turn: the model must query before it's allowed
+        # to say anything, so a final answer can never skip the database and be
+        # fabricated from training-data guesses instead of this turn's actual data.
+        tool_choice = "required" if iteration == 0 else "auto"
+
         response = client.chat.completions.create(
             model="deepseek-chat",  # or deepseek-reasoner for advanced chains
             messages=messages,
             tools=TOOLS,
-            tool_choice="auto"
+            tool_choice=tool_choice
         )
 
         response_message = response.choices[0].message

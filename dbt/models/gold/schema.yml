@@ -226,3 +226,36 @@ models:
               field: weather_code
       - name: is_daylight
         description: "True if it was daylight at the hour the ride started"
+
+  - name: daily_ride_summary
+    description: >
+      Serving-layer Refreshable Materialized View — pre-aggregates fact_trips
+      to one row per (date, rider type, bike type, weather code, daylight)
+      combination. Refreshed on a 1-day ClickHouse-internal schedule as a
+      backstop, and explicitly via SYSTEM REFRESH VIEW right after each
+      pipeline run's gold rebuild (scripts/orchestration/flows.py). The
+      queryable table is this name; the underlying MV trigger object is
+      named daily_ride_summary_mv.
+    columns:
+      - name: date_key
+        description: "FK to dim_date"
+        data_tests:
+          - not_null
+      - name: rider_type_key
+        description: "FK to dim_rider_type"
+      - name: bike_type_key
+        description: "FK to dim_bike_type"
+      - name: weather_code
+        description: "Raw WMO code — see dim_weather_code for the description"
+      - name: is_daylight
+        description: "True if it was daylight at the hour rides in this group started"
+      - name: total_rides
+        description: "Count of rides in this (date, rider type, bike type, weather code, daylight) group"
+        data_tests:
+          - not_null
+      - name: avg_ride_duration_minutes
+        description: "Average ride duration in minutes for this group"
+      - name: avg_ride_distance_km
+        description: "Average great-circle ride distance in km for this group"
+      - name: avg_temperature_c
+        description: "Average temperature in Celsius for this group"

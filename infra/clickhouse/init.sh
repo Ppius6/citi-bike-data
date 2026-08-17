@@ -85,7 +85,14 @@ ENGINE = PostgreSQL('${DB_HOST}:${DB_PORT}', '${DB_NAME}', 'station_snapshot', '
 clickhouse-client --port 9009 --query "GRANT SELECT, INSERT, ALTER, CREATE DATABASE, CREATE TABLE, DROP TABLE ON gold.* TO data_engineer"
 clickhouse-client --port 9009 --query "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE ON silver.* TO data_engineer"
 clickhouse-client --port 9009 --query "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE ON snapshots.* TO data_engineer"
+# Elementary's own internal monitoring tables (dbt_project.yml routes the
+# elementary package here instead of gold.*) — same grant shape as gold.*.
+clickhouse-client --port 9009 --query "GRANT SELECT, INSERT, ALTER, CREATE DATABASE, CREATE TABLE, DROP TABLE ON elementary.* TO data_engineer"
 clickhouse-client --port 9009 --query "GRANT SELECT, SHOW ON system.* TO data_engineer"
+# SYSTEM VIEWS is only grantable at the *.* scope (not per-database) — needed
+# for SYSTEM REFRESH VIEW on gold's Refreshable Materialized Views (see
+# scripts/orchestration/flows.py's refresh_gold_serving_views_task).
+clickhouse-client --port 9009 --query "GRANT SYSTEM VIEWS ON *.* TO data_engineer"
 clickhouse-client --port 9009 --query "GRANT SELECT ON gold.* TO data_analyst"
 clickhouse-client --port 9009 --query "GRANT SELECT ON silver.* TO data_analyst"
 

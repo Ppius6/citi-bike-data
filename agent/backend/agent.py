@@ -1,13 +1,19 @@
 
 import json
 import os
-from openai import OpenAI
+from openai import OpenAI, BadRequestError
 from database import get_db_schema, execute_sql_query, retrieve_memory, save_memory
 
-# DeepSeek client (OpenAI-compatible API, pointed at DeepSeek's base_url)
+# OpenAI-compatible client — DeepSeek by default. Override LLM_API_KEY/LLM_BASE_URL/
+# LLM_MODEL (e.g. to CometAPI's https://api.cometapi.com/v1) to swap providers/models
+# for comparison without touching the agent logic below.
+LLM_API_KEY = os.getenv("LLM_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL") or "https://api.deepseek.com/v1"
+LLM_MODEL = os.getenv("LLM_MODEL") or "deepseek-chat"
+
 client = OpenAI(
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
-    base_url="https://api.deepseek.com/v1"
+    api_key=LLM_API_KEY,
+    base_url=LLM_BASE_URL
 )
 
 # Define the tool metadata for the LLM
@@ -33,7 +39,8 @@ You are an expert data analyst for a bike-share system.
 You answer user questions by writing and executing ClickHouse SQL queries.
 
 CRITICAL JOIN RULES:
-- Always start from the central fact table: `gold.fact_trips` (alias as `t`).
+- Always start from the central fact table: `gold.fact_trips` (alias as `t`) — EXCEPT as noted below.
+- For ride counts or average duration/distance/temperature broken down only by date, rider type, bike type, weather code, and/or daylight (no station, no other measures), query `gold.daily_ride_summary` directly instead of aggregating `gold.fact_trips` — it's pre-aggregated to that exact grain and far cheaper to scan. It already has `total_rides`, `avg_ride_duration_minutes`, `avg_ride_distance_km`, `avg_temperature_c` — don't re-derive these from fact_trips if this table already has them. Fall back to `fact_trips` for anything needing stations, individual rides, precipitation/wind, or any measure not listed above.
 - To filter by dates/seasons/weekends, JOIN `gold.dim_date` (dd) ON `t.date_key = dd.date_key`.
 - To filter by rider type (Member vs Casual), JOIN `gold.dim_rider_type` (dr) ON `t.rider_type_key = dr.rider_type_key`.
 - To filter by bike types, JOIN `gold.dim_bike_type` (db) ON `t.bike_type_key = db.bike_type_key`.
@@ -93,12 +100,27 @@ def run_bike_agent(user_question: str, history: list[dict] = None) -> dict:
         # fabricated from training-data guesses instead of this turn's actual data.
         tool_choice = "required" if iteration == 0 else "auto"
 
-        response = client.chat.completions.create(
-            model="deepseek-chat",  # or deepseek-reasoner for advanced chains
-            messages=messages,
-            tools=TOOLS,
-            tool_choice=tool_choice
-        )
+        try:
+            response = client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=messages,
+                tools=TOOLS,
+                tool_choice=tool_choice
+            )
+        except BadRequestError as e:
+            # Some models/providers reject tool_choice="required" outright (e.g.
+            # Qwen's "thinking mode" via CometAPI). Degrade to "auto" for this
+            # call instead of hard-failing — the GROUNDING RULES in the system
+            # prompt still apply, just without the hard guarantee "required" gives.
+            if tool_choice == "required" and "tool_choice" in str(e).lower():
+                response = client.chat.completions.create(
+                    model=LLM_MODEL,
+                    messages=messages,
+                    tools=TOOLS,
+                    tool_choice="auto"
+                )
+            else:
+                raise
 
         response_message = response.choices[0].message
 

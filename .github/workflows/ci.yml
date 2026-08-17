@@ -175,6 +175,10 @@ jobs:
           CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
         run: |
           uv run --project .. dbt run --select gold.* --target clickhouse --profiles-dir .
+          # Smoke-test the explicit refresh path used by the Prefect pipeline
+          # (scripts/orchestration/flows.py's refresh_gold_serving_views_task)
+          # for gold's Refreshable Materialized View.
+          uv run --project .. dbt run-operation refresh_materialized_view --args '{view_name: gold.daily_ride_summary}' --target clickhouse --profiles-dir .
           # Elementary's monitoring tables are per-target — the ones built
           # against Postgres above don't exist in ClickHouse, but fact_trips's
           # elementary.volume_anomalies test needs them there too.

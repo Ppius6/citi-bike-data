@@ -45,6 +45,13 @@ models:
         relation: true
         columns: true
 
+  # Isolates Elementary's own internal monitoring tables from the gold.*
+  # business schema — without this they inherit the clickhouse target's
+  # default schema (gold) and pollute it with 30+ unrelated tables that also
+  # bloat the chat agent's introspected schema context.
+  elementary:
+    +schema: elementary
+
 snapshots:
   citibike_dbt:
     # Config indicated by + and applies to all files under snapshots/

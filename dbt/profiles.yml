@@ -29,6 +29,12 @@ citibike_dbt:
       schema: gold
       secure: false
       threads: 4
+      # Refreshable materialized views (daily_ride_summary) are still
+      # experimental in ClickHouse 24.3 — set client-side so it works
+      # against a vanilla server too (e.g. CI's unconfigured service
+      # container), not just our locally-mounted config.xml.
+      custom_settings:
+        allow_experimental_refreshable_materialized_view: 1
       
   target: local
 

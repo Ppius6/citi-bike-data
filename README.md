@@ -102,7 +102,7 @@ citi-bike-data/
 - Node.js 22+ (only needed for local frontend dev outside Docker)
 - dbt-core, dbt-postgres, dbt-clickhouse
 - Prefect 3
-- A DeepSeek API key (for the chat agent)
+- A DeepSeek API key (for the chat agent) or any. 
 
 ---
 

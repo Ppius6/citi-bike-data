@@ -78,6 +78,11 @@ services:
       CLICKHOUSE_HTTP_PORT: 8123
       AI_AGENT_PASSWORD: ${AI_AGENT_PASSWORD}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      # Optional overrides to swap LLM provider/model (e.g. CometAPI) — see
+      # .env.example. Left empty falls back to the DeepSeek defaults in agent.py.
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
     ports:
       - "8000:8000"
     volumes:

@@ -223,6 +223,26 @@ def dbt_gold_task() -> bool:
 
 
 @task(
+    name="refresh_gold_serving_views",
+    description="Force an immediate SYSTEM REFRESH VIEW on gold's Refreshable "
+    "Materialized Views so they're guaranteed fresh right after this run, "
+    "rather than waiting for their independent 1-day ClickHouse schedule",
+    retries=2,
+    retry_delay_seconds=30,
+)
+def refresh_gold_serving_views_task() -> bool:
+    logger = get_run_logger()
+    logger.info("Refreshing gold serving-layer materialized views.")
+    success = run_dbt(
+        "run-operation refresh_materialized_view "
+        "--args '{view_name: gold.daily_ride_summary}' --target clickhouse"
+    )
+    if not success:
+        raise RuntimeError("Refreshing gold serving-layer materialized view failed.")
+    return success
+
+
+@task(
     name="dbt_elementary_clickhouse",
     description="Initialise Elementary models in ClickHouse — separate from the "
     "Postgres ones dbt_elementary_task builds, needed for elementary tests "
@@ -342,6 +362,7 @@ def citibike_pipeline():
     # Snapshot and Gold in ClickHouse
     dbt_snapshot_task()
     dbt_gold_task()
+    refresh_gold_serving_views_task()
     dbt_elementary_clickhouse_task()
 
     # Tests across all layers

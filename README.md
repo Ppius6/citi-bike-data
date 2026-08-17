@@ -234,7 +234,7 @@ Task execution order:
 4.  quality_check       Soda checks on bronze.trips
 5.  dbt_bronze          bronze.trips → bronze.bronze_trips
 6.  dbt_silver          bronze_trips → silver.int_trips_cleaned / silver_trips / silver_trips_rejected
-7.  dbt_elementary      Elementary monitoring models in silver
+7.  dbt_elementary      Elementary monitoring models in elementary
 8.  dbt_snapshot        silver_trips → snapshots.station_snapshot (SCD Type 2)
 9.  dbt_gold            silver → ClickHouse gold layer (5 models)
 10. dbt_test_dev        tests on bronze + silver

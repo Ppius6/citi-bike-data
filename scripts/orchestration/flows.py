@@ -179,7 +179,7 @@ def dbt_silver_task() -> bool:
 
 @task(
     name="dbt_elementary",
-    description="Initialise Elementary models in silver schema",
+    description="Initialise Elementary models in elementary schema",
     retries=1,
     retry_delay_seconds=30,
 )

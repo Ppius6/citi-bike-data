@@ -72,3 +72,6 @@ pipeline.log
 
 # dbt local config
 dbt/.user.yml
+
+notes.md
+models.md

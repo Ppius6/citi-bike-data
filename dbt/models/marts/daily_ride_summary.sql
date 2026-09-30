@@ -1,7 +1,7 @@
 {{
     config(
         materialized='materialized_view',
-        schema='gold',
+        schema='marts',
         engine='MergeTree()',
         order_by='(date_key, rider_type_key, bike_type_key, weather_code)',
         refreshable={

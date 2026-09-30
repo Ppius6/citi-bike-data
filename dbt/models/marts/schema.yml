@@ -1,0 +1,207 @@
+version: 2
+
+models:
+  - name: daily_ride_summary
+    description: >
+      Serving-layer Refreshable Materialized View — pre-aggregates fact_trips
+      to one row per (date, rider type, bike type, weather code, daylight)
+      combination. Refreshed on a 1-day ClickHouse-internal schedule as a
+      backstop, and explicitly via SYSTEM REFRESH VIEW right after each
+      pipeline run's gold rebuild (scripts/orchestration/flows.py). The
+      queryable table is this name; the underlying MV trigger object is
+      named daily_ride_summary_mv.
+    columns:
+      - name: date_key
+        description: "FK to dim_date"
+        data_tests:
+          - not_null
+      - name: rider_type_key
+        description: "FK to dim_rider_type"
+      - name: bike_type_key
+        description: "FK to dim_bike_type"
+      - name: weather_code
+        description: "Raw WMO code — see dim_weather_code for the description"
+      - name: is_daylight
+        description: "True if it was daylight at the hour rides in this group started"
+      - name: total_rides
+        description: "Count of rides in this (date, rider type, bike type, weather code, daylight) group"
+        data_tests:
+          - not_null
+      - name: avg_ride_duration_minutes
+        description: "Average ride duration in minutes for this group"
+      - name: avg_ride_distance_km
+        description: "Average great-circle ride distance in km for this group"
+      - name: avg_temperature_c
+        description: "Average temperature in Celsius for this group"
+
+  - name: mart_station_flow
+    description: >
+      Station-level operational flow — departures and arrivals per station
+      per hour, attributed to the hour the ride actually started/ended (a
+      ride can end on a different calendar day/hour than it started). Built
+      by tagging every trip as one departure-side row and one arrival-side
+      row, unioning, and aggregating once — a station-hour that only saw
+      traffic on one side naturally gets 0 on the other, no explicit outer
+      join needed. Retrospective (rebuilt on the monthly pipeline cadence),
+      not a live/real-time view of station state.
+    data_tests:
+      # No run history yet to learn a baseline from — warn until enough
+      # runs accumulate, same rationale as fact_trips's volume_anomalies.
+      - elementary.volume_anomalies:
+          config:
+            severity: warn
+    columns:
+      - name: station_flow_key
+        description: "Surrogate key — one row per (station_key, date_key, hour)"
+        data_tests:
+          - not_null
+          - unique
+      - name: station_key
+        description: "FK to dim_station"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_station')
+              field: station_key
+      - name: date_key
+        description: >
+          FK to dim_date. For departure-tagged rows this is the ride's start
+          date; for arrival-tagged rows it's the ride's end date — the two
+          can differ for long-running rides, which is why this isn't simply
+          fact_trips.date_key carried through.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: hour
+        description: "Hour of day (0-23) the departures/arrivals in this row occurred"
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 23
+      - name: departures
+        description: "Count of rides starting at this station in this hour"
+        data_tests:
+          - not_null
+      - name: arrivals
+        description: "Count of rides ending at this station in this hour"
+        data_tests:
+          - not_null
+      - name: net_flow
+        description: "departures - arrivals. Positive means the station is losing bikes overall, negative means it's gaining them."
+        data_tests:
+          - not_null
+      - name: member_departures
+        description: "Departures by member riders"
+      - name: casual_departures
+        description: "Departures by casual riders"
+      - name: electric_departures
+        description: "Departures on electric bikes"
+      - name: classic_departures
+        description: "Departures on classic bikes"
+      - name: docked_departures
+        description: "Departures on docked bikes"
+      - name: member_arrivals
+        description: "Arrivals by member riders"
+      - name: casual_arrivals
+        description: "Arrivals by casual riders"
+      - name: electric_arrivals
+        description: "Arrivals on electric bikes"
+      - name: classic_arrivals
+        description: "Arrivals on classic bikes"
+      - name: docked_arrivals
+        description: "Arrivals on docked bikes"
+      - name: round_trip_count
+        description: "Departures where the ride's start and end station are the same"
+        data_tests:
+          - not_null
+      - name: round_trip_share
+        description: >
+          round_trip_count / departures. Null (not 0) when there were no
+          departures at all in this station-hour — an undefined share isn't
+          the same as a genuine 0% round-trip rate.
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+      - name: distance_weighted_outflow
+        description: >
+          Sum of ride_distance_km for departing trips in this station-hour,
+          rounded to 2 decimal places. Null under the same conditions
+          ride_distance_km itself is null on fact_trips (missing end
+          coordinates) or when there were no departures.
+  - name: mart_demand_patterns
+    description: >
+      Baseline of typical departures and arrivals per station, day of week and
+      hour, computed over all history. Densified before aggregating —
+      mart_station_flow only has rows for station-hours with activity, so
+      every (date, hour) between a station's first and last active date is
+      counted, with missing hours as 0. Otherwise a plain average would
+      overstate a typical hour. Keyed by station_id, not station_key, so a
+      station's SCD2 versions share one baseline instead of splitting its
+      history. Retrospective (rebuilt on the monthly pipeline cadence).
+    data_tests:
+      # No run history yet to learn a baseline from — warn until enough
+      # runs accumulate, same rationale as fact_trips's volume_anomalies.
+      - elementary.volume_anomalies:
+          config:
+            severity: warn
+    columns:
+      - name: demand_pattern_key
+        description: "Surrogate key — one row per (station_id, day_of_week, hour)"
+        data_tests:
+          - not_null
+          - unique
+      - name: station_id
+        description: "Natural station key from dim_station.station_id (shared across a station's SCD2 versions)"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_station')
+              field: station_id
+      - name: day_of_week
+        description: "ISO day of week, 1 = Monday to 7 = Sunday"
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 7
+      - name: hour
+        description: "Hour of day (0-23)"
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 23
+      - name: sample_size
+        description: >
+          Number of dates behind this baseline: dates with this weekday
+          between the station's first and last active date. Check this before
+          trusting a cell — small values give unstable averages and bands.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: avg_departures
+        description: "Mean departures in this station/weekday/hour across all sampled dates, missing hours counted as 0"
+        data_tests:
+          - not_null
+      - name: p05_departures
+        description: "5th percentile of departures across sampled dates (approximate, ClickHouse quantile())"
+      - name: p95_departures
+        description: "95th percentile of departures across sampled dates (approximate, ClickHouse quantile())"
+      - name: avg_arrivals
+        description: "Mean arrivals in this station/weekday/hour across all sampled dates, missing hours counted as 0"
+        data_tests:
+          - not_null
+      - name: p05_arrivals
+        description: "5th percentile of arrivals across sampled dates (approximate, ClickHouse quantile())"
+      - name: p95_arrivals
+        description: "95th percentile of arrivals across sampled dates (approximate, ClickHouse quantile())"
+      - name: avg_net_flow
+        description: "Mean of departures - arrivals. Positive means the station typically loses bikes in this slot."
+        data_tests:
+          - not_null

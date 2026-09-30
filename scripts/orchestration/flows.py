@@ -216,7 +216,7 @@ def dbt_snapshot_task() -> bool:
 def dbt_gold_task() -> bool:
     logger = get_run_logger()
     logger.info("Running dbt gold models.")
-    success = run_dbt("run --select gold.* --target clickhouse")
+    success = run_dbt("run --select gold.* marts.* --target clickhouse")
     if not success:
         raise RuntimeError("dbt gold run failed.")
     return success
@@ -235,7 +235,7 @@ def refresh_gold_serving_views_task() -> bool:
     logger.info("Refreshing gold serving-layer materialized views.")
     success = run_dbt(
         "run-operation refresh_materialized_view "
-        "--args '{view_name: gold.daily_ride_summary}' --target clickhouse"
+        "--args '{view_name: marts.daily_ride_summary}' --target clickhouse"
     )
     if not success:
         raise RuntimeError("Refreshing gold serving-layer materialized view failed.")
@@ -371,7 +371,7 @@ def citibike_pipeline():
         models="bronze_trips int_trips_cleaned silver_trips silver_trips_rejected "
         "bronze_weather int_weather_cleaned silver_weather",
     )
-    dbt_test_task(target="clickhouse", models="gold.* fact_trips_reconciles_with_silver_trips")
+    dbt_test_task(target="clickhouse", models="gold.* marts.* fact_trips_reconciles_with_silver_trips")
 
     # Docs as the project catalog, plus Elementary's observability report
     dbt_docs_generate_task()

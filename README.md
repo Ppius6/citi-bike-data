@@ -1,6 +1,6 @@
 # Citi Bike Data Pipeline
 
-A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres for the mutable bronze/silver layers, ClickHouse for the gold star schema, that ingests Citi Bike trip data from S3, transforms it through bronze, silver, and gold layers, and serves analytical queries. Fully orchestrated with Prefect and containerised with Docker Compose. (See [Key Design Decisions](#key-design-decisions) for why bronze is Postgres rather than ClickHouse querying Parquet directly.)
+Ingests Citi Bike trip data from S3 and hourly weather from Open-Meteo, then transforms it through bronze, silver, gold and marts layers. MinIO is the landing zone, Postgres holds bronze and silver, and ClickHouse holds gold and marts. Prefect runs the pipeline on Docker Compose, and a chat agent answers questions about the data in plain English. See [Key Design Decisions](#key-design-decisions) for why bronze is Postgres rather than ClickHouse reading Parquet directly.
 
 ---
 
@@ -17,12 +17,12 @@ A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres
 | Source | Citi Bike S3 & Open-Meteo | Public trip data (monthly zips) and historical weather API |
 | Data Lake | MinIO | Local S3-compatible object storage |
 | Operational DB | Postgres 16 | Bronze + silver layers, snapshots |
-| Warehouse | ClickHouse 24.3 | Gold layer, columnar analytical queries |
-| Transformation | dbt (postgres + clickhouse) | Bronze → silver → gold models |
+| Warehouse | ClickHouse 24.3 | Gold and marts layers, columnar analytical queries |
+| Transformation | dbt (postgres + clickhouse) | Bronze → silver → gold → marts models |
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
-| Data Catalog | dbt docs | Model docs, column descriptions, tests, and lineage — live at [ppius6.github.io/citi-bike-data](https://ppius6.github.io/citi-bike-data/) |
-| Observability | Soda + dbt tests + Elementary | Landing contract, model assertions, and anomaly/run-history report — live at [.../elementary](https://ppius6.github.io/citi-bike-data/elementary/) |
-| Chat Agent | FastAPI + DeepSeek + sentence-transformers | Tool-calling agent that writes read-only SQL against the gold layer, with long-term vector memory |
+| Data Catalog | dbt docs | Model docs, columns, tests and lineage, published at [ppius6.github.io/citi-bike-data](https://ppius6.github.io/citi-bike-data/) |
+| Observability | Soda, dbt tests, Elementary | Soda checks bronze on landing, dbt tests check every layer, and Elementary tracks volume anomalies and run history ([report](https://ppius6.github.io/citi-bike-data/elementary/)) |
+| Chat Agent | FastAPI + DeepSeek + sentence-transformers | Tool-calling agent that writes read-only SQL against gold and marts, with long-term vector memory |
 | Chat UI | React + Vite + TypeScript | Chat frontend, served via nginx |
 | Containerisation | Docker Compose | Full stack, single command startup |
 
@@ -31,17 +31,15 @@ A hybrid warehouse pipeline with MinIO as an object-store landing zone, Postgres
 ## Prerequisites
 
 - Docker Desktop
-- Python 3.12+
-- Node.js 22+ (only needed for local frontend dev outside Docker)
-- dbt-core, dbt-postgres, dbt-clickhouse
-- Prefect 3
-- A DeepSeek API key (for the chat agent) or any. 
+- Python 3.12+ and [uv](https://docs.astral.sh/uv/)
+- Node.js 22+ (only for frontend development outside Docker)
+- An LLM API key for the chat agent (DeepSeek by default, any OpenAI-compatible provider works)
 
 ---
 
 ## Quickstart
 
-**1. Clone and configure environment**
+**1. Configure the environment**
 
 ```bash
 git clone <repo>
@@ -50,34 +48,34 @@ cp .env.example .env
 # Fill in the values in .env
 ```
 
-**2. Start the full stack**
+`.env.example` lists every variable the stack needs: Postgres, MinIO and ClickHouse credentials, plus the LLM API key. Real secrets belong only in `.env`.
+
+**2. Start the stack**
 
 ```bash
 docker compose up -d
 ```
 
-Services started:
+- MinIO console: <http://localhost:9001>
+- Prefect UI: <http://localhost:4200>
+- Postgres: localhost:5432
+- ClickHouse: localhost:8123 (HTTP), localhost:9009 (native)
+- Chat agent API: <http://localhost:8000>
+- Chat UI: <http://localhost:3000>
 
-- MinIO console → <http://localhost:9001>
-- Prefect UI → <http://localhost:4200>
-- Postgres → localhost:5432
-- ClickHouse → localhost:8123 (HTTP), localhost:9009 (native)
-- Chat agent API → <http://localhost:8000> (see [Chat Agent](#chat-agent))
-- Chat UI → <http://localhost:3000>
-
-**3. Run the pipeline manually**
+**3. Run the pipeline**
 
 ```bash
 prefect deployment run 'citibike_pipeline/citibike-monthly'
 ```
 
-Watch progress at <http://localhost:4200> or monitor logs with `docker compose logs -f pipeline`. The pipeline will also run automatically on the 1st of every month at 06:00 AM New York time.
+Watch progress in the Prefect UI or with `docker compose logs -f pipeline`. On its own, the pipeline runs on the 1st of every month at 06:00 New York time.
 
-**4. Browse the data catalog (dbt docs)**
+**4. Browse the data catalog**
 
-Live at **<https://ppius6.github.io/citi-bike-data/>** — model docs, column descriptions, tests, and lineage, published automatically by CI on every push to `main` (see `.github/workflows/ci.yml`'s `deploy-docs` job). Elementary's anomaly/run-history report is published alongside it at **<https://ppius6.github.io/citi-bike-data/elementary/>**.
+CI publishes the dbt docs to **<https://ppius6.github.io/citi-bike-data/>** and the Elementary report to **<https://ppius6.github.io/citi-bike-data/elementary/>** on every push to `main` (the `deploy-docs` job in `.github/workflows/ci.yml`).
 
-To generate and browse local copies instead (useful while iterating on models before pushing):
+To build them locally:
 
 ```bash
 cd dbt && uv run dbt docs generate --profiles-dir . --target dev && uv run dbt docs serve --profiles-dir .
@@ -87,15 +85,7 @@ mkdir -p target/elementary
 uv run edr report --profiles-dir . --project-dir . --profile-target dev --file-path target/elementary/index.html
 ```
 
----
-
-## Environment Variables
-
-```bash
-cp .env.example .env
-```
-
-`.env.example` is the source of truth for every variable the stack needs — Postgres (admin, `data_engineer`, `data_analyst` passwords), MinIO (root + engineer/analyst keys), ClickHouse (`data_engineer`/`ai_agent` passwords), and the DeepSeek API key for the chat agent. Fill in real values in `.env`; nothing in the repo besides `.env.example` should contain a real secret.
+When running dbt from your host, the ClickHouse target defaults to the hostname `clickhouse`, which only resolves inside Docker. From your own shell, set `CLICKHOUSE_HOST=localhost`.
 
 ---
 
@@ -103,61 +93,69 @@ cp .env.example .env
 
 ### Bronze
 
-Raw Citi Bike trip data landed from MinIO Parquet files into Postgres with no transformations. Two metadata columns added: `_source_file` and `_ingested_at`.
+Raw trip data loaded from MinIO Parquet files into Postgres with no transformations, plus two metadata columns: `_source_file` and `_ingested_at`.
 
 ### Silver
 
-`int_trips_cleaned` is the single incremental scan over bronze — cleaning, dedup, and quarantine flagging all happen here once. `silver_trips` and `silver_trips_rejected` are thin views splitting on `rejection_reason`, so downstream consumers see the same shape as before. We also directly ingest hourly historical data into `silver_weather`. Transformations applied:
+`int_trips_cleaned` is the single incremental scan over bronze. Cleaning, deduplication and quarantine flagging all happen there. `silver_trips` and `silver_trips_rejected` are views that split its output on `rejection_reason`. Hourly weather goes straight into `silver_weather`.
 
-- Duplicates removed on `ride_id`
-- Timestamps converted from UTC to `America/New_York` (single conversion — the raw column is already `timestamptz`)
-- `ride_duration_minutes` computed
-- Station names and IDs cleaned (`NULLIF` on empty strings); a missing `station_id` with a surviving `station_name` is backfilled from an unambiguous name→id lookup built from the rest of the data — station IDs don't change over time, so a name seen with exactly one other ID elsewhere is safe to fill in
-- Invalid rides quarantined, not dropped: duration ≤ 0 or > 1440 minutes, missing coordinates → `silver_trips_rejected`, tagged with why
+- Duplicates removed on `ride_id`.
+- Timestamps converted from UTC to `America/New_York`.
+- `ride_duration_minutes` computed.
+- Empty station names and IDs become `NULL`. A missing `station_id` is backfilled from the station's name when that name maps to exactly one ID elsewhere in the data.
+- Invalid rides go to `silver_trips_rejected` with a reason instead of being dropped: duration ≤ 0 or > 1440 minutes, or missing coordinates.
 
-### Gold (Star Schema)
+### Gold (star schema)
 
-Business-ready dimensional model in ClickHouse:
+Dimensional model in ClickHouse.
 
 | Model | Rows | Description |
 |---|---|---|
-| `dim_date` | ~1,977 | Date spine from 2021-01-01 to latest data, `date_key` as `YYYYMMDD` `UInt32` |
-| `dim_station` | 939 | Stations with SCD Type 2 history, `station_key` unique per version |
+| `dim_date` | ~2,070 | Date spine from 2021-01-01 to latest data, `date_key` as `YYYYMMDD` `UInt32` |
+| `dim_station` | 963 | Stations with SCD Type 2 history, `station_key` unique per version |
 | `dim_rider_type` | 2 | Member / casual |
 | `dim_bike_type` | 3 | Electric / classic / docked |
-| `fact_trips` | ~4.86M | One row per ride, FK to all dimensions, includes hourly weather data (temp, precipitation, wind speed, etc.), `ORDER BY (date_key, start_station_key)` — rides with no resolvable station are excluded (~0.3%) |
+| `dim_weather_code` | 28 | WMO weather code lookup |
+| `fact_trips` | ~5.19M | One row per ride, FK to all dimensions, with hourly weather and `ride_distance_km`. `ORDER BY (date_key, start_station_key)`. Rides with no resolvable station (~0.3%) are excluded |
+
+### Marts
+
+Pre-aggregated tables built from gold, in their own ClickHouse schema (`marts`). They are rebuilt once a month with the rest of the pipeline, so they describe history, not live station status.
+
+| Model | Rows | Grain and purpose |
+|---|---|---|
+| `daily_ride_summary` | ~53K | Date × rider type × bike type × weather × daylight. A refreshable materialized view for cheap system-wide counts and averages |
+| `mart_station_flow` | ~2.4M | Station × date × hour. Departures, arrivals, net flow, round-trip share, distance and rider/bike mix. Only hours with activity have rows |
+| `mart_demand_patterns` | ~115K | Station × day of week × hour. Typical departures and arrivals with p05/p95 bands and a `sample_size`. Quiet hours count as 0, keyed by `station_id` so a station's SCD2 versions share one baseline |
 
 ---
 
 ## dbt Tests
 
-50 data tests across all layers, including `relationships` tests from every `fact_trips` FK to its dimension, `accepted_values` on the dimension enums, and a reconciliation test asserting `fact_trips`'s row count against `silver_trips`'s — any gap not explained by the known station-less exclusion fails the build:
+Data tests across all layers are implemented which cut across `relationships` tests from every `fact_trips` FK to its dimension, `accepted_values` on the dimension enums, and a reconciliation test that compares `fact_trips`'s row count to `silver_trips`'s. Any gap beyond the known station-less exclusion fails the build.
 
 ```bash
 # Postgres layers (bronze + silver)
 uv run dbt test --target dev --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected bronze_weather int_weather_cleaned silver_weather --profiles-dir .
 
-# ClickHouse layers (gold)
-uv run dbt test --target clickhouse --select gold.* fact_trips_reconciles_with_silver_trips --profiles-dir .
+# ClickHouse layers (gold + marts)
+uv run dbt test --target clickhouse --select gold.* marts.* fact_trips_reconciles_with_silver_trips --profiles-dir .
 ```
 
 ---
 
-## Data Quality, Observability, and Governance
+## Data Quality and Observability
 
-- **Soda** runs data quality checks right after data lands in the bronze layer using Soda Core  integrated into the pipeline using Soda's YAML-based check definitions. It runs immediately after the raw data is loaded into the postgres `bronze.trips` table from MinIO, but before any dbt models start running.
+- **Soda** checks `bronze.trips` right after the raw data loads and before any dbt model runs. Checks are YAML files under `scripts/quality/`.
+- **dbt tests** run on every layer: unique primary keys, foreign keys that resolve, valid enum values. Postgres layers run under the `dev` target and ClickHouse layers under `clickhouse`.
+- **Elementary** monitors anomalies and records pipeline run history.
+- **dbt docs** publish model docs, columns and lineage as a static site.
 
-- **dbt tests** checks run on every layer i.e., ensuring primary keys are unique, foreign keys in the fact table actually match the dimension tables, and the enum values are correct. These tests are separated into two groups, `dev` (for postgres layers) and `ch` (for clickhouse layers).
-
-- **Elementary** plugs into dbt to monitor anomalies and report on our pipeline's run history. It runs after the `bronze` and `silver` dbt models have executed.
-
-- **Data Catalog (dbt docs)** automatically generates a searcheable website mapping out of every table, column, and lineage graph (how data flows from source to destination) 
-
-See the dbt docs deployed at <https://ppius6.github.io/citi-bike-data/> and also the elementary report at <https://ppius6.github.io/citi-bike-data/elementary/>.
+---
 
 ## Orchestration
 
-The pipeline runs on the 1st of every month at 06:00 AM (New York time), since the source data is published on that cadence.
+The pipeline runs on the 1st of every month at 06:00 New York time, because Citi Bike publishes data monthly.
 
 ```
 Task execution order:
@@ -169,22 +167,22 @@ Task execution order:
 6.  dbt_silver          bronze_trips → silver.int_trips_cleaned / silver_trips / silver_trips_rejected
 7.  dbt_elementary      Elementary monitoring models in elementary
 8.  dbt_snapshot        silver_trips → snapshots.station_snapshot (SCD Type 2)
-9.  dbt_gold            silver → ClickHouse gold layer (5 models)
+9.  dbt_gold            silver → ClickHouse gold and marts layers
 10. dbt_test_dev        tests on bronze + silver
-11. dbt_test_ch         tests on gold
+11. dbt_test_ch         tests on gold + marts
 12. dbt_docs_generate   regenerate dbt docs (model docs, tests, lineage)
 13. elementary_report   regenerate Elementary's anomaly/observability report
 ```
 
-Each task has automatic retries, and a failure stops the flow before any downstream layer is built on bad data.
+Each task retries automatically, and a failure stops the flow before any downstream layer is built on bad data. After the gold and marts build, a refresh step runs `SYSTEM REFRESH VIEW` on `marts.daily_ride_summary`.
 
-![Completed pipeline run in the Prefect UI](docs/images/pipeline.png)
+![Completed pipeline run in the Prefect UI](docs/images/pipeline2.png)
 
 ---
 
 ## Chat Agent
 
-A minimal chat UI for asking questions about the gold layer in plain English — "What was the average ride duration for casual riders versus members?" — backed by a tool-calling agent that writes and executes the SQL itself. Dark by default with a light-mode toggle, persisted to `localStorage`.
+A chat UI for asking questions about the data in plain English, such as "What was the average ride duration for casual riders versus members?" A tool-calling agent writes and runs the SQL. Dark theme by default, with a light-mode toggle saved to `localStorage`.
 
 | Light | Dark |
 |---|---|
@@ -196,18 +194,18 @@ A minimal chat UI for asking questions about the gold layer in plain English —
 
 **How it works:**
 
-1. **Initialization:** At startup, `agent/backend/database.py` introspects `system.columns` for `gold.*` live (via the same read-only `ai_agent` user) and probes the actual `DISTINCT` values of the rider/bike-type dimension columns. This becomes the schema context baked into the system prompt which reflects the real dbt models, not a hand-maintained description that can drift when a model changes.
-2. **Memory Retrieval:** The agent embeds the user's question using a local `sentence-transformers` model (`all-MiniLM-L6-v2`) and searches the `agent.memory` table in ClickHouse using `cosineDistance`. The most semantically similar past questions are retrieved and their corresponding SQL queries are injected into the system prompt as proven few-shot examples.
-3. **Query Generation:** `agent/backend/agent.py` sends the user's question and the entire chat history (for conversational context) to DeepSeek along with the schema context and retrieved memory examples.
-4. **Execution Loop:** DeepSeek responds with a tool call containing a generated SQL query. The loop keeps `tools` available on every turn which is required for DeepSeek's function-calling to behave correctly across multiple rounds.
-5. **Memory Storage:** Once the agent finishes executing exploratory queries and successfully produces the final plain-English answer, the single most successful query is embedded and saved back to the `agent.memory` ClickHouse table for future reference.
+1. **Startup:** `agent/backend/database.py` reads `system.columns` for `gold` and `marts` through the read-only `ai_agent` user and probes the real values of the rider and bike type columns. The result fills the `{db_schema}` slot in the system prompt, so the schema the agent sees always matches the dbt models.
+2. **Prompt:** the join and grounding rules live in [`agent/backend/prompts/system_instructions.md`](agent/backend/prompts/system_instructions.md). They tell the agent which table to use for which question: `fact_trips` by default, `marts.daily_ride_summary` for system-wide totals, `marts.mart_station_flow` for station flow, and `marts.mart_demand_patterns` for typical demand.
+3. **Memory:** the agent embeds the question with a local `sentence-transformers` model (`all-MiniLM-L6-v2`) and searches `agent.memory` in ClickHouse with `cosineDistance`. The closest past questions and their SQL are added to the prompt as examples.
+4. **Query loop:** `agent/backend/agent.py` sends the question, chat history, schema and examples to the LLM, which replies with a tool call containing SQL. Tools stay available on every turn, which DeepSeek's function calling needs across multiple rounds.
+5. **Saving:** once the agent has a final answer, it embeds the one most successful query and stores it in `agent.memory`.
 
-**Guardrails** (defense in depth where each layer works even if another fails):
+**Guardrails:**
 
-- App layer: only a single `SELECT`/`WITH` statement is allowed per call; a keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, and other mutating statements — including keywords hidden inside a `WITH ... DELETE` CTE. Covered by 29 guardrail tests in `agent/backend/tests/test_database.py` (statement-count enforcement, every forbidden keyword, case-insensitivity, and word-boundary checks so identifiers like `inserted_at` don't false-positive on `INSERT`).
-- Database layer: the agent connects as a dedicated `ai_agent` ClickHouse user (see `infra/clickhouse/init.sh`) that is granted `SELECT` on `gold.*` and `INSERT`/`SELECT` on `agent.memory`. It is created without restricted readonly settings to allow it to persist memories, relying completely on explicit table-level RBAC grants to prevent unauthorized writes.
-- Correctness: ClickHouse string comparisons are case-sensitive, and dimension tables store both a raw value (`rider_type = 'casual'`) and a display value (`rider_type_desc = 'Casual'`). The system prompt instructs the agent to filter with `lower(column) = lower('value')` unless it's certain of exact casing, so a wrong guess returns the right rows instead of silently returning zero.
-- Vector Pollution: The agent tracks its exploratory tool calls and only commits the final, successful query to its long-term memory to prevent memorizing confused exploratory queries.
+- **App layer:** one `SELECT` or `WITH` statement per call. A keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE` and similar, including inside a `WITH ... DELETE` CTE. 29 tests in `agent/backend/tests/test_database.py` cover this, including word boundaries so `inserted_at` doesn't trip `INSERT`.
+- **Database layer:** the agent connects as `ai_agent` (see `infra/clickhouse/init.sh`), which has `SELECT` on `gold.*` and `marts.*` and `INSERT`/`SELECT` on `agent.memory`. Table-level grants stop any other write.
+- **Memory hygiene:** exploratory queries are tracked, and only the final successful query is saved.
+- **Prompt rules:** case-insensitive filtering, grounding every number in a query result, and which table to use for which question are all defined in [`agent/backend/prompts/system_instructions.md`](agent/backend/prompts/system_instructions.md).
 
 **Run standalone (CLI, no Docker):**
 
@@ -217,13 +215,17 @@ pip install -r requirements.txt
 python main.py
 ```
 
-**Run via Docker Compose** (part of `docker compose up -d`, see [Quickstart](#quickstart)): the `agent-api` service builds from `agent/backend/`, and `web` builds from `agent/frontend/` and serves the UI at <http://localhost:3000>, with nginx proxying `/api/*` to `agent-api`.
+**Run with Docker Compose:** `docker compose up -d` builds `agent-api` from `agent/backend/` and `web` from `agent/frontend/`. The UI is at <http://localhost:3000>, with nginx proxying `/api/*` to `agent-api`. The system prompt is baked into the image, so rebuild after editing it:
+
+```bash
+docker compose up -d --build agent-api
+```
 
 ---
 
-## DBeaver Connections
+## Database Connections
 
-Connect with the least-privilege `data_analyst` role for read-only exploration; use `data_engineer` only if you need to write.
+Use the read-only `data_analyst` role for exploration. Use `data_engineer` only when you need to write.
 
 **Postgres (bronze + silver)**
 
@@ -235,13 +237,13 @@ Connect with the least-privilege `data_analyst` role for read-only exploration; 
 | User | `data_analyst` (read-only) or `data_engineer` |
 | Password | `ANALYST_PASSWORD` or `DB_PASSWORD` from `.env` |
 
-**ClickHouse (gold)**
+**ClickHouse (gold + marts)**
 
 | Field | Value |
 |---|---|
 | Host | localhost |
 | Port | 9009 |
-| Database | gold |
+| Database | gold (or marts) |
 | User | `data_analyst` (read-only) or `data_engineer` |
 | Password | `ANALYST_PASSWORD` or `CLICKHOUSE_ENGINEER_PASSWORD` from `.env` |
 
@@ -249,14 +251,12 @@ Connect with the least-privilege `data_analyst` role for read-only exploration; 
 
 ## Key Design Decisions
 
-**Idempotency.** Every layer checks before writing. The pipeline is safe to re-run at any time and already-processed files are skipped at every stage.
+- Idempotency is maintained as every layer checks before writing, so a re-run is safe and already-processed files are skipped.
 
-**Medallion architecture.** Bronze is immutable. Silver is replayable from bronze. Gold is replayable from silver. A bug at any layer can be fixed and replayed without re-ingesting from source. Empty fields in source CSVs are interpreted as `NULL` at ingestion (`ingest.py`'s `pd.read_csv(..., keep_default_na=False, na_values=[""])`) — source files don't reliably distinguish empty strings from missing values, so no attempt is made to preserve that distinction, and only a truly empty field is coerced, not pandas' broader default list of "NA"/"NULL"/"N/A"-style tokens that could otherwise destroy a real value.
+- Bronze is immutable, silver replays from bronze, and gold and marts replay from silver. You can fix a bug at any layer and replay without re-ingesting from source. Empty fields in source CSVs become `NULL` at ingestion (`pd.read_csv(..., keep_default_na=False, na_values=[""])` in `ingest.py`). The source files do not reliably tell empty strings from missing values, and this setting avoids pandas turning real values like "NA" into nulls.
 
-**SCD Type 2 on stations.** Station names and coordinates change over time. dbt snapshots track the full history, and `fact_trips` resolves each ride to the station version that was actually true at ride time via a ClickHouse `ASOF JOIN` on `valid_from`/`valid_to` — not just a lookup of whatever the station's attributes are today. `station_key` is unique per version (sourced from `dbt_scd_id`, not the natural `station_id`), which is what makes the point-in-time join actually mean something.
+- We assume that station(s) could change. We therefore design to keep the full history. `fact_trips` resolves each ride to the station version that was current at ride time with a ClickHouse `ASOF JOIN` on `valid_from`/`valid_to`. `station_key` is unique per version, taken from `dbt_scd_id`, which is what makes the point-in-time join work. Marts that need one row per physical station key on `station_id` instead.
 
-**ClickHouse bridge tables.** Gold models read from Postgres silver via ClickHouse's PostgreSQL engine. No data is copied and ClickHouse queries Postgres directly. Only the gold layer is physically stored in ClickHouse.
+- Gold models read Postgres silver through ClickHouse's PostgreSQL engine, so no data is copied. Only gold and marts are stored in ClickHouse.
 
-**Why bronze lives in Postgres, not queried straight off MinIO's Parquet.** ClickHouse can query S3-compatible object storage directly via its S3 table engine, so an obvious question is why this pipeline hops through a Postgres bronze table at all instead of pointing ClickHouse straight at the raw Parquet files. The answer is that Postgres gives the rest of the pipeline a mutable staging surface: dbt's incremental models need `MERGE`/upsert semantics keyed on `ride_id`, Soda's quality checks run as row-level SQL assertions against a real table, and re-loading a corrected file means updating rows in place rather than re-deriving the whole layer from immutable object storage. Object storage is the right fit for gold, where the shape is fixed and queries are append-mostly as it is the wrong fit for bronze, where the whole point is DML.
-
-**Gold intentionally doesn't reconcile 1:1 with silver.** `fact_trips` excludes the small share of rides (~0.3%) whose start or end station can't be resolved to a `dim_station` row even after the name→id backfill (see [Silver](#silver)), so that `start_station_key`/`end_station_key` stay non-nullable and every FK in the fact table is guaranteed resolvable. The tradeoff: `fact_trips`'s row count will never exactly match `silver_trips`'s — a real, known gap, not a bug — and an analyst diffing total ride counts across layers should expect it. The alternative (a sentinel "Unknown" row in `dim_station` so every ride survives into the fact table) was considered and rejected: it would require every station-level query to remember to filter out a synthetic row that doesn't represent an unresolved-but-real station, just an absence of data.
+- The bronze layer is Postgres and not Parquet on MinIO. ClickHouse can query S3-compatible storage directly, so the extra Postgres hop needs a reason. dbt incremental models need `MERGE`/upsert on `ride_id`, Soda runs row-level SQL assertions against a real table, and reloading a corrected file means updating rows in place. Object storage suits gold, where the shape is fixed and writes are append-mostly. It doesn't suit bronze, where the job is DML.

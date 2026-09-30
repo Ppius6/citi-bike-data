@@ -44,6 +44,13 @@ models:
       +persist_docs:
         relation: true
         columns: true
+    marts:
+      +materialized: table
+      +schema: marts
+      +persist_docs:
+        relation: true
+        columns: true
+
 
   # Isolates Elementary's own internal monitoring tables from the gold.*
   # business schema — without this they inherit the clickhouse target's

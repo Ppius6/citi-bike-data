@@ -57,25 +57,25 @@ def get_db_schema() -> str:
     client = _get_client()
 
     columns = client.query("""
-        SELECT table, name, type, comment
+        SELECT database, table, name, type, comment
         FROM system.columns
-        WHERE database = 'gold'
-        ORDER BY table, position
+        WHERE database IN ('gold', 'marts')
+        ORDER BY database, table, position
         """).result_rows
 
-    tables: dict[str, list[tuple[str, str, str]]] = {}
-    for table, name, col_type, comment in columns:
-        tables.setdefault(table, []).append((name, col_type, comment))
+    tables: dict[tuple[str, str], list[tuple[str, str, str]]] = {}
+    for database, table, name, col_type, comment in columns:
+        tables.setdefault((database, table), []).append((name, col_type, comment))
 
     lines = []
-    for table, cols in tables.items():
+    for (database, table), cols in tables.items():
         col_strings = []
         for name, col_type, comment in cols:
             col_str = f"{name} {col_type}"
             if comment:
                 col_str += f" COMMENT '{comment}'"
             col_strings.append(col_str)
-        lines.append(f"TABLE gold.{table} (\n  " + ",\n  ".join(col_strings) + "\n);")
+        lines.append(f"TABLE {database}.{table} (\n  " + ",\n  ".join(col_strings) + "\n);")
 
     enum_notes = []
     for table, column in ENUM_COLUMNS:
@@ -137,8 +137,6 @@ def save_memory(question: str, query: str) -> None:
         embedding = embed_text(question)
         client = _get_client()
 
-        # ClickHouse connect insert syntax: client.insert('table', data, column_names)
-        # where data is a list of rows, and each row is a list/tuple of values.
         client.insert(
             "agent.memory",
             [[question, query, embedding]],

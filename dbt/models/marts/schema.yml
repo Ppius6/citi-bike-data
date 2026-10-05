@@ -205,3 +205,43 @@ models:
         description: "Mean of departures - arrivals. Positive means the station typically loses bikes in this slot."
         data_tests:
           - not_null
+
+  - name: mart_city_flow
+    description: >
+      Rides between cities per month: one row per start city, end city and
+      month. Shows where rides start and end, including Jersey City to
+      Hoboken crossings in each direction. City comes from
+      dim_station.city, which is derived from the station ID format.
+      Retrospective (rebuilt on the monthly pipeline cadence).
+    columns:
+      - name: city_flow_key
+        description: "Surrogate key, one row per (month_start, start_city, end_city)"
+        data_tests:
+          - not_null
+          - unique
+      - name: month_start
+        description: "First day of the month the rides started in"
+        data_tests:
+          - not_null
+      - name: start_city
+        description: "City of the start station: Jersey City, Hoboken, New York City or Unknown (non-public operational stations)"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Jersey City', 'Hoboken', 'New York City', 'Unknown']
+      - name: end_city
+        description: "City of the end station: Jersey City, Hoboken, New York City or Unknown (non-public operational stations)"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Jersey City', 'Hoboken', 'New York City', 'Unknown']
+      - name: rides
+        description: "Number of rides in this month from start_city to end_city"
+        data_tests:
+          - not_null
+      - name: avg_ride_duration_minutes
+        description: "Mean ride duration in minutes"
+      - name: avg_ride_distance_km
+        description: "Mean straight-line ride distance in km. Null if no ride in the group has a known end point."

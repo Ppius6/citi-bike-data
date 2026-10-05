@@ -112,7 +112,7 @@ Dimensional model in ClickHouse.
 | Model | Rows | Description |
 |---|---|---|
 | `dim_date` | ~2,070 | Date spine from 2021-01-01 to latest data, `date_key` as `YYYYMMDD` `UInt32` |
-| `dim_station` | 963 | Stations with SCD Type 2 history, `station_key` unique per version |
+| `dim_station` | 963 | Stations with SCD Type 2 history, `station_key` unique per version. `city` (Jersey City, Hoboken, New York City) comes from the station ID format |
 | `dim_rider_type` | 2 | Member / casual |
 | `dim_bike_type` | 3 | Electric / classic / docked |
 | `dim_weather_code` | 28 | WMO weather code lookup |
@@ -127,6 +127,7 @@ Pre-aggregated tables built from gold, in their own ClickHouse schema (`marts`).
 | `daily_ride_summary` | ~53K | Date × rider type × bike type × weather × daylight. A refreshable materialized view for cheap system-wide counts and averages |
 | `mart_station_flow` | ~2.4M | Station × date × hour. Departures, arrivals, net flow, round-trip share, distance and rider/bike mix. Only hours with activity have rows |
 | `mart_demand_patterns` | ~115K | Station × day of week × hour. Typical departures and arrivals with p05/p95 bands and a `sample_size`. Quiet hours count as 0, keyed by `station_id` so a station's SCD2 versions share one baseline |
+| `mart_city_flow` | ~420 | Start city × end city × month. Ride counts, average duration and distance, including Jersey City ↔ Hoboken crossings |
 
 ---
 
@@ -195,7 +196,7 @@ A chat UI for asking questions about the data in plain English, such as "What wa
 **How it works:**
 
 1. **Startup:** `agent/backend/database.py` reads `system.columns` for `gold` and `marts` through the read-only `ai_agent` user and probes the real values of the rider and bike type columns. The result fills the `{db_schema}` slot in the system prompt, so the schema the agent sees always matches the dbt models.
-2. **Prompt:** the join and grounding rules live in [`agent/backend/prompts/system_instructions.md`](agent/backend/prompts/system_instructions.md). They tell the agent which table to use for which question: `fact_trips` by default, `marts.daily_ride_summary` for system-wide totals, `marts.mart_station_flow` for station flow, and `marts.mart_demand_patterns` for typical demand.
+2. **Prompt:** the join and grounding rules live in [`agent/backend/prompts/system_instructions.md`](agent/backend/prompts/system_instructions.md). They tell the agent which table to use for which question: `fact_trips` by default, `marts.daily_ride_summary` for system-wide totals, `marts.mart_station_flow` for station flow, and `marts.mart_demand_patterns` for typical demand, and `dim_station.city` and `marts.mart_city_flow` for city questions.
 3. **Memory:** the agent embeds the question with a local `sentence-transformers` model (`all-MiniLM-L6-v2`) and searches `agent.memory` in ClickHouse with `cosineDistance`. The closest past questions and their SQL are added to the prompt as examples.
 4. **Query loop:** `agent/backend/agent.py` sends the question, chat history, schema and examples to the LLM, which replies with a tool call containing SQL. Tools stay available on every turn, which DeepSeek's function calling needs across multiple rounds.
 5. **Saving:** once the agent has a final answer, it embeds the one most successful query and stores it in `agent.memory`.

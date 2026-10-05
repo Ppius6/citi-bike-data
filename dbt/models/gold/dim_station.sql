@@ -26,6 +26,17 @@ SELECT
     assumeNotNull(dbt_scd_id)       AS station_key,
     station_id,
     station_name,
+    -- Derived from the source's station ID format, not from coordinates:
+    -- coordinates can't separate Jersey City from Hoboken at the border, and
+    -- NYC stations' coordinates in this data are unreliable (taken from ride
+    -- endpoints). JC/HB are the Citi Bike Jersey City/Hoboken ID prefixes;
+    -- numeric IDs (e.g. 5297.02) are the New York City system.
+    multiIf(
+        startsWith(station_id, 'JC'), 'Jersey City',
+        startsWith(station_id, 'HB'), 'Hoboken',
+        match(station_id, '^[0-9]+[.][0-9]+$'), 'New York City',
+        'Unknown'
+    )                                AS city,
     latitude,
     longitude,
     -- A station's earliest captured version reflects "however far back our

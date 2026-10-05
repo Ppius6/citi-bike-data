@@ -66,6 +66,20 @@ models:
           - not_null
       - name: station_name
         description: "The name of the station"
+      - name: city
+        description: >
+          City the station belongs to, derived from the station_id format:
+          JC prefix is Jersey City, HB prefix is Hoboken, numeric IDs are the
+          New York City system. Not derived from coordinates, which cannot
+          separate Jersey City from Hoboken at the border and are unreliable
+          for NYC stations. "Unknown" covers a handful of non-public
+          operational stations (a lab, a shop, loading docks) with IDs in
+          neither format; they account for about 20 ride endpoints in total.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Jersey City', 'Hoboken', 'New York City', 'Unknown']
       - name: latitude
         description: "The latitude coordinate of the station"
       - name: longitude

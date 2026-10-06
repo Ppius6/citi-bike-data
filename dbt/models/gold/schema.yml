@@ -48,6 +48,8 @@ models:
         description: "1 if the date is a weekend (Saturday or Sunday), 0 otherwise"
       - name: season
         description: "The season of the year (Winter, Spring, Summer, Fall)"
+      - name: month_year
+        description: "Abbreviated month and year, e.g. 'Aug 2026'"
 
   - name: dim_station
     description: "Station dimension with SCD Type 2 history"
@@ -140,6 +142,13 @@ models:
         description: "Human-readable description of the weather code (e.g. Clear sky, Overcast)"
         data_tests:
           - not_null
+      - name: weather_group
+        description: "Broad weather category (Clear, Cloudy, Fog, Drizzle, Rain, Snow, Showers, Thunderstorm)"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Clear', 'Cloudy', 'Fog', 'Drizzle', 'Rain', 'Snow', 'Showers', 'Thunderstorm']
 
   - name: fact_trips
     description: "Fact table — one row per ride, FK references to all dimensions"

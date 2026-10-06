@@ -33,7 +33,8 @@ final AS (
         {{ day_name('date_day') }} AS day_name,
         {{ month_name('date_day') }} AS month_name,
         if(toDayOfWeek(date_day) IN (6, 7), 1, 0) AS is_weekend,
-        {{ get_season('date_day') }} AS season
+        {{ get_season('date_day') }} AS season,
+        formatDateTime(date_day, '%b %Y') AS month_year
     FROM date_spine
     CROSS JOIN max_date
     WHERE date_day <= max_start_date

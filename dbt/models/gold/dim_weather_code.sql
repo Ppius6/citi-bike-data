@@ -13,7 +13,17 @@
 -- this table's weather_code directly (no surrogate key needed).
 SELECT
     weather_code,
-    weather_description
+    weather_description,
+    multiIf(
+        weather_code <= 1,  'Clear',
+        weather_code <= 3,  'Cloudy',
+        weather_code IN (45, 48), 'Fog',
+        weather_code >= 51 AND weather_code <= 57, 'Drizzle',
+        weather_code >= 61 AND weather_code <= 67, 'Rain',
+        weather_code >= 71 AND weather_code <= 77, 'Snow',
+        weather_code >= 80 AND weather_code <= 86, 'Showers',
+        'Thunderstorm'
+    ) AS weather_group
 FROM VALUES(
     'weather_code UInt8, weather_description String',
     -- Clear sky & clouds

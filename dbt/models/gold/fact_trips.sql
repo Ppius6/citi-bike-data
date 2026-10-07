@@ -90,6 +90,8 @@ final AS (
         -- Timestamps
         t.started_at,
         t.ended_at,
+        toHour(t.started_at)                                    AS start_hour,
+        toHour(t.ended_at)                                      AS end_hour,
 
         -- Measures
         t.ride_duration_minutes,

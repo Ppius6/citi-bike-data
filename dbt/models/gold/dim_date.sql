@@ -16,7 +16,9 @@ WITH date_spine AS (
 ),
 
 max_date AS (
-    SELECT MAX(start_date) AS max_start_date
+    -- Latest of start and end dates: a ride can end on a later calendar day
+    -- than any ride starts, and arrival-side marts join dim_date on that day.
+    SELECT MAX(greatest(start_date, toDate(ended_at))) AS max_trip_date
     FROM {{ source('silver', 'silver_trips') }}
 ),
 
@@ -34,10 +36,11 @@ final AS (
         {{ month_name('date_day') }} AS month_name,
         if(toDayOfWeek(date_day) IN (6, 7), 1, 0) AS is_weekend,
         {{ get_season('date_day') }} AS season,
-        formatDateTime(date_day, '%b %Y') AS month_year
+        formatDateTime(date_day, '%b %Y') AS month_year,
+        toYYYYMM(date_day) AS month_year_key
     FROM date_spine
     CROSS JOIN max_date
-    WHERE date_day <= max_start_date
+    WHERE date_day <= max_trip_date
 )
 
 SELECT * FROM final

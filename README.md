@@ -60,7 +60,6 @@ docker compose up -d
 - Prefect UI: <http://localhost:4200>
 - Postgres: localhost:5432
 - ClickHouse: localhost:8123 (HTTP), localhost:9009 (native)
-- Chat agent API: <http://localhost:8000>
 - Chat UI: <http://localhost:3000>
 
 **3. Run the pipeline**

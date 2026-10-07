@@ -50,6 +50,8 @@ models:
         description: "The season of the year (Winter, Spring, Summer, Fall)"
       - name: month_year
         description: "Abbreviated month and year, e.g. 'Aug 2026'"
+      - name: month_year_key
+        description: "Sort key for month_year — YYYYMM as UInt32 (e.g. 202608). Sort month_year by this so months order chronologically, not alphabetically."
 
   - name: dim_station
     description: "Station dimension with SCD Type 2 history"
@@ -166,6 +168,7 @@ models:
         description: "Surrogate key for the fact row"
         data_tests:
           - not_null
+          - unique
       - name: ride_id
         description: "Natural key from source"
         data_tests:
@@ -219,6 +222,10 @@ models:
         description: "The timestamp when the ride started (America/New_York timezone)"
       - name: ended_at
         description: "The timestamp when the ride ended (America/New_York timezone)"
+      - name: start_hour
+        description: "Hour of day the ride started (0-23, America/New_York)"
+      - name: end_hour
+        description: "Hour of day the ride ended (0-23, America/New_York). Can fall on a later date than date_key."
       - name: ride_duration_minutes
         description: "The duration of the ride in minutes"
       - name: start_lat

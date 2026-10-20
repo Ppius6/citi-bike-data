@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
 from scripts.config.config import Config
-from scripts.ingestion.ingest import Downloader
+from scripts.ingestion.ingest import Downloader, parquet_key_for
 from scripts.loading.loader import BronzeLoader
 from scripts.storage.minio_client import MinIOClient
 from scripts.ingestion.weather import run_weather_ingest
@@ -89,7 +89,7 @@ def run_ingest(config: Config) -> bool:
     new_files = [
         f
         for f in file_list
-        if not minio.object_exists(f"bronze/{f.replace('.zip', '.parquet')}")
+        if not minio.object_exists(parquet_key_for(f))
     ]
 
     if not new_files:

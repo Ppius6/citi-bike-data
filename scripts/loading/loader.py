@@ -29,6 +29,15 @@ class BronzeLoader:
     def _table_ref(self) -> str:
         return f"{self.postgres.bronze_schema}.trips"
 
+    @staticmethod
+    def _source_stem(name: str) -> str:
+        """
+        Drop a trailing .parquet and .csv so a MinIO key and a stored
+        _source_file compare equal. Source zips are named either X.csv.zip or
+        X.zip, but both contain X.csv, so only the CSV name is reliable.
+        """
+        return name.removesuffix(".parquet").removesuffix(".csv")
+
     def get_loaded_sources(self) -> set[str]:
         """
         Return the set of _source_file values already present in bronze.trips.
@@ -106,10 +115,11 @@ class BronzeLoader:
             f"Found {len(loaded_sources)} already-loaded source files in bronze.trips."
         )
 
+        loaded_stems = {self._source_stem(source) for source in loaded_sources}
         new_keys = [
             key
             for key in all_keys
-            if key.split("/")[-1].replace(".parquet", "") not in loaded_sources
+            if self._source_stem(key.split("/")[-1]) not in loaded_stems
         ]
 
         if not new_keys:

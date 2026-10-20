@@ -14,6 +14,12 @@ from scripts.config.config import PipelineConfig, SourceConfig
 logger = logging.getLogger(__name__)
 
 
+def parquet_key_for(file_name: str) -> str:
+    """MinIO key a source zip lands at, e.g. JC-202501-citibike-tripdata.csv.zip
+    -> bronze/JC-202501-citibike-tripdata.csv.parquet."""
+    return f"bronze/{Path(file_name).stem}.parquet"
+
+
 class Downloader:
     def __init__(self, source: SourceConfig, pipeline: PipelineConfig):
         self.source = source
@@ -125,7 +131,7 @@ class Downloader:
             buffer = BytesIO()
             df.to_parquet(buffer, index=False, engine="pyarrow")
 
-            key = f"bronze/{zip_path.stem}.parquet"
+            key = parquet_key_for(zip_path.name)
             logger.info(f"Converted to Parquet buffer: {key} ({len(df)} rows)")
 
             return buffer, key

@@ -38,6 +38,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         _ingested_at timestamptz
     );
 
+    -- A repeated load of the same source file fails loudly instead of
+    -- silently duplicating rows.
+    CREATE UNIQUE INDEX IF NOT EXISTS trips_source_file_ride_id_key
+        ON bronze.trips (_source_file, ride_id);
+
     CREATE TABLE IF NOT EXISTS bronze.weather (
         observation_time timestamptz,
         temperature_c double precision,

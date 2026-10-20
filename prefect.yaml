@@ -27,11 +27,12 @@ deployments:
 - name: citibike-monthly
   version: null
   tags: []
-  description: "Monthly Citi Bike pipeline — ingest to gold layer"
+  description: "Citi Bike pipeline, polls daily and runs ingest to gold layer when new data is published"
   schedule:
-    cron: "0 6 1 * *"
+    cron: "0 6 * * *"
     timezone: "America/New_York"
   entrypoint: scripts/orchestration/flows.py:citibike_pipeline
+  concurrency_limit: 1
   parameters: {}
   work_pool:
     name: local-pool

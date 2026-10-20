@@ -1,5 +1,7 @@
+import json
 import logging
 from io import BytesIO
+from typing import Optional
 
 import boto3
 from botocore.client import Config as BotoConfig
@@ -62,3 +64,20 @@ class MinIOClient:
             Prefix=prefix,
         )
         return [obj["Key"] for obj in response.get("Contents", [])]
+
+    def read_json(self, key: str) -> Optional[dict]:
+        try:
+            response = self.client.get_object(Bucket=self.config.bucket, Key=key)
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                return None
+            raise
+        return json.loads(response["Body"].read())
+
+    def write_json(self, key: str, data: dict) -> None:
+        self.client.put_object(
+            Bucket=self.config.bucket,
+            Key=key,
+            Body=json.dumps(data).encode(),
+            ContentType="application/json",
+        )

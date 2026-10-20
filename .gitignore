@@ -75,3 +75,5 @@ dbt/.user.yml
 
 notes.md
 models.md
+# Claude Code
+.claude/

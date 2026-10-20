@@ -3,18 +3,20 @@ import subprocess
 from pathlib import Path
 
 from prefect import flow, task, get_run_logger
-from prefect.tasks import task_input_hash
 from prefect.blocks.notifications import SlackWebhook
 
+from scripts.ingestion.ingest import Downloader
+from scripts.storage.minio_client import MinIOClient
 from scripts.config.config import Config
 from scripts.pipeline import run_ingest, run_bronze_load
 from scripts.ingestion.weather import run_weather_ingest
 from scripts.quality.validator import run_quality_checks
 
-from datetime import timedelta
-
 # Absolute path to the dbt project
 DBT_PROJECT_DIR = Path(__file__).resolve().parent.parent.parent / "dbt"
+
+# MinIO object recording which source files have been through every layer
+PROCESSED_STATE_KEY = "state/processed.json"
 
 
 def run_dbt(command: str) -> bool:
@@ -50,12 +52,40 @@ def run_dbt(command: str) -> bool:
 
 
 @task(
+    name="find_pending_files",
+    description="List Citi Bike source files not yet fully processed, per the MinIO watermark",
+    retries=2,
+    retry_delay_seconds=60,
+)
+def find_pending_files_task(config: Config) -> list[str]:
+    source_files = Downloader(config.source, config.pipeline).get_file_list()
+    if not source_files:
+        raise RuntimeError(
+            "Source listing is empty - check source.start_from and the S3 listing."
+        )
+    state = MinIOClient(config.minio).read_json(PROCESSED_STATE_KEY) or {}
+    processed = set(state.get("files", []))
+    return [f for f in source_files if f not in processed]
+
+
+@task(
+    name="mark_files_processed",
+    description="Record files as fully processed, only called after every layer and test passed",
+    retries=2,
+    retry_delay_seconds=30,
+)
+def mark_files_processed_task(config: Config, files: list[str]) -> None:
+    minio = MinIOClient(config.minio)
+    state = minio.read_json(PROCESSED_STATE_KEY) or {}
+    processed = sorted(set(state.get("files", [])) | set(files))
+    minio.write_json(PROCESSED_STATE_KEY, {"files": processed})
+
+
+@task(
     name="ingest",
     description="Download source files from Citi Bike S3, convert to Parquet, land in MinIO",
     retries=3,
     retry_delay_seconds=60,
-    cache_key_fn=task_input_hash,
-    cache_expiration=timedelta(hours=24),
 )
 def ingest_task(config: Config) -> bool:
     logger = get_run_logger()
@@ -347,6 +377,12 @@ def citibike_pipeline():
 
     logger.info("Pipeline flow started.")
 
+    pending_files = find_pending_files_task(config)
+    if not pending_files:
+        logger.info("No new Citi Bike files, nothing to do.")
+        return
+    logger.info(f"{len(pending_files)} unprocessed file(s): {pending_files}")
+
     # Ingest to MinIO
     ingest_task(config)
 
@@ -372,6 +408,8 @@ def citibike_pipeline():
         "bronze_weather int_weather_cleaned silver_weather",
     )
     dbt_test_task(target="clickhouse", models="gold.* marts.* fact_trips_reconciles_with_silver_trips")
+
+    mark_files_processed_task(config, pending_files)
 
     # Docs as the project catalog, plus Elementary's observability report
     dbt_docs_generate_task()

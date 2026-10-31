@@ -3,5 +3,7 @@ uvicorn[standard]==0.46.0
 pydantic==2.13.3
 python-dotenv==1.2.2
 clickhouse-connect>=0.7.0
+sqlglot==30.27.0
+tzdata>=2024.1
 openai==2.44.0
 sentence-transformers==3.0.1

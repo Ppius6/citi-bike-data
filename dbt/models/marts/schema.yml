@@ -27,6 +27,24 @@ models:
         description: "Count of rides in this (date, rider type, bike type, weather code, daylight) group"
         data_tests:
           - not_null
+      - name: ride_duration_sum
+        description: "Unrounded sum of non-null ride_duration values; sum across groups before dividing."
+      - name: ride_duration_count
+        description: "Non-null ride_duration observations; denominator for rolled-up averages, not total rides."
+        data_tests:
+          - not_null
+      - name: ride_distance_sum
+        description: "Unrounded sum of non-null ride_distance values; sum across groups before dividing."
+      - name: ride_distance_count
+        description: "Non-null ride_distance observations; denominator for rolled-up averages, not total rides."
+        data_tests:
+          - not_null
+      - name: temperature_sum
+        description: "Unrounded sum of non-null temperature values; sum across groups before dividing."
+      - name: temperature_count
+        description: "Non-null temperature observations; denominator for rolled-up averages, not total rides."
+        data_tests:
+          - not_null
       - name: avg_ride_duration_minutes
         description: "Average ride duration in minutes for this group"
       - name: avg_ride_distance_km
@@ -239,6 +257,18 @@ models:
                 values: ['Jersey City', 'Hoboken', 'New York City', 'Unknown']
       - name: rides
         description: "Number of rides in this month from start_city to end_city"
+        data_tests:
+          - not_null
+      - name: ride_duration_sum
+        description: "Unrounded sum of non-null ride_duration values; sum across groups before dividing."
+      - name: ride_duration_count
+        description: "Non-null ride_duration observations; denominator for rolled-up averages, not total rides."
+        data_tests:
+          - not_null
+      - name: ride_distance_sum
+        description: "Unrounded sum of non-null ride_distance values; sum across groups before dividing."
+      - name: ride_distance_count
+        description: "Non-null ride_distance observations; denominator for rolled-up averages, not total rides."
         data_tests:
           - not_null
       - name: avg_ride_duration_minutes

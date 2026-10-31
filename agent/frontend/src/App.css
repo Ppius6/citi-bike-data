@@ -160,6 +160,26 @@
   border-top: 1px solid var(--border);
 }
 
+.feedback {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.feedback button {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
 .composer input {
   flex: 1;
   font: inherit;

@@ -43,6 +43,10 @@ SELECT
     start_city,
     end_city,
     count()                                    AS rides,
+    sum(ride_duration_minutes)                 AS ride_duration_sum,
+    count(ride_duration_minutes)               AS ride_duration_count,
+    sum(ride_distance_km)                      AS ride_distance_sum,
+    count(ride_distance_km)                    AS ride_distance_count,
     round(avg(ride_duration_minutes), 2)       AS avg_ride_duration_minutes,
     round(avg(ride_distance_km), 2)            AS avg_ride_distance_km
 FROM joined

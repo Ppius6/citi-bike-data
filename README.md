@@ -139,7 +139,7 @@ Data tests across all layers are implemented which cut across `relationships` te
 uv run dbt test --target dev --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected bronze_weather int_weather_cleaned silver_weather --profiles-dir .
 
 # ClickHouse layers (gold + marts)
-uv run dbt test --target clickhouse --select gold.* marts.* fact_trips_reconciles_with_silver_trips --profiles-dir .
+uv run dbt test --target clickhouse --select gold.* marts.* fact_trips_reconciles_with_silver_trips summary_metrics_reconcile --profiles-dir .
 ```
 
 ---
@@ -194,18 +194,13 @@ A chat UI for asking questions about the data in plain English, such as "What wa
 
 **How it works:**
 
-1. **Startup:** `agent/backend/database.py` reads `system.columns` for `gold` and `marts` through the read-only `ai_agent` user and probes the real values of the rider and bike type columns. The result fills the `{db_schema}` slot in the system prompt, so the schema the agent sees always matches the dbt models.
-2. **Prompt:** the join and grounding rules live in [`agent/backend/prompts/system_instructions.md`](agent/backend/prompts/system_instructions.md). They tell the agent which table to use for which question: `fact_trips` by default, `marts.daily_ride_summary` for system-wide totals, `marts.mart_station_flow` for station flow, and `marts.mart_demand_patterns` for typical demand, and `dim_station.city` and `marts.mart_city_flow` for city questions.
-3. **Memory:** the agent embeds the question with a local `sentence-transformers` model (`all-MiniLM-L6-v2`) and searches `agent.memory` in ClickHouse with `cosineDistance`. The closest past questions and their SQL are added to the prompt as examples.
-4. **Query loop:** `agent/backend/agent.py` sends the question, chat history, schema and examples to the LLM, which replies with a tool call containing SQL. Tools stay available on every turn, which DeepSeek's function calling needs across multiple rounds.
-5. **Saving:** once the agent has a final answer, it embeds the one most successful query and stores it in `agent.memory`.
+1. **Schema:** the backend refreshes gold/marts columns, enum values and fact-table coverage every five minutes. It builds the prompt per request and supplies the current New York date for relative date questions.
+2. **Query loop:** the model calls a SQL tool that returns structured results. SQLGlot validates SELECT syntax, table sources and functions; ClickHouse independently enforces read permissions and resource limits. The loop caps tool calls and request time, and returns call/token/latency metrics.
+3. **Analytics:** mart selection, SCD2 joins, quiet-hour handling and sum/count formulas for combining averages are defined in [`system_instructions.md`](agent/backend/prompts/system_instructions.md).
+4. **Memory:** eligible standalone answers offer **Yes/No** feedback. Only approved examples with a matching schema version and sufficient similarity are retrieved. Memory uses a separate database account and a locally cached embedding model; chat works when memory is disabled.
+5. **Verification:** unit/API tests, eight analytical fixture cases and native ClickHouse 24.3 integration tests run in CI. The dbt reconciliation test checks that summary sums/counts agree with the facts.
 
-**Guardrails:**
-
-- **App layer:** one `SELECT` or `WITH` statement per call. A keyword block-list rejects `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE` and similar, including inside a `WITH ... DELETE` CTE. 29 tests in `agent/backend/tests/test_database.py` cover this, including word boundaries so `inserted_at` doesn't trip `INSERT`.
-- **Database layer:** the agent connects as `ai_agent` (see `infra/clickhouse/init.sh`), which has `SELECT` on `gold.*` and `marts.*` and `INSERT`/`SELECT` on `agent.memory`. Table-level grants stop any other write.
-- **Memory hygiene:** exploratory queries are tracked, and only the final successful query is saved.
-- **Prompt rules:** case-insensitive filtering, grounding every number in a query result, and which table to use for which question are all defined in [`agent/backend/prompts/system_instructions.md`](agent/backend/prompts/system_instructions.md).
+See [Agent reliability changes](docs/agent-improvements.md) for each change, limits, evaluation commands and the migration steps for existing Docker volumes.
 
 **Run standalone (CLI, no Docker):**
 

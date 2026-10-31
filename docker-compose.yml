@@ -47,6 +47,7 @@ services:
         CLICKHOUSE_ENGINEER_PASSWORD: ${CLICKHOUSE_ENGINEER_PASSWORD}
         ANALYST_PASSWORD: ${ANALYST_PASSWORD}
         AI_AGENT_PASSWORD: ${AI_AGENT_PASSWORD}
+        AI_MEMORY_PASSWORD: ${AI_MEMORY_PASSWORD:-}
         # Needed by init.sh to create the silver_trips/station_snapshot bridge
         # tables (ClickHouse's PostgreSQL engine) — not otherwise required to
         # be in .env, so set explicitly rather than assuming it's there.
@@ -60,6 +61,7 @@ services:
         - ./infra/clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml
         - ./infra/clickhouse/users.xml:/etc/clickhouse-server/users.d/users.xml
         - ./infra/clickhouse/init.sh:/docker-entrypoint-initdb.d/init.sh
+        - ./infra/clickhouse/agent-access.sh:/opt/citibike/agent-access.sh
       healthcheck:
         test: ["CMD", "clickhouse-client", "--port", "9009", "--query", "SELECT 1"]
         interval: 10s
@@ -77,9 +79,10 @@ services:
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_HTTP_PORT: 8123
       AI_AGENT_PASSWORD: ${AI_AGENT_PASSWORD}
+      AI_MEMORY_PASSWORD: ${AI_MEMORY_PASSWORD:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
-      # Optional overrides to swap LLM provider/model (e.g. CometAPI) — see
-      # .env.example. Left empty falls back to the DeepSeek defaults in agent.py.
+      # Optional overrides for another OpenAI-compatible provider/model. Left
+      # empty, agent.py uses DeepSeek (deepseek-chat) with DEEPSEEK_API_KEY.
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_MODEL: ${LLM_MODEL:-}

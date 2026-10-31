@@ -33,6 +33,18 @@ jobs:
 
   test-agent:
     runs-on: ubuntu-latest
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server:24.3
+        env:
+          CLICKHOUSE_SKIP_USER_SETUP: "1"
+        ports:
+          - 8123:8123
+        options: >-
+          --health-cmd="clickhouse-client --query 'SELECT 1'"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -40,6 +52,10 @@ jobs:
           python-version: "3.12"
       - run: pip install -r agent/backend/requirements-dev.txt
       - run: pytest agent/backend/tests -v
+        env:
+          CLICKHOUSE_TEST_PORT: "8123"
+          CLICKHOUSE_TEST_CONTAINER: ${{ job.services.clickhouse.id }}
+      - run: python agent/backend/evaluation.py
 
   dbt-parse:
     runs-on: ubuntu-latest
@@ -198,7 +214,7 @@ jobs:
           CLICKHOUSE_ENGINEER_PASSWORD: ci_engineer_password
         run: |
           uv run --project .. dbt test --select bronze_trips int_trips_cleaned silver_trips silver_trips_rejected bronze_weather int_weather_cleaned silver_weather --target local --profiles-dir .
-          uv run --project .. dbt test --select gold.* marts.* fact_trips_reconciles_with_silver_trips --target clickhouse --profiles-dir .
+          uv run --project .. dbt test --select gold.* marts.* fact_trips_reconciles_with_silver_trips summary_metrics_reconcile --target clickhouse --profiles-dir .
 
       # dbt docs generate only builds catalog.json (real column types) for
       # whichever single target/adapter it's pointed at — a lone run misses

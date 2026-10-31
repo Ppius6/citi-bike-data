@@ -1,39 +1,43 @@
+import hashlib
+import logging
 import os
-import re
+from dataclasses import dataclass
+from threading import Lock
+from time import monotonic
 
 import clickhouse_connect
+import sqlglot
+from sqlglot import exp
+from sqlglot.optimizer.scope import traverse_scope
 
-CLICKHOUSE_HOST = os.getenv("CLICKHOUSE_HOST", "localhost")
-CLICKHOUSE_HTTP_PORT = int(os.getenv("CLICKHOUSE_HTTP_PORT", "8123"))
-CLICKHOUSE_USER = "ai_agent"
-CLICKHOUSE_PASSWORD = os.getenv("AI_AGENT_PASSWORD", "")
+from contracts import QueryResult, SQLArguments
 
-FORBIDDEN_KEYWORDS = [
-    "DROP",
-    "DELETE",
-    "UPDATE",
-    "INSERT",
-    "ALTER",
-    "TRUNCATE",
-    "CREATE",
-    "GRANT",
-    "REVOKE",
-    "ATTACH",
-    "DETACH",
-    "RENAME",
-    "OPTIMIZE",
-    "SYSTEM",
-    "KILL",
-    "SET",
-]
-
+logger = logging.getLogger(__name__)
 MAX_ROWS_RETURNED = 50
+SCHEMA_CACHE_SECONDS = 300
+MEMORY_MAX_DISTANCE = 0.25
 
-# Low-cardinality dimension columns that string filters commonly target. Their raw
-# values often differ in casing from their *_desc display counterparts (e.g.
-# rider_type='casual' vs rider_type_desc='Casual'), which is a common source of
-# zero-result queries if the model guesses. Probed live so the agent never has to guess,
-# and so it stays correct if a new bike/rider type is ever added.
+# Unknown functions fail closed, including external I/O and dictionary lookups.
+ALLOWED_FUNCTIONS = set("""
+    ABS AND ANY ANY_VALUE ARG_MAX ARG_MIN ARRAY ARRAY_AGG AVG AVG_WEIGHTED
+    CASE CAST CEIL COALESCE CONCAT COUNT COUNT_IF DATE DATE_ADD DATE_DIFF
+    DATE_TRUNC TIMESTAMP_TRUNC TIME_TRUNC DATE_SUB TIMESTAMP_SUB
+    DAY DAY_OF_MONTH DAY_OF_WEEK DENSE_RANK EXTRACT FLOOR GREATEST
+    IF IFNULL ILIKE LAG LEAD LEAST LENGTH LIKE LOWER MAX MIN MONTH NULLIF
+    POW QUANTILE QUANTILES RANK REPLACE ROUND ROW_NUMBER SAFE_DIVIDE SQRT
+    STDDEV STDDEV_POP STDDEV_SAMP STR_POSITION SUBSTRING SUM SUM_IF
+    TIME_TO_STR TIMESTAMP_ADD TIMESTAMP_DIFF TO_CHAR TRIM TRUNC UPPER VARIANCE
+    WEEK YEAR
+    avgWeighted countIf sumIf quantileExact quantileExactLow quantileExactHigh
+    quantileTDigest quantilesTDigest uniq uniqExact uniqIf uniqExactIf
+    toDate toDateTime toStartOfDay toStartOfWeek toStartOfMonth toStartOfYear
+    toStartOfQuarter toQuarter toISOWeek toDayOfYear toMonday dateTrunc addHours
+    toYYYYMM toYYYYMMDD toYear toMonth toDayOfMonth toDayOfWeek toHour
+    dateDiff formatDateTime addDays addMonths subtractDays subtractMonths
+    today now lowerUTF8 positionCaseInsensitive multiIf toFloat64 toUInt32
+    isNull isNotNull ifNull nullIf roundBankers
+""".upper().split())
+
 ENUM_COLUMNS = [
     ("dim_rider_type", "rider_type"),
     ("dim_rider_type", "rider_type_desc"),
@@ -42,133 +46,194 @@ ENUM_COLUMNS = [
 ]
 
 
-def _get_client():
+def _get_client(*, memory=False):
     return clickhouse_connect.get_client(
-        host=CLICKHOUSE_HOST,
-        port=CLICKHOUSE_HTTP_PORT,
-        username=CLICKHOUSE_USER,
-        password=CLICKHOUSE_PASSWORD,
+        host=os.getenv("CLICKHOUSE_HOST", "localhost"),
+        port=int(os.getenv("CLICKHOUSE_HTTP_PORT", "8123")),
+        username="ai_memory" if memory else "ai_agent",
+        password=os.getenv("AI_MEMORY_PASSWORD" if memory else "AI_AGENT_PASSWORD", ""),
+        connect_timeout=3,
+        send_receive_timeout=35 if not memory else 5,
     )
 
 
-def get_db_schema() -> str:
-    """Introspects the live gold.* schema plus known enum values, so this never
-    drifts from the actual dbt models. Called once at process startup."""
-    client = _get_client()
-
-    columns = client.query("""
-        SELECT database, table, name, type, comment
-        FROM system.columns
-        WHERE database IN ('gold', 'marts')
-        ORDER BY database, table, position
-        """).result_rows
-
-    tables: dict[tuple[str, str], list[tuple[str, str, str]]] = {}
-    for database, table, name, col_type, comment in columns:
-        tables.setdefault((database, table), []).append((name, col_type, comment))
-
-    lines = []
-    for (database, table), cols in tables.items():
-        col_strings = []
-        for name, col_type, comment in cols:
-            col_str = f"{name} {col_type}"
-            if comment:
-                col_str += f" COMMENT '{comment}'"
-            col_strings.append(col_str)
-        lines.append(f"TABLE {database}.{table} (\n  " + ",\n  ".join(col_strings) + "\n);")
-
-    enum_notes = []
-    for table, column in ENUM_COLUMNS:
-        values = client.query(f"SELECT DISTINCT {column} FROM gold.{table}").result_rows
-        values_list = ", ".join(repr(v[0]) for v in values)
-        enum_notes.append(f"gold.{table}.{column} actual values: {values_list}")
-
-    try:
-        date_bounds = client.query("SELECT min(full_date), max(full_date) FROM gold.dim_date").result_rows[0]
-        if date_bounds and date_bounds[0] and date_bounds[1]:
-            enum_notes.append(f"Data coverage: from {date_bounds[0]} to {date_bounds[1]}.")
-    except Exception as e:
-        print(f"Warning: Could not fetch date bounds: {e}")
-
-    return "\n".join(lines) + "\n\n" + "\n".join(enum_notes)
+@dataclass(frozen=True)
+class SchemaContext:
+    text: str
+    version: str
 
 
-def execute_sql_query(query: str) -> str:
-    """Validates the SQL and runs it against ClickHouse using the read-only ai_agent user."""
+_schema_context = None
+_schema_expires_at = 0.0
+_schema_lock = Lock()
 
-    statements = [s for s in query.strip().split(";") if s.strip()]
+
+def get_schema_context() -> SchemaContext:
+    """Refresh schema, enums and fact-table coverage every five minutes.
+
+    A failed refresh is surfaced instead of silently using outdated metadata.
+    The version covers structure/semantics, not changing coverage dates.
+    """
+    global _schema_context, _schema_expires_at
+    with _schema_lock:
+        if _schema_context is not None and monotonic() < _schema_expires_at:
+            return _schema_context
+        client = _get_client()
+        try:
+            columns = client.query("""
+                SELECT database, table, name, type, comment FROM system.columns
+                WHERE database IN ('gold', 'marts')
+                ORDER BY database, table, position
+            """, settings={"max_execution_time": 5}).result_rows
+            if not columns:
+                raise RuntimeError("The analytics schema is not ready.")
+            tables = {}
+            for database, table, name, col_type, comment in columns:
+                tables.setdefault((database, table), []).append(
+                    f"{name} {col_type}" + (f" COMMENT {comment!r}" if comment else "")
+                )
+            lines = [f"TABLE {db}.{table} (\n  " + ",\n  ".join(cols) + "\n);"
+                     for (db, table), cols in tables.items()]
+            for table, column in ENUM_COLUMNS:
+                values = client.query(
+                    f"SELECT DISTINCT {column} FROM gold.{table} ORDER BY {column}",
+                    settings={"max_execution_time": 5},
+                ).result_rows
+                lines.append(f"gold.{table}.{column} actual values: " +
+                             ", ".join(repr(row[0]) for row in values))
+            version = hashlib.sha256(("analytics-v2\n" + "\n".join(lines)).encode()).hexdigest()
+            bounds = client.query("""
+                SELECT min(toDate(started_at)), max(toDate(started_at)), count()
+                FROM gold.fact_trips
+            """, settings={"max_execution_time": 5}).result_rows[0]
+            lines.append(f"Trip start-date coverage: {bounds[0]} to {bounds[1]}."
+                         if bounds[2] else "Trip start-date coverage: no rides loaded.")
+            _schema_context = SchemaContext("\n".join(lines), version)
+            _schema_expires_at = monotonic() + SCHEMA_CACHE_SECONDS
+            return _schema_context
+        finally:
+            client.close()
+
+
+def validate_sql(query: str) -> tuple[str, list[str]]:
+    """Resolve CTEs and allow only SELECTs over explicit gold/marts tables."""
+    SQLArguments(query=query)
+    statements = [stmt for stmt in sqlglot.parse(query, read="clickhouse") if stmt is not None]
     if len(statements) != 1:
-        return "Error: Only a single SELECT statement is allowed per call."
+        raise ValueError("Only a single SELECT statement is allowed per call.")
+    tree = statements[0]
+    if not isinstance(tree, (exp.Select, exp.Union, exp.Intersect, exp.Except)):
+        raise ValueError("Only SELECT queries are allowed.")
+    for node in tree.walk():
+        if isinstance(node, (exp.DDL, exp.DML, exp.Command, exp.Into)):
+            raise ValueError("Only read-only SELECT queries are allowed.")
+        if node.args.get("settings") or node.args.get("format") or node.args.get("into"):
+            raise ValueError("Query settings, output formats and INTO are not allowed.")
+        if isinstance(node, exp.Func):
+            name = node.name if isinstance(node, exp.Anonymous) else node.sql_name()
+            if name.upper() not in ALLOWED_FUNCTIONS:
+                raise ValueError(f"Function {name} is not approved for analytics.")
+    sources = set()
+    for scope in traverse_scope(tree):
+        for source in scope.sources.values():
+            if isinstance(source, exp.Table):
+                if (not isinstance(source.this, exp.Identifier) or source.catalog
+                        or source.db not in {"gold", "marts"}):
+                    raise ValueError("Only explicit gold.* and marts.* tables are allowed; no table functions.")
+                sources.add(f"{source.db}.{source.name}")
+    # Execute the validated AST, never unparsed trailing syntax.
+    return tree.sql(dialect="clickhouse"), sorted(sources)
 
-    clean_query = statements[0].strip()
-    upper_query = clean_query.upper()
 
-    if not (upper_query.startswith("SELECT") or upper_query.startswith("WITH")):
-        return "Error: Security block. Only SELECT (or WITH ... SELECT) queries are allowed."
-
-    if any(re.search(rf"\b{word}\b", upper_query) for word in FORBIDDEN_KEYWORDS):
-        return "Error: Security block. Only read-only SELECT queries are allowed."
-
+def execute_sql_query(query: str, *, timeout: float = 30) -> QueryResult:
+    try:
+        clean_query, sources = validate_sql(query)
+    except (ValueError, sqlglot.errors.SqlglotError) as error:
+        return QueryResult(status="error", error=str(error))
+    client = None
     try:
         client = _get_client()
-        # Defense in depth: ai_agent is also created with SETTINGS readonly = 2 server-side,
-        # which blocks all writes at the ClickHouse engine level regardless of this app-side check.
-        result = client.query(clean_query, settings={"max_execution_time": 30})
-
-        if not result.result_rows:
-            return "No data found for this query."
-
-        rows = result.result_rows[:MAX_ROWS_RETURNED]
-        output = f"Columns: {result.column_names}\nRows: {rows}"
-        if len(result.result_rows) > MAX_ROWS_RETURNED:
-            output += f"\n(truncated to first {MAX_ROWS_RETURNED} of {len(result.result_rows)} rows)"
-        return output
-    except Exception as e:
-        return f"Database Error: {str(e)}"
-
-
-def save_memory(question: str, query: str) -> None:
-    """Saves a successful question-query pair into long-term vector memory."""
-    from memory import (
-        embed_text,
-    )  # Local import to avoid initialization overhead if not needed
-
-    try:
-        embedding = embed_text(question)
-        client = _get_client()
-
-        client.insert(
-            "agent.memory",
-            [[question, query, embedding]],
-            column_names=["question", "query", "embedding"],
-        )
-    except Exception as e:
-        print(f"Warning: Failed to save memory to ClickHouse: {e}")
-
-
-def retrieve_memory(question: str, limit: int = 3) -> list[dict]:
-    """Retrieves the most similar past question-query pairs from memory."""
-    from memory import embed_text
-
-    try:
-        embedding = embed_text(question)
-        client = _get_client()
-
-        # Find similar queries using cosineDistance
+        # Limit output, never the input of an aggregate. An extra row detects
+        # truncation without downloading the complete result into Python.
         result = client.query(
-            f"""
-            SELECT question, query, cosineDistance(embedding, {{vector:Array(Float32)}}) as dist
-            FROM agent.memory
-            ORDER BY dist ASC
-            LIMIT {limit}
-            """,
-            parameters={"vector": embedding},
+            f"SELECT * FROM ({clean_query}) AS agent_result LIMIT {MAX_ROWS_RETURNED + 1}",
+            settings={
+                "max_execution_time": min(30, max(1, int(timeout))),
+                "max_result_rows": MAX_ROWS_RETURNED + 1,
+                "max_result_bytes": 1000000,
+                "result_overflow_mode": "throw",
+                "max_memory_usage": 536870912,
+                "max_rows_to_read": 20000000,
+                "read_overflow_mode": "throw",
+            },
         )
+        return QueryResult(
+            status="ok" if result.result_rows else "empty",
+            columns=list(result.column_names),
+            rows=[list(row) for row in result.result_rows[:MAX_ROWS_RETURNED]],
+            source_tables=sources,
+            truncated=len(result.result_rows) > MAX_ROWS_RETURNED,
+        )
+    except Exception:
+        logger.exception("Analytics query failed")
+        return QueryResult(status="error", error="Database query failed or exceeded its resource limits.")
+    finally:
+        if client is not None:
+            client.close()
 
-        return [
-            {"question": row[0], "query": row[1], "distance": row[2]}
-            for row in result.result_rows
-        ]
-    except Exception as e:
-        print(f"Warning: Failed to retrieve memory from ClickHouse: {e}")
+
+def save_memory(question: str, query: str, schema_version: str) -> bool:
+    """Persist an explicitly approved example, never automatic success."""
+    if not os.getenv("AI_MEMORY_PASSWORD"):
+        return False
+    client = None
+    try:
+        from memory import embed_text
+
+        validate_sql(query)
+        client = _get_client(memory=True)
+        params = {"question": question, "query": query, "version": schema_version}
+        exists = client.query("""
+            SELECT count() FROM agent.memory
+            WHERE question = {question:String} AND query = {query:String}
+              AND schema_version = {version:String} AND validated = 1
+        """, parameters=params, settings={"max_execution_time": 3}).result_rows[0][0]
+        if not exists:
+            client.insert("agent.memory", [[question, query, embed_text(question), schema_version, 1]],
+                          column_names=["question", "query", "embedding", "schema_version", "validated"])
+        return True
+    except Exception:
+        logger.exception("Memory save failed")
+        return False
+    finally:
+        if client is not None:
+            client.close()
+
+
+def retrieve_memory(question: str, schema_version: str, limit: int = 3) -> list[dict]:
+    if not os.getenv("AI_MEMORY_PASSWORD"):
         return []
+    client = None
+    try:
+        from memory import embed_text
+
+        client = _get_client(memory=True)
+        result = client.query("""
+            SELECT question, query, cosineDistance(any(embedding), {vector:Array(Float32)}) AS dist
+            FROM agent.memory
+            WHERE validated = 1 AND schema_version = {version:String}
+            GROUP BY question, query
+            HAVING dist <= {max_distance:Float64}
+            ORDER BY dist ASC, question, query
+            LIMIT {limit:UInt32}
+        """, parameters={"vector": embed_text(question), "version": schema_version,
+                          "max_distance": MEMORY_MAX_DISTANCE, "limit": min(3, max(1, limit))},
+                              settings={"max_execution_time": 3, "max_memory_usage": 134217728})
+        return [{"question": row[0], "query": row[1], "distance": row[2]}
+                for row in result.result_rows if row[2] <= MEMORY_MAX_DISTANCE]
+    except Exception:
+        logger.exception("Memory retrieval failed; continuing without examples")
+        return []
+    finally:
+        if client is not None:
+            client.close()

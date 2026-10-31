@@ -7,11 +7,14 @@ interface Message {
   role: 'user' | 'agent'
   text: string
   queries?: string[]
+  memoryCandidateId?: string
+  feedback?: 'pending' | 'saved' | 'discarded' | 'error'
 }
 
 interface ChatResponse {
   answer: string
   queries: string[]
+  memory_candidate_id?: string | null
 }
 
 const INITIAL_MESSAGE: Message = {
@@ -54,20 +57,28 @@ function App() {
 
     const history = messages
       .filter((m) => m !== INITIAL_MESSAGE)
+      .slice(-20)
       .map((m) => ({
         role: m.role === 'agent' ? 'assistant' : 'user',
-        content: m.text,
+        content: m.text.slice(0, 4000),
       }))
+    while (history.reduce((total, msg) => total + msg.content.length, question.length) > 24000) {
+      history.shift()
+    }
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: question, history }),
+        signal: AbortSignal.timeout(150000),
       })
       if (!res.ok) throw new Error(`Request failed: ${res.status}`)
       const data: ChatResponse = await res.json()
-      setMessages((prev) => [...prev, { role: 'agent', text: data.answer, queries: data.queries }])
+      setMessages((prev) => [...prev, {
+        role: 'agent', text: data.answer, queries: data.queries,
+        memoryCandidateId: data.memory_candidate_id ?? undefined,
+      }])
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -76,6 +87,27 @@ function App() {
     } finally {
       setIsLoading(false)
       scrollToBottom()
+    }
+  }
+
+  const sendFeedback = async (index: number, approved: boolean) => {
+    const candidateId = messages[index].memoryCandidateId
+    if (!candidateId) return
+    const update = (feedback: Message['feedback']) => setMessages((prev) => prev.map(
+      (message, i) => i === index ? { ...message, feedback } : message,
+    ))
+    update('pending')
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidate_id: candidateId, approved }),
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!res.ok) throw new Error('Feedback unavailable')
+      update(approved ? 'saved' : 'discarded')
+    } catch {
+      update('error')
     }
   }
 
@@ -115,6 +147,21 @@ function App() {
                   ))}
                 </details>
               )}
+              {message.memoryCandidateId && (
+                <div className="feedback" aria-live="polite">
+                  {message.feedback === 'saved' ? 'Thanks — example saved.' :
+                    message.feedback === 'discarded' ? 'Thanks — example discarded.' : (
+                      <>
+                        <span>Was this answer correct?</span>
+                        <button type="button" disabled={message.feedback === 'pending'}
+                          onClick={() => sendFeedback(index, true)}>Yes</button>
+                        <button type="button" disabled={message.feedback === 'pending'}
+                          onClick={() => sendFeedback(index, false)}>No</button>
+                        {message.feedback === 'error' && <span>Couldn’t save feedback. Try again.</span>}
+                      </>
+                    )}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -128,6 +175,7 @@ function App() {
       <form className="composer" onSubmit={sendMessage}>
         <input
           type="text"
+          maxLength={4000}
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder="e.g. What was the average ride duration for casual riders last weekend?"

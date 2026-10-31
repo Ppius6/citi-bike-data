@@ -103,7 +103,14 @@ clickhouse-client --port 9009 --query "GRANT SELECT ON marts.* TO data_analyst"
 clickhouse-client --port 9009 --query "GRANT SELECT ON gold.* TO ai_agent"
 clickhouse-client --port 9009 --query "GRANT SELECT ON system.columns TO ai_agent"
 clickhouse-client --port 9009 --query "GRANT SELECT ON system.tables TO ai_agent"
-clickhouse-client --port 9009 --query "GRANT SELECT, INSERT ON agent.memory TO ai_agent"
 clickhouse-client --port 9009 --query "GRANT SELECT ON marts.* TO ai_agent"
+
+# Docker mounts the upgrade script outside the automatic entrypoint directory.
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$script_dir/agent-access.sh" ]; then
+    bash "$script_dir/agent-access.sh"
+else
+    bash /opt/citibike/agent-access.sh
+fi
 
 echo "ClickHouse init complete."

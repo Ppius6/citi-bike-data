@@ -26,6 +26,12 @@ SELECT
     weather_code,
     is_daylight,
     count() AS total_rides,
+    sum(ride_duration_minutes) AS ride_duration_sum,
+    count(ride_duration_minutes) AS ride_duration_count,
+    sum(ride_distance_km) AS ride_distance_sum,
+    count(ride_distance_km) AS ride_distance_count,
+    sum(temperature_c) AS temperature_sum,
+    count(temperature_c) AS temperature_count,
     round(avg(ride_duration_minutes), 2) AS avg_ride_duration_minutes,
     round(avg(ride_distance_km), 2) AS avg_ride_distance_km,
     round(avg(temperature_c), 2) AS avg_temperature_c

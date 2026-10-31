@@ -407,7 +407,7 @@ def citibike_pipeline():
         models="bronze_trips int_trips_cleaned silver_trips silver_trips_rejected "
         "bronze_weather int_weather_cleaned silver_weather",
     )
-    dbt_test_task(target="clickhouse", models="gold.* marts.* fact_trips_reconciles_with_silver_trips")
+    dbt_test_task(target="clickhouse", models="gold.* marts.* fact_trips_reconciles_with_silver_trips summary_metrics_reconcile")
 
     mark_files_processed_task(config, pending_files)
 

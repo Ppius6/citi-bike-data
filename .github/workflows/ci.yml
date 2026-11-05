@@ -259,6 +259,11 @@ jobs:
           mkdir -p target/elementary
           uv run --project .. edr report --profiles-dir . --project-dir . --profile-target local --file-path target/elementary/index.html --open-browser false
 
+      # Column definitions and the Power BI model catalog for report users,
+      # served at /columns/ and /model/ next to dbt docs and Elementary.
+      - name: Build report docs pages
+        run: uv run python scripts/docs/build_report_docs.py dbt/target
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

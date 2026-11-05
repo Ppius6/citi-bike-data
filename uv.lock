@@ -1,15 +1,15 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version < '3.13' and sys_platform == 'win32'",
     "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version < '3.13' and sys_platform == 'emscripten'",
     "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten'",
     "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
@@ -460,6 +460,7 @@ dependencies = [
     { name = "dbt-postgres" },
     { name = "elementary-data", extra = ["postgres"] },
     { name = "lxml" },
+    { name = "markdown" },
     { name = "pandas" },
     { name = "prefect" },
     { name = "psycopg2-binary" },
@@ -486,6 +487,7 @@ requires-dist = [
     { name = "dbt-postgres", specifier = ">=1.10.0" },
     { name = "elementary-data", extras = ["postgres"], specifier = ">=0.25.0" },
     { name = "lxml", specifier = ">=6.1.0" },
+    { name = "markdown", specifier = ">=3.10" },
     { name = "pandas", specifier = ">=3.0.2" },
     { name = "prefect", specifier = ">=3.6.28" },
     { name = "psycopg2-binary", specifier = ">=2.9.12" },

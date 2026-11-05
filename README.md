@@ -22,6 +22,7 @@ Ingests Citi Bike trip data from S3 and hourly weather from Open-Meteo, then tra
 | Orchestration | Prefect 3 | Monthly schedule, task retries, UI |
 | Data Catalog | dbt docs | Model docs, columns, tests and lineage, published at [ppius6.github.io/citi-bike-data](https://ppius6.github.io/citi-bike-data/) |
 | Observability | Soda, dbt tests, Elementary | Soda checks bronze on landing, dbt tests check every layer, and Elementary tracks volume anomalies and run history ([report](https://ppius6.github.io/citi-bike-data/elementary/)) |
+| Reporting | Power BI | Import-mode report on gold and marts, with [column definitions](https://ppius6.github.io/citi-bike-data/columns/) and a [measures catalog](https://ppius6.github.io/citi-bike-data/model/) |
 | Chat Agent | FastAPI + DeepSeek + sentence-transformers | Tool-calling agent that writes read-only SQL against gold and marts, with long-term vector memory |
 | Chat UI | React + Vite + TypeScript | Chat frontend, served via nginx |
 | Containerisation | Docker Compose | Full stack, single command startup |
@@ -72,7 +73,12 @@ Watch progress in the Prefect UI or with `docker compose logs -f pipeline`. On i
 
 **4. Browse the data catalog**
 
-CI publishes the dbt docs to **<https://ppius6.github.io/citi-bike-data/>** and the Elementary report to **<https://ppius6.github.io/citi-bike-data/elementary/>** on every push to `main` (the `deploy-docs` job in `.github/workflows/ci.yml`).
+CI publishes these on every push to `main` (the `deploy-docs` job in `.github/workflows/ci.yml`):
+
+- dbt docs: **<https://ppius6.github.io/citi-bike-data/>**
+- Elementary report: **<https://ppius6.github.io/citi-bike-data/elementary/>**
+- Column definitions for the reporting layer: **<https://ppius6.github.io/citi-bike-data/columns/>**, generated from the dbt descriptions
+- Power BI model catalog (tables, measures, relationships): **<https://ppius6.github.io/citi-bike-data/model/>**, rendered from `docs/powerbi/model-catalog.md`
 
 To build them locally:
 
